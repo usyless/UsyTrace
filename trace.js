@@ -3,7 +3,8 @@
 // global constants
 let lineSVG = document.getElementById('lines');
 
-const image = document.getElementById('uploadedImage'),
+const imageMap = new Map(),
+    image = document.getElementById('uploadedImage'),
     main = document.getElementById('main'),
     fileInput = document.getElementById('imageInput'),
     state = State(),
@@ -31,6 +32,7 @@ let worker, lines, sizeRatio, imageData, width, height;
 // call initial functions
 restoreDefault();
 createWorker();
+state.toInitial();
 
 // assign event listeners
 multiEventListener('dragstart', image, (e) => e.preventDefault());
@@ -57,11 +59,10 @@ multiEventListener('dragstart', image, (e) => e.preventDefault());
     const glass = document.getElementById('glass');
     multiEventListener(['mousemove'], image, (e) => {
         e.preventDefault();
-        const parentRect = image.parentElement.getBoundingClientRect(),
-            m = getMouseCoords(e);
+        const parentRect = image.parentElement.getBoundingClientRect(), m = getMouseCoords(e),
+            v = (Math.floor((m.yRel) * sizeRatio) * imageData.width * 4) + (Math.floor((m.xRel) * sizeRatio) * 4);
         glass.style.left = `${m.x - parentRect.left}px`;
         glass.style.top = `${m.y - parentRect.top}px`;
-        const v = (Math.floor((m.yRel) * sizeRatio) * imageData.width * 4) + (Math.floor((m.xRel) * sizeRatio) * 4);
         glass.style.backgroundColor = `rgb(${imageData.data[v]}, ${imageData.data[v + 1]}, ${imageData.data[v + 2]})`;
         glass.classList.remove('hidden');
     });
@@ -69,31 +70,48 @@ multiEventListener('dragstart', image, (e) => e.preventDefault());
 }
 
 multiEventListener('load', image, () => {
-    document.querySelectorAll("[temp_thing='true']").forEach((e) => e.remove());
-    document.querySelectorAll("button[class='disableme']").forEach((b) => b.disabled = false);
+    if (image.src !== '') {
+        clearPath();
 
-    width = image.naturalWidth;
-    height = image.naturalHeight;
+        document.querySelectorAll("[temp_thing='']").forEach((e) => e.classList.add('hidden'));
+        document.querySelectorAll("button[class='disableme']").forEach((b) => b.disabled = false);
 
-    document.querySelectorAll('svg').forEach((svg) => {
-        svg.setAttribute("width", width);
-        svg.setAttribute("height", height);
-        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    });
+        width = image.naturalWidth;
+        height = image.naturalHeight;
 
-    updateSizeRatio();
-    setUpImageData();
+        document.querySelectorAll('svg').forEach((svg) => {
+            svg.setAttribute("width", width);
+            svg.setAttribute("height", height);
+            svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        });
 
-    lines = [
-        {pos: width * 0.1, type: "Low", dir: "x", i: 0},
-        {pos: width * 0.9, type: "High", dir: "x", i: 1},
-        {pos: height * 0.1, type: "High", dir: "y", i: 2},
-        {pos: height * 0.9, type: "Low", dir: "y", i: 3}
-    ]
+        updateSizeRatio();
+        const d = imageMap.get(image.src);
+        if (d.initial) {
+            setUpImageData();
+            lines = [
+                {pos: width * 0.1, type: "Low", dir: "x", i: 0},
+                {pos: width * 0.9, type: "High", dir: "x", i: 1},
+                {pos: height * 0.1, type: "High", dir: "y", i: 2},
+                {pos: height * 0.9, type: "Low", dir: "y", i: 3}
+            ]
+            d.d = "";
+            d.lines = lines;
+            state.snapLines();
+            state.autoPath();
+            d.initial = false;
+        } else {
+            imageData = d.imageData;
+            lines = d.lines;
+            setTracePath(d.d, d.colour, height * 0.005);
+        }
 
-    createLines();
-    state.snapLines();
-    state.autoPath();
+        worker.postMessage({src: image.src, type: 'setImage'});
+
+        createLines();
+        state.updateState(state.States.imageLoaded);
+        scrollToSelectedImage();
+    }
 });
 
 multiEventListener('resize', window, () => {
@@ -135,9 +153,6 @@ multiEventListener('click', image, (e) => {
     state.handleImageClick(m.xRel * sizeRatio, m.yRel * sizeRatio);
 });
 
-// disable buttons with no image loaded
-document.querySelectorAll("button[class='disableme']").forEach(b => b.disabled = true);
-
 function State() {
     const overlay = document.getElementById('overlay'),
         pointButton = document.getElementById('selectPoint'),
@@ -175,6 +190,7 @@ function State() {
             selectingPoint: 3
         }
         state = this.States.initial;
+        tracing = false;
 
         updateState(newState) {
             this.state = newState;
@@ -186,10 +202,24 @@ function State() {
             return false;
         }
 
-        loadNewImage() {
+        toInitial() {
+            if (this.tracing) this.toggleTrace();
             stopImageEditing();
-            image.src = URL.createObjectURL(fileInput.files[0]);
-            clearPathAndWorker();
+            document.querySelectorAll("[temp_thing='']").forEach((e) => e.classList.remove('hidden'));
+            document.querySelectorAll("button[class='disableme']").forEach((b) => b.disabled = true);
+            image.src = '';
+            clearLines();
+            clearPath();
+            this.updateState(this.States.initial);
+        }
+
+        loadNewImage() {
+            if (this.tracing) this.toggleTrace();
+            let img;
+            stopImageEditing();
+            for (const f of fileInput.files) img = createImageQueueItem(URL.createObjectURL(f));
+            img.click();
+            this.updateState(this.States.imageLoaded);
         }
 
         snapLines() {
@@ -201,6 +231,7 @@ function State() {
 
         snapLine(line, direction) {
             worker.postMessage({
+                src: image.src,
                 type: 'snap',
                 dir: direction,
                 line: line
@@ -211,6 +242,7 @@ function State() {
             clearPath();
             this.toggleTrace();
             worker.postMessage({
+                src: image.src,
                 type: 'auto',
                 lineHeightOffset: document.getElementById("maxLineHeightOffset").value,
                 colourTolerance: document.getElementById("colourTolerance").value,
@@ -243,12 +275,14 @@ function State() {
             main.classList.toggle("lowOpacity");
             main.classList.toggle("not_allowed");
             main.classList.toggle("removePointerEvents");
+            this.tracing = !this.tracing;
         }
 
         handleImageClick(x, y) {
             this.toggleTrace();
             if (this.checkState(this.States.selectingPath)) {
                 worker.postMessage({
+                    src: image.src,
                     type: 'trace',
                     x: x,
                     y: y,
@@ -258,6 +292,7 @@ function State() {
                 });
             } else {
                 worker.postMessage({
+                    src: image.src,
                     type: 'point',
                     x: x,
                     y: y
@@ -275,7 +310,9 @@ function clearPath() {
 
 function clearPathAndWorker() {
     clearPath();
-    worker.postMessage({type: "clear"});
+    worker.postMessage({src: image.src, type: "clear"});
+    const d = imageMap.get(image.src);
+    d.d = '';
 }
 
 function exportTrace() {
@@ -292,6 +329,7 @@ function exportTrace() {
     }
 
     worker.postMessage({
+        src: image.src,
         type: "export",
         SPL: {
             top: SPLTop,
@@ -322,12 +360,17 @@ function createWorker() {
     if (!worker) {
         worker = new Worker("./worker.js");
         worker.onmessage = (e) => {
-            if (e.data['type'] === "done") {
-                setTracePath(e.data['d'], e.data['colour'], height * 0.005);
-                state.toggleTrace();
-            } else if (e.data['type'] === 'export') {
+            const d = e.data, imgData = imageMap.get(d.src);
+
+            // update data
+            if (d.d) imgData.d = d.d;
+            if (d.line) imgData.lines[d.line.i] = d.line;
+            if (d.colour) imgData.colour = d.colour;
+
+            // export anyway
+            if (d.type === 'export') {
                 const a = document.createElement("a"),
-                    url = URL.createObjectURL(new Blob([e.data['export']], {type: "text/plain;charset=utf-8"}));
+                    url = URL.createObjectURL(new Blob([d.export], {type: "text/plain;charset=utf-8"}));
                 a.href = url;
                 a.download = "trace.txt";
                 document.body.appendChild(a);
@@ -336,10 +379,19 @@ function createWorker() {
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
                 }, 0);
-            } else {
-                const newLine = e.data['line'], line = lines[newLine.i];
-                line.pos = newLine.pos;
-                moveLine(line);
+                return;
+            }
+
+            // if still the same image
+            if (d.src === image.src) {
+                if (d.type === "done") {
+                    setTracePath(d.d, d.colour, height * 0.005);
+                    state.toggleTrace();
+                } else if (d.type === 'snap') {
+                    const newLine = d.line, line = lines[newLine.i];
+                    line.pos = newLine.pos;
+                    moveLine(line);
+                }
             }
         }
     }
@@ -401,10 +453,14 @@ function updateLine(l, line, x1, y1, x2, y2) {
     l.setAttribute('y2', y2);
 }
 
-function createLines() {
+function clearLines() {
     const newSvg = lineSVG.cloneNode(false);
     lineSVG.parentElement.replaceChild(newSvg, lineSVG);
     lineSVG = newSvg;
+}
+
+function createLines() {
+    clearLines();
 
     { // Move canvas lines with mouse
         let selectedLine = null, offset = 0;
@@ -467,16 +523,17 @@ function getMouseCoords(e) {
 }
 
 function setUpImageData() {
-    const processing_canvas = document.createElement("canvas");
-    const processing_context = processing_canvas.getContext('2d');
+    const processing_canvas = document.createElement("canvas"),
+        processing_context = processing_canvas.getContext('2d'),
+        new_image = new Image;
     processing_canvas.width = width;
     processing_canvas.height = height;
-
-    const new_image = new Image;
     new_image.src = image.src;
     processing_context.drawImage(new_image, 0, 0);
     imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
+    imageMap.get(image.src).imageData = imageData;
     worker.postMessage({
+        src: image.src,
         type: 'setData',
         imageData: imageData
     });
@@ -490,10 +547,70 @@ function minVal(e) {
 function undo() {
     if (worker) {
         state.toggleTrace();
-        worker.postMessage({type: "undo"});
+        worker.postMessage({src: image.src, type: "undo"});
     }
 }
 
 function restoreDefault() {
     for (const val in defaults) document.getElementById(val).value = defaults[val];
+}
+
+function toggleImageQueue(b) {
+    const m = document.getElementById('imageQueueOuter');
+    if (m.getAttribute('style')) {
+        b.innerText = 'Hide';
+        m.removeAttribute('style');
+    }
+    else {
+        b.innerText = 'Show';
+        m.style.display = 'none';
+    }
+}
+
+function removeSelectedImage() {
+    for (const i of document.querySelectorAll('img[class="selectedImage"]')) i.classList.remove('selectedImage');
+}
+
+function createImageQueueItem(src) {
+    const img = document.createElement('img'),
+        a = document.getElementById('imageQueueInner');
+    img.src = src;
+    imageMap.set(img.src, {
+        initial: true
+    });
+    img.addEventListener('dragstart', (e) => e.preventDefault());
+    img.addEventListener('click', (e) => {
+        state.toInitial();
+        e.preventDefault();
+        e.stopPropagation();
+        image.src = src;
+        removeSelectedImage();
+        img.classList.add('selectedImage');
+    });
+    img.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        if (img.classList.contains('selectedImage')) {
+            let newImage = img.nextElementSibling;
+            if (!newImage) newImage = img.previousElementSibling;
+            if (!newImage) state.toInitial();
+            else newImage.click();
+        }
+        deleteImage(img);
+    })
+    a.appendChild(img);
+    return img;
+}
+
+function deleteImage(img) {
+    imageMap.delete(img.src);
+    worker.postMessage({src: img.src, type: 'removeImage'})
+    img.remove();
+}
+
+function removeImage() {
+    document.querySelector('img[class="selectedImage"]').dispatchEvent(new Event('contextmenu'));
+}
+
+function scrollToSelectedImage() {
+    document.querySelector('img[class="selectedImage"]').scrollIntoView({inline: 'center'});
 }

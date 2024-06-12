@@ -25,8 +25,8 @@
             <h1>UsyTrace</h1>
         </div>
         <div onclick="fileInput.click()" class="divButton sidebarSection" id="imageInputDiv">
-            <input onchange="state.loadNewImage()" type='file' id='imageInput' class="hidden" accept="image/*"/>
-            Choose Image
+            <input onchange="state.loadNewImage()" type='file' id='imageInput' class="hidden" multiple="multiple" accept="image/*"/>
+            Choose Images
         </div>
         <div class="sidebarSection">
             <div>
@@ -39,10 +39,10 @@
                 <button onclick="state.togglePoint()" id="selectPoint" def="Add Point" alt="Stop Adding Points" class="disableme">Add Point</button>
             </div>
             <div>
-                <button onclick="clearPathAndWorker()" class="disableme">Clear Path</button>
+                <button onclick="undo()" class="disableme">Undo</button>
             </div>
             <div>
-                <button onclick="undo()" class="disableme">Undo Latest Trace</button>
+                <button onclick="clearPathAndWorker()" class="disableme">Clear Path</button>
             </div>
             <div>
                 <button onclick="exportTrace()" id="export" class="disableme">Export Trace</button>
@@ -165,14 +165,27 @@
     </div>
 
     <div id="main-content">
-        <div id="inner-content">
-            <div id="glass" class="hidden magnify"></div>
-            <img id='uploadedImage' src='' alt='' class="canvasSizing"/>
-            <svg id="lines" class="canvasSizing"></svg>
-            <svg id="trace" class="canvasSizing removePointerEvents">
-                <path stroke="#ff0000" fill="transparent" d=""></path>
-            </svg>
-            <h1 temp_thing="true">Please Choose An Image (Or drop an image on the page)</h1>
+        <div id="imageContainer">
+            <div id="inner-content">
+                <div id="glass" class="hidden magnify"></div>
+                <img id='uploadedImage' src='' alt='' class="canvasSizing"/>
+                <svg id="lines" class="canvasSizing"></svg>
+                <svg id="trace" class="canvasSizing removePointerEvents">
+                    <path stroke="#ff0000" fill="transparent" d=""></path>
+                </svg>
+                <h1 temp_thing="">Please Load Images (Or drop any images onto the page)</h1>
+            </div>
+        </div>
+        <div id="imageQueueContainer">
+            <div id="imageQueueBar">
+                <button id="toggleImageQueue" onclick="toggleImageQueue(this)">Hide</button>
+                <button id="removeImage" onclick="removeImage()">Remove</button>
+            </div>
+            <div id="imageQueueOuter">
+                <div id="imageQueueInner">
+
+                </div>
+            </div>
         </div>
     </div>
 </div>

@@ -44,7 +44,7 @@ label {
     background: none;
 }
 
-button {
+#sidebar button {
     background: var(--background-secondary);
     border: none;
     padding: 5px 10px;
@@ -57,7 +57,7 @@ button {
     user-select: none;
 }
 
-button:hover, .divButton:hover {
+#sidebar button:hover, .divButton:hover {
   background: var(--background-tertiary);
 }
 
@@ -66,16 +66,16 @@ button:hover, .divButton:hover {
     cursor: pointer;
 }
 
-button:active, .divButton:active {
+#sidebar button:active, .divButton:active {
     background: var(--background-quaternary);
     transition: background 0.1s ease;
 }
 
-button:disabled, .disabled {
+#sidebar button:disabled, .disabled {
     color: var(--disabled);
 }
 
-button:disabled:hover, .disabled:hover {
+#sidebar button:disabled:hover, .disabled:hover {
     cursor: not-allowed;
     background: var(--background-primary);
 }
@@ -152,11 +152,24 @@ select {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column;
+}
+
+#main-content * {
+    max-width: 100%;
+}
+
+#imageContainer {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #inner-content {
-    width: 95%;
-    height: 95vh;
+    width: calc(100% - 1.5em);
+    height: calc(100% - 1.5em);
     position: relative;
     display: flex;
     justify-content: center;
@@ -164,9 +177,77 @@ select {
 }
 
 .canvasSizing {
-    max-width: 100%;
     max-height: 100%;
     position: absolute;
+}
+
+#imageQueueContainer {
+    max-height: 170px;
+    min-height: 20px;
+    width: 100%;
+    background-color: var(--background-secondary);
+    display: flex;
+    flex-direction: column;
+}
+
+#imageQueueBar {
+    background-color: var(--background-tertiary);
+    height: 20px;
+    max-height: 20px;
+    min-height: 20px;
+    width: 100%;
+}
+
+#imageQueueBar button {
+    height: 100%;
+    padding-left: 10px;
+    padding-right: 10px;
+    border: none;
+    border-radius: 0;
+    background-color: var(--background-quaternary);
+    transition: background-color 0.1s ease;
+}
+
+#imageQueueBar button:hover {
+    background-color: var(--disabled);
+    cursor: pointer;
+}
+
+#imageQueueBar button:active {
+    background: var(--background-quaternary);
+    transition: background 0.1s ease;
+}
+
+#imageQueueOuter {
+    max-height: 150px;
+    height: 150px;
+    display: flex;
+    align-items: center;
+    max-width: none;
+    overflow-x: scroll;
+    scroll-behavior: smooth;
+}
+
+#imageQueueInner {
+    height: calc(100% - 1.5em);
+    max-height: calc(100% - 1.5em);
+    padding-left: 5px;
+    white-space: nowrap;
+}
+
+#imageQueueInner > img {
+    max-height: 100%;
+    height: 100%;
+    min-height: 100%;
+    margin-right: 15px;
+}
+
+#imageQueueInner > img:hover {
+    cursor: pointer;
+}
+
+.selectedImage {
+    outline: 5px solid red;
 }
 
 .removePointerEvents, .removePointerEvents * {
