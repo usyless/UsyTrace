@@ -1,6 +1,6 @@
 'use strict';
 
-let imageData, currentTrace, simplifiedTrace, previousTrace, traceColour, previousColour, backgroundColour;
+let imageData, currentTrace, previousTrace, traceColour, previousColour, backgroundColour;
 
 const imageMap = new Map(),
     funcMap = {
@@ -26,7 +26,6 @@ function setData(d) {
     imageMap.set(d.src, {
         imageData: imageData,
         currentTrace: new Map(),
-        simplifiedTrace: [],
         previousTrace: new Map(),
         traceColour: '#ff0000',
         previousColour: undefined,
@@ -36,22 +35,18 @@ function setData(d) {
 }
 
 function saveData(src) {
-    imageMap.set(src, {
-        imageData: imageData,
-        currentTrace: currentTrace,
-        simplifiedTrace: simplifiedTrace,
-        previousTrace: previousTrace,
-        traceColour: traceColour,
-        previousColour: previousColour,
-        backgroundColour: backgroundColour
-    });
+    const d = imageMap.get(src);
+    d.currentTrace = currentTrace;
+    d.previousTrace = previousTrace;
+    d.traceColour = traceColour;
+    d.previousColour = previousColour;
+    d.backgroundColour = backgroundColour;
 }
 
 function setCurrentImage(d) {
     d = imageMap.get(d.src);
     imageData = d.imageData;
     currentTrace = d.currentTrace;
-    simplifiedTrace = d.simplifiedTrace;
     previousTrace = d.previousTrace;
     traceColour = d.traceColour;
     previousColour = d.previousColour;
@@ -131,9 +126,9 @@ ${freq.toString()}${this.delim}${spl.toString()}`
 }
 
 function cleanUpData() {
+    let simplifiedTrace = [];
     if (currentTrace.size > 2) {
         currentTrace = new Map([...currentTrace.entries()].sort((a, b) => a[0] - b[0]));
-        simplifiedTrace = []
         let z, avg, n = currentTrace.entries().next().value[0], identity = [], finalKey, finalValue;
         simplifiedTrace.push([n, currentTrace.get(n)]);
         const l = imageData.width;
@@ -161,6 +156,7 @@ function cleanUpData() {
     } else {
         simplifiedTrace = Array.from(currentTrace);
     }
+    return simplifiedTrace;
 }
 
 function parseIntDefault(a, def) {
@@ -203,11 +199,10 @@ function contiguousLinearInterpolation(FRxSPL) {
 }
 
 function cleanDataSendTrace(d) {
-    cleanUpData();
     postMessage({
         src: d.src,
         type: "done",
-        d: traceToSVGPath(simplifiedTrace),
+        d: traceToSVGPath(cleanUpData()),
         colour: traceColour
     });
 }
@@ -223,7 +218,6 @@ function traceToSVGPath(trace) {
 function clearTrace() {
     if (currentTrace != null) {
         currentTrace.clear();
-        simplifiedTrace = [];
         traceColour = '#ff0000';
     }
 }
@@ -256,7 +250,7 @@ function exportTrace(d) {
 
     const export_string = new exportString(d.delim);
 
-    const FRxSPL = simplifiedTrace.map(([x, y]) => [
+    const FRxSPL = cleanUpData().map(([x, y]) => [
         Math.pow(10, ((parseFloat(x) - FRBotPixel) * FRRatio) + logFRBot),
         ((parseFloat(y) - SPLBotPixel) * SPLRatio) + SPLBot]
     );

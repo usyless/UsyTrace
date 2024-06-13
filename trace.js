@@ -69,49 +69,39 @@ multiEventListener('dragstart', image, (e) => e.preventDefault());
     multiEventListener(['mouseup', 'mouseleave', 'mouseout', 'touchend', 'touchcancel'], image, () => glass.classList.add('hidden'));
 }
 
-multiEventListener('load', image, () => {
-    if (image.src !== '') {
-        clearPath();
+multiEventListener('load', image, () => { // image context switching
+    clearPath();
+    document.querySelectorAll("[temp_thing='']").forEach((e) => e.classList.add('hidden'));
+    document.querySelectorAll("button[class='disableme']").forEach((b) => b.disabled = false);
+    width = image.naturalWidth;
+    height = image.naturalHeight;
+    document.querySelectorAll('svg').forEach((svg) => {
+        svg.setAttribute("width", width);
+        svg.setAttribute("height", height);
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    });
 
-        document.querySelectorAll("[temp_thing='']").forEach((e) => e.classList.add('hidden'));
-        document.querySelectorAll("button[class='disableme']").forEach((b) => b.disabled = false);
-
-        width = image.naturalWidth;
-        height = image.naturalHeight;
-
-        document.querySelectorAll('svg').forEach((svg) => {
-            svg.setAttribute("width", width);
-            svg.setAttribute("height", height);
-            svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-        });
-
-        updateSizeRatio();
-        const d = imageMap.get(image.src);
-        if (d.initial) {
-            setUpImageData();
-            lines = [
-                {pos: width * 0.1, type: "Low", dir: "x", i: 0},
-                {pos: width * 0.9, type: "High", dir: "x", i: 1},
-                {pos: height * 0.1, type: "High", dir: "y", i: 2},
-                {pos: height * 0.9, type: "Low", dir: "y", i: 3}
-            ]
-            d.d = "";
-            d.lines = lines;
-            state.snapLines();
-            state.autoPath();
-            d.initial = false;
-        } else {
-            imageData = d.imageData;
-            lines = d.lines;
-            setTracePath(d.d, d.colour, height * 0.005);
-        }
-
-        worker.postMessage({src: image.src, type: 'setImage'});
-
-        createLines();
-        state.updateState(state.States.imageLoaded);
-        scrollToSelectedImage();
+    updateSizeRatio();
+    const d = imageMap.get(image.src);
+    if (d.initial) {
+        setUpImageData();
+        lines = [
+            {pos: width * 0.1, type: "Low", dir: "x", i: 0},
+            {pos: width * 0.9, type: "High", dir: "x", i: 1},
+            {pos: height * 0.1, type: "High", dir: "y", i: 2},
+            {pos: height * 0.9, type: "Low", dir: "y", i: 3}
+        ]
+        d.d = "";
+        d.lines = lines;
+        state.snapLines();
+        state.autoPath();
+        d.initial = false;
+    } else {
+        imageData = d.imageData;
+        lines = d.lines;
+        setTracePath(d.d, d.colour, height * 0.005);
     }
+    state.imageLoaded();
 });
 
 multiEventListener('resize', window, () => {
@@ -123,9 +113,11 @@ multiEventListener('resize', window, () => {
     let holdInterval, line, speed, snap = true;
     const snapSetting = document.getElementById('snap');
     updateSnap();
+
     function updateSnap() {
         snap = snapSetting.checked;
     }
+
     multiEventListener('change', snapSetting, updateSnap);
     document.querySelectorAll(".moveButtons button").forEach((btn) => {
         multiEventListener(['mousedown', 'touchstart'], btn, (e) => {
@@ -220,6 +212,13 @@ function State() {
             for (const f of fileInput.files) img = createImageQueueItem(URL.createObjectURL(f));
             img.click();
             this.updateState(this.States.imageLoaded);
+        }
+
+        imageLoaded() {
+            worker.postMessage({src: image.src, type: 'setImage'});
+            createLines();
+            this.updateState(this.States.imageLoaded);
+            scrollToSelectedImage();
         }
 
         snapLines() {
@@ -379,15 +378,11 @@ function createWorker() {
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
                 }, 0);
-                return;
-            }
-
-            // if still the same image
-            if (d.src === image.src) {
+            } else if (d.src === image.src) {
                 if (d.type === "done") {
                     setTracePath(d.d, d.colour, height * 0.005);
                     state.toggleTrace();
-                } else if (d.type === 'snap') {
+                } else {
                     const newLine = d.line, line = lines[newLine.i];
                     line.pos = newLine.pos;
                     moveLine(line);
@@ -500,8 +495,7 @@ function createLines() {
         if (line.dir === "x") {
             l = createSVGLine(line.pos, "0", line.pos, height, 'green', sizeRatio);
             t = createSVGText(line.type, line.pos, height / 2);
-        }
-        else {
+        } else {
             l = createSVGLine("0", line.pos, width, line.pos, 'blue', sizeRatio);
             t = createSVGText(line.type, width / 2, line.pos);
         }
@@ -556,14 +550,18 @@ function restoreDefault() {
 }
 
 function toggleImageQueue(b) {
-    const m = document.getElementById('imageQueueOuter');
+    const m = document.getElementById('imageQueueOuter'),
+        n = m.firstElementChild;
     if (m.getAttribute('style')) {
         b.innerText = 'Hide';
         m.removeAttribute('style');
-    }
-    else {
+        setTimeout(() => n.removeAttribute('style'), 300);
+    } else {
         b.innerText = 'Show';
-        m.style.display = 'none';
+        n.style.minHeight = n.clientHeight + 'px';
+        n.style.height = n.clientHeight + 'px';
+        n.style.maxHeight = n.clientHeight + 'px';
+        m.style.height = '0px';
     }
 }
 
