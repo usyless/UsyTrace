@@ -226,6 +226,7 @@ select {
     align-items: center;
     max-width: none;
     overflow-x: scroll;
+    overflow-y: clip;
     scroll-behavior: smooth;
     transition: height 0.3s ease-in-out;
 }

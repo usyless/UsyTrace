@@ -93,8 +93,8 @@ multiEventListener('load', image, () => { // image context switching
         ]
         d.d = "";
         d.lines = lines;
-        state.snapLines();
-        state.autoPath();
+        // state.snapLines();
+        // state.autoPath();
         d.initial = false;
     } else {
         imageData = d.imageData;
@@ -215,7 +215,6 @@ function State() {
         }
 
         imageLoaded() {
-            worker.postMessage({src: image.src, type: 'setImage'});
             createLines();
             this.updateState(this.States.imageLoaded);
             scrollToSelectedImage();
@@ -231,7 +230,7 @@ function State() {
         snapLine(line, direction) {
             worker.postMessage({
                 src: image.src,
-                type: 'snap',
+                type: 'snapLine',
                 dir: direction,
                 line: line
             });
@@ -242,7 +241,7 @@ function State() {
             this.toggleTrace();
             worker.postMessage({
                 src: image.src,
-                type: 'auto',
+                type: 'autoTrace',
                 lineHeightOffset: document.getElementById("maxLineHeightOffset").value,
                 colourTolerance: document.getElementById("colourTolerance").value,
                 maxJumpOffset: document.getElementById("maxJumpOffset").value
@@ -292,7 +291,7 @@ function State() {
             } else {
                 worker.postMessage({
                     src: image.src,
-                    type: 'point',
+                    type: 'addPoint',
                     x: x,
                     y: y
                 });
@@ -309,7 +308,7 @@ function clearPath() {
 
 function clearPathAndWorker() {
     clearPath();
-    worker.postMessage({src: image.src, type: "clear"});
+    worker.postMessage({src: image.src, type: "clearTrace"});
     const d = imageMap.get(image.src);
     d.d = '';
 }
@@ -329,7 +328,7 @@ function exportTrace() {
 
     worker.postMessage({
         src: image.src,
-        type: "export",
+        type: "exportTrace",
         SPL: {
             top: SPLTop,
             topPixel: lines[2].pos,
@@ -357,17 +356,15 @@ function updateSizeRatio() {
 
 function createWorker() {
     if (!worker) {
-        worker = new Worker("./worker.js");
+        worker = new Worker("./worker_wasm.js");
         worker.onmessage = (e) => {
             const d = e.data, imgData = imageMap.get(d.src);
 
-            // update data
-            if (d.d) imgData.d = d.d;
+            if (d.svg) imgData.d = d.svg;
             if (d.line) imgData.lines[d.line.i] = d.line;
             if (d.colour) imgData.colour = d.colour;
 
-            // export anyway
-            if (d.type === 'export') {
+            if (d.type === 'exportTrace') {
                 const a = document.createElement("a"),
                     url = URL.createObjectURL(new Blob([d.export], {type: "text/plain;charset=utf-8"}));
                 a.href = url;
@@ -379,13 +376,13 @@ function createWorker() {
                     window.URL.revokeObjectURL(url);
                 }, 0);
             } else if (d.src === image.src) {
-                if (d.type === "done") {
-                    setTracePath(d.d, d.colour, height * 0.005);
-                    state.toggleTrace();
-                } else {
+                if (d.type === 'snapLine') {
                     const newLine = d.line, line = lines[newLine.i];
                     line.pos = newLine.pos;
                     moveLine(line);
+                } else {
+                    setTracePath(d.svg, d.colour, height * 0.005);
+                    state.toggleTrace();
                 }
             }
         }
@@ -541,7 +538,7 @@ function minVal(e) {
 function undo() {
     if (worker) {
         state.toggleTrace();
-        worker.postMessage({src: image.src, type: "undo"});
+        worker.postMessage({src: image.src, type: "undoTrace"});
     }
 }
 
@@ -601,7 +598,7 @@ function createImageQueueItem(src) {
 
 function deleteImage(img) {
     imageMap.delete(img.src);
-    worker.postMessage({src: img.src, type: 'removeImage'})
+    worker.postMessage({src: img.src, type: 'removeImage'});
     img.remove();
 }
 
