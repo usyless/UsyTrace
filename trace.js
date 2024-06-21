@@ -9,7 +9,7 @@ const imageMap = new Map(),
     fileInput = document.getElementById('imageInput'),
     state = State(),
     defaults = {
-        "colourTolerance": 65,
+        "colourTolerance": 67,
         "maxLineHeightOffset": 0,
         "maxJumpOffset": 0,
 
@@ -17,8 +17,6 @@ const imageMap = new Map(),
         "delimitation": "tab",
         "lowFRExport": 20,
         "highFRExport": 20000,
-        "exportSPLPrecision": 3,
-        "exportFRPrecision": 5,
 
         "SPLTop": "",
         "SPLBot": "",
@@ -94,7 +92,7 @@ multiEventListener('load', image, () => { // image context switching
         d.d = "";
         d.lines = lines;
         // state.snapLines();
-        // state.autoPath();
+        state.autoPath();
         d.initial = false;
     } else {
         imageData = d.imageData;
@@ -269,7 +267,7 @@ function State() {
         }
 
         toggleTrace() {
-            overlay.classList.toggle("hidden");
+            overlay.classList.toggle("noOpacity");
             main.classList.toggle("lowOpacity");
             main.classList.toggle("not_allowed");
             main.classList.toggle("removePointerEvents");
@@ -343,8 +341,6 @@ function exportTrace() {
         },
         lowFR: document.getElementById("lowFRExport").value,
         highFR: document.getElementById("highFRExport").value,
-        FRPrecision: document.getElementById("exportFRPrecision").value,
-        SPLPrecision: document.getElementById("exportSPLPrecision").value,
         PPO: document.getElementById("PPO").value,
         delim: document.getElementById("delimitation").value
     });

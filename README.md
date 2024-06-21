@@ -43,7 +43,3 @@
 - The minimum frequency to export to, will draw a straight line from first data point to minimum frequency
 ### Maximum Frequency
 - The maximum frequency to export to, will draw a straight line from the last data point to maximum frequency
-### SPL Precision
-- With how many decimal places to save SPL values to
-### Frequency Precision
-- With how many decimal places to save Frequency values to

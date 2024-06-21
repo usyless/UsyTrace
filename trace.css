@@ -33,6 +33,7 @@ body {
     z-index: 99999;
     pointer-events: none;
     cursor: not-allowed;
+    transition: opacity 0.3s ease-in-out;
 }
 
 * {
@@ -271,6 +272,10 @@ select {
 
 .lowOpacity {
     opacity: 0.2;
+}
+
+.noOpacity {
+    opacity: 0;
 }
 
 .magnify {
