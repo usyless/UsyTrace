@@ -32,9 +32,7 @@ struct ImageData {
     ImageData(const Colour* data, const int width, const int height) : width(width), height(height) {
         this->data = vector<Colour>();
         const auto max = width * height * 4;
-        for (auto i = 0; i < max; ++i) {
-            this->data.emplace_back(data[i]);
-        }
+        for (auto i = 0; i < max; ++i) this->data.emplace_back(data[i]);
     }
 };
 
@@ -152,10 +150,10 @@ private:
         vector<RGB> colours{};
         vector<int> yValues{};
         int currJump = 0;
-        for (; startX >= 0 && startX < imageData.width; startX += step) {
+        for (const auto width = imageData.width; startX >= 0 && startX < width; startX += step) {
             colours.clear();
             yValues.clear();
-            const auto max = maxLineHeight + (currJump * 2);
+            const auto max = maxLineHeight + currJump * 2;
             checkPixel(startX, startY, colour, colours, yValues, imageData);
             for (auto z = 1; z <= max; ++z) {
                 checkPixel(startX, startY + z, colour, colours, yValues, imageData);
@@ -163,7 +161,7 @@ private:
             }
             if (!colours.empty()) {
                 currJump = 0;
-                for_each(colours.begin(), colours.end(), [&colour] (const RGB& col){ colour.addToAverage(col); });
+                for (const RGB& col : colours) colour.addToAverage(col);
                 startY = reduce(yValues.begin(), yValues.end()) / static_cast<int>(yValues.size());
                 trace[startX] = startY;
                 continue;
@@ -187,26 +185,20 @@ public:
                 auto iter = trace.begin();
                 simplifiedTrace.emplace_back(iter->first, iter->second);
                 auto identity = vector<int>();
-                for(++iter; iter != trace.end(); ++iter) {
+                const auto end = trace.end();
+                for(++iter; iter != end; ++iter) {
                     identity.clear();
                     const auto previousValue = iter->second;
                     do {
                         identity.emplace_back(iter->first);
                         ++iter;
-                    } while(iter != trace.end() && iter->second == previousValue);
+                    } while(iter != end && iter->second == previousValue);
                     --iter;
-                    if (identity.size() == 1) {
-                        simplifiedTrace.emplace_back(identity[0], previousValue);
-                    } else {
-                        simplifiedTrace.emplace_back(reduce(identity.begin(), identity.end()) / static_cast<int>(identity.size()), previousValue);
-                    }
+                    if (identity.size() == 1) simplifiedTrace.emplace_back(identity[0], previousValue);
+                    else simplifiedTrace.emplace_back(reduce(identity.begin(), identity.end()) / static_cast<int>(identity.size()), previousValue);
                 }
-                if (simplifiedTrace.back().first != trace.rbegin()->first) {
-                    simplifiedTrace.emplace_back(trace.rbegin()->first, trace.rbegin()->second);
-                }
-            } else {
-                copy(trace.begin(), trace.end(), back_inserter(simplifiedTrace));
-            }
+                if (simplifiedTrace.back().first != trace.rbegin()->first) simplifiedTrace.emplace_back(trace.rbegin()->first, trace.rbegin()->second);
+            } else copy(trace.begin(), trace.end(), back_inserter(simplifiedTrace));
         }
         return simplifiedTrace;
     }
@@ -214,10 +206,9 @@ public:
     [[nodiscard]] string toSVG() const {
         if (const auto res = clean(); !res.empty()) {
             auto iter = res.begin();
+            const auto end = res.end();
             auto svg = "M" + to_string(iter->first) + " " + to_string(iter->second);
-            for (++iter; iter != res.end(); ++iter) {
-                svg += " L" + to_string(iter->first) + " " + to_string(iter->second);
-            }
+            for (++iter; iter != end; ++iter) svg += " L" + to_string(iter->first) + " " + to_string(iter->second);
             return svg;
         }
         return "";
@@ -278,7 +269,7 @@ struct TraceHistory {
     }
 
     ~TraceHistory() {
-        for_each(history.begin(), history.end(), [] (const Trace* trace){ delete trace; });
+        for(const Trace* trace : history) delete trace;
     }
 };
 
@@ -289,11 +280,7 @@ RGB getBackgroundColour(const ImageData& imageData) {
     const long xJump = max(1, mX / 100);
     const long yJump = max (1, mY / 100);
 
-    for (auto y = 0; y < mY; y += yJump) {
-        for (auto x = 0; x < mX; x += xJump) {
-            ++colours[RGBTools::getRGB(x, y, imageData)];
-        }
-    }
+    for (auto y = 0; y < mY; y += yJump) for (auto x = 0; x < mX; x += xJump) ++colours[RGBTools::getRGB(x, y, imageData)];
     return max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, int>& a, const std::pair<RGB, int>& b){ return a.second < b.second; } )->first;
 }
 
@@ -303,19 +290,13 @@ function<double(double, int&)> contiguousLinearInterpolation(const vector<pair<d
     const auto l = FRxSPL.size();
 
     return [&FRxSPL, firstF, lastF, firstV, lastV, l] (const double freq, int& pos) {
-        if (freq <= firstF) {
-            return firstV;
-        }
-        if (freq >= lastF) {
-            return lastV;
-        }
+        if (freq <= firstF) return firstV;
+        if (freq >= lastF) return lastV;
         pair<double, double> lower, upper;
         for (; pos < l; ++pos) {
-            if (FRxSPL.at(pos).first < freq) {
-                lower = FRxSPL.at(pos);
-            } else {
-                upper = FRxSPL.at(pos);
-                --pos;
+            if (FRxSPL.at(pos).first < freq) lower = FRxSPL.at(pos);
+            else {
+                upper = FRxSPL.at(pos--);
                 break;
             }
         }
@@ -382,19 +363,23 @@ struct Image {
     }
 
     [[nodiscard]] string exportTrace(const ExportData& exportData) const {
+        const auto FRBottomPixel = exportData.FRBottomPixel, FRRatio = exportData.FRRatio,
+        logFRBottomValue = exportData.logFRBottomValue, SPLBottomPixel = exportData.SPLBottomPixel,
+        SPLRatio = exportData.SPLRatio, SPLBottomValue = exportData.SPLBottomValue,
+        PPOStep = exportData.PPOStep, logMaxFR = exportData.logMaxFR;
         auto str = ExportString{exportData.delim};
 
         auto FRxSPL = vector<pair<double, double>>();
         for (const auto& [x, y] : traceHistory.getLatest()->clean()) {
-            FRxSPL.emplace_back(pow(10, (x - exportData.FRBottomPixel) * exportData.FRRatio + exportData.logFRBottomValue), (y - exportData.SPLBottomPixel) * exportData.SPLRatio + exportData.SPLBottomValue);
+            FRxSPL.emplace_back(pow(10, (x - FRBottomPixel) * FRRatio + logFRBottomValue), (y - SPLBottomPixel) * SPLRatio + SPLBottomValue);
         }
 
         const auto interp = contiguousLinearInterpolation(FRxSPL);
         auto pos = 0;
-        for(auto v = exportData.logMinFR; ; v += exportData.PPOStep) {
+        for(auto v = exportData.logMinFR; ; v += PPOStep) {
             const auto freq = pow(10, v);
             str.addData(to_string(freq), to_string(interp(freq, pos)));
-            if (v >= exportData.logMaxFR) break;
+            if (v >= logMaxFR) break;
         }
 
         return str.getData();
@@ -424,9 +409,7 @@ struct ImageQueue {
     }
 
     ~ImageQueue() {
-        for(auto& [_, image] : images) {
-            delete image;
-        }
+        for(auto& [_, image] : images) delete image;
     }
 } imageQueue;
 
