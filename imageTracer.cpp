@@ -85,12 +85,12 @@ struct RGBTools {
         if (min(min(this->rgb.R, this->rgb.G), this->rgb.B) == this->rgb.R) return DEFAULT_COLOUR;
         return ALT_COLOUR;
     }
-
-    static RGB getRGB(const long& x, const long& y, const ImageData& imageData) {
-        const auto pos = y * imageData.width * 4 + x * 4;
-        return RGB{imageData.data.at(pos), imageData.data.at(pos + 1), imageData.data.at(pos + 2)};
-    }
 };
+
+RGB getRGB(const long& x, const long& y, const ImageData& imageData) {
+    const auto pos = y * imageData.width * 4 + x * 4;
+    return RGB{imageData.data.at(pos), imageData.data.at(pos + 1), imageData.data.at(pos + 2)};
+}
 
 struct TraceData {
     int x = 0, y = 0, maxLineHeightOffset = 0, maxJumpOffset = 0, colourTolerance = 0;
@@ -140,7 +140,7 @@ class Trace {
 private:
     static void checkPixel(const int x, const int y, const RGBTools& baselineColour, vector<RGB>& colours, vector<int>& yValues, const ImageData& imageData) {
         const auto yVal = max(0, min(imageData.height - 1, y));
-        if (const auto col = RGBTools::getRGB(x, yVal, imageData); baselineColour.withinTolerance(col)) {
+        if (const auto col = getRGB(x, yVal, imageData); baselineColour.withinTolerance(col)) {
             colours.push_back(col);
             yValues.push_back(yVal);
         }
@@ -217,7 +217,7 @@ public:
     [[nodiscard]] Trace* newTrace(const ImageData& imageData, const TraceData& traceData) const {
         const auto maxLineHeight = max(0, imageData.height / 20 + traceData.maxLineHeightOffset);
         const auto maxJump = max(0, imageData.width / 50 + traceData.maxJumpOffset);
-        auto baselineColour = RGBTools(RGBTools::getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
+        auto baselineColour = RGBTools(getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
         auto newTrace = map(trace);
 
         traceFor(traceData.x, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
@@ -280,7 +280,7 @@ RGB getBackgroundColour(const ImageData& imageData) {
     const long xJump = max(1, mX / 100);
     const long yJump = max (1, mY / 100);
 
-    for (auto y = 0; y < mY; y += yJump) for (auto x = 0; x < mX; x += xJump) ++colours[RGBTools::getRGB(x, y, imageData)];
+    for (auto y = 0; y < mY; y += yJump) for (auto x = 0; x < mX; x += xJump) ++colours[getRGB(x, y, imageData)];
     return max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, int>& a, const std::pair<RGB, int>& b){ return a.second < b.second; } )->first;
 }
 
@@ -305,6 +305,20 @@ function<double(double, int&)> contiguousLinearInterpolation(const vector<pair<d
     };
 }
 
+void lineFor(int pos, const int length, const int direction, const int lowerBound, const int upperBound, const function<bool(int, int)>& comparator, vector<int>& valid) {
+    const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
+    pos += length / 100 * direction;
+    auto foundline = false;
+    for (; pos < length && pos >= 0; pos += direction) {
+        auto trueCount = 0;
+        for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
+        if (trueCount >= bound) {
+            valid.emplace_back(pos);
+            foundline = true;
+        } else if (foundline) break;
+    }
+}
+
 Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const function<int(RGB)>& differenceFunc) {
     auto bestY = 0, currentDiff = 0;
     const auto middleX = imageData.width / 2;
@@ -313,7 +327,7 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     auto y = middleY - yRange;
 
     for(const auto endY = middleY + yRange; y <= endY; ++y) {
-        if (const auto diff = differenceFunc(RGBTools::getRGB(middleX, y, imageData)); diff >= max(10, currentDiff)) {
+        if (const auto diff = differenceFunc(getRGB(middleX, y, imageData)); diff >= max(10, currentDiff)) {
             bestY = y;
             currentDiff = diff;
         }
@@ -385,6 +399,26 @@ struct Image {
         return str.getData();
     }
 
+    [[nodiscard]] int snapLine(int pos, const int lineDir, const int moveDir) const {
+        auto valid = vector<int>{};
+        int lengthOfDirection, otherDirection;
+        const auto col = backgroundColour;
+        const auto data = imageData;
+        function<bool(int, int)> comparator;
+        if(lineDir == 1) { // vertical line, representing x axis
+            lengthOfDirection = imageData.width;
+            otherDirection = imageData.height;
+            comparator = [&col, &data] (const int x, const int y) { return col.withinTolerance(getRGB(x, y, data)); };
+        } else {
+            lengthOfDirection = imageData.height;
+            otherDirection = imageData.width;
+            comparator = [&col, &data] (const int y, const int x) { return col.withinTolerance(getRGB(x, y, data)); };
+        }
+        lineFor(pos, lengthOfDirection, moveDir, static_cast<int>(otherDirection * 0.2), static_cast<int>(otherDirection * 0.8), comparator, valid);
+        if (!valid.empty()) pos = reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size());
+        return pos;
+    }
+
     void clear() {
         traceHistory.add(new Trace{});
     }
@@ -451,6 +485,10 @@ EXTERN EMSCRIPTEN_KEEPALIVE char* exportTrace(const int id, const int PPO, const
         SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
         FRBottomPixel}));
     return s->data();
+}
+
+EXTERN EMSCRIPTEN_KEEPALIVE int snap(const int id, const int pos, const int lineDir, const int moveDir) {
+    return imageQueue.get(id)->snapLine(pos, lineDir, moveDir);
 }
 
 EXTERN EMSCRIPTEN_KEEPALIVE void removeImage(const int id) {
