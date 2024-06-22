@@ -510,7 +510,7 @@ function getMouseCoords(e) {
 }
 
 function setUpImageData() {
-    const processing_canvas = document.createElement("canvas"),
+    let processing_canvas = document.createElement("canvas"),
         processing_context = processing_canvas.getContext('2d'),
         new_image = new Image;
     processing_canvas.width = width;
@@ -518,12 +518,16 @@ function setUpImageData() {
     new_image.src = image.src;
     processing_context.drawImage(new_image, 0, 0);
     imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
-    imageMap.get(image.src).imageData = imageData;
     worker.postMessage({
         src: image.src,
         type: 'setData',
-        imageData: imageData
-    });
+        data: imageData.data,
+        width: imageData.width,
+        height: imageData.height
+    }, [imageData.data.buffer]);
+    // duplicate copy because silly but prevents the other thing being copied
+    imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
+    imageMap.get(image.src).imageData = imageData;
 }
 
 // HTML Functions

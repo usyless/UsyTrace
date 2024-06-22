@@ -305,20 +305,6 @@ function<double(double, int&)> contiguousLinearInterpolation(const vector<pair<d
     };
 }
 
-void lineFor(int pos, const int length, const int direction, const int lowerBound, const int upperBound, const function<bool(int, int)>& comparator, vector<int>& valid) {
-    const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
-    pos += length / 100 * direction;
-    auto foundline = false;
-    for (; pos < length && pos >= 0; pos += direction) {
-        auto trueCount = 0;
-        for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
-        if (trueCount >= bound) {
-            valid.emplace_back(pos);
-            foundline = true;
-        } else if (foundline) break;
-    }
-}
-
 Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const function<int(RGB)>& differenceFunc) {
     auto bestY = 0, currentDiff = 0;
     const auto middleX = imageData.width / 2;
@@ -401,20 +387,31 @@ struct Image {
 
     [[nodiscard]] int snapLine(int pos, const int lineDir, const int moveDir) const {
         auto valid = vector<int>{};
-        int lengthOfDirection, otherDirection;
+        int length, otherDirection;
         const auto col = backgroundColour;
         const auto data = imageData;
         function<bool(int, int)> comparator;
         if(lineDir == 1) { // vertical line, representing x axis
-            lengthOfDirection = imageData.width;
+            length = imageData.width;
             otherDirection = imageData.height;
             comparator = [&col, &data] (const int x, const int y) { return col.withinTolerance(getRGB(x, y, data)); };
         } else {
-            lengthOfDirection = imageData.height;
+            length = imageData.height;
             otherDirection = imageData.width;
             comparator = [&col, &data] (const int y, const int x) { return col.withinTolerance(getRGB(x, y, data)); };
         }
-        lineFor(pos, lengthOfDirection, moveDir, static_cast<int>(otherDirection * 0.2), static_cast<int>(otherDirection * 0.8), comparator, valid);
+        const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
+        const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
+        pos += length / 100 * moveDir;
+        auto foundline = false;
+        for (; pos < length && pos >= 0; pos += moveDir) {
+            auto trueCount = 0;
+            for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
+            if (trueCount >= bound) {
+                valid.emplace_back(pos);
+                foundline = true;
+            } else if (foundline) break;
+        }
         if (!valid.empty()) pos = reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size());
         return pos;
     }

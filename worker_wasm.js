@@ -58,10 +58,9 @@ onmessage = (e) => {
 
 // Image control
 function addImage(data) {
-    const imageData = data.imageData;
-    const p = api.create_buffer(imageData.width, imageData.height);
-    Module.HEAPU8.set(imageData.data, p);
-    api.addImage(data.id, p, imageData.width, imageData.height);
+    const p = api.create_buffer(data.width, data.height);
+    Module.HEAPU8.set(data.data, p);
+    api.addImage(data.id, p, data.width, data.height);
     api.destroy_buffer(p);
 }
 
