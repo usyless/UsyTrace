@@ -3,7 +3,7 @@ var Module=typeof Module!="undefined"?Module:{};var ENVIRONMENT_IS_WEB=typeof wi
 
 const typeMap = {
     removeImage: removeImage,
-    setData: addImage,
+    setData: () => void(0),
 
     clearTrace: clear,
     undoTrace: undo,
@@ -31,25 +31,11 @@ const typeMap = {
 
 // src to id mapping
 const srcMap = new Map();
-let id = 0;
-
-function getImageID(src) {
-    let p = srcMap.get(src);
-    if (p == null) {
-        srcMap.set(src, id);
-        p = id++;
-    }
-    return p;
-}
-
-function removeImageID(src) {
-    srcMap.delete(src);
-}
 
 // onMessage handling
 onmessage = (e) => {
     const d = e.data;
-    d.id = getImageID(d.src);
+    d.id = getImageID(d);
     const r = typeMap[d.type](d);
     if (r) {
         postMessage(r);
@@ -57,15 +43,20 @@ onmessage = (e) => {
 }
 
 // Image control
-function addImage(data) {
-    const p = api.create_buffer(data.width, data.height);
-    Module.HEAPU8.set(data.data, p);
-    api.addImage(data.id, p, data.width, data.height);
-    api.destroy_buffer(p);
+function getImageID(data) {
+    let p = srcMap.get(data.src);
+    if (p == null) {
+        const id = api.create_buffer(data.width, data.height);
+        Module.HEAPU8.set(data.data, id);
+        api.addImage(id, id, data.width, data.height);
+        srcMap.set(data.src, id);
+    }
+    return p;
 }
 
 function removeImage(data) {
-    removeImageID(data.id);
+    api.destroy_buffer(data.id);
+    srcMap.delete(data.id);
     api.removeImage(data.id);
 }
 

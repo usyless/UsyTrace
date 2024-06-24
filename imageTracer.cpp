@@ -26,14 +26,10 @@ static inline string DEFAULT_COLOUR = "#ff0000";
 static inline string ALT_COLOUR = "#00ff7b";
 
 struct ImageData {
-    vector<Colour> data;
+    const Colour* data;
     const int width, height;
 
-    ImageData(const Colour* data, const int width, const int height) : width(width), height(height) {
-        this->data = vector<Colour>();
-        const auto max = width * height * 4;
-        for (auto i = 0; i < max; ++i) this->data.emplace_back(data[i]);
-    }
+    ImageData(const Colour* data, const int width, const int height) : data(data), width(width), height(height) {}
 };
 
 struct RGB {
@@ -89,7 +85,7 @@ struct RGBTools {
 
 RGB getRGB(const long& x, const long& y, const ImageData& imageData) {
     const auto pos = y * imageData.width * 4 + x * 4;
-    return RGB{imageData.data.at(pos), imageData.data.at(pos + 1), imageData.data.at(pos + 2)};
+    return RGB{imageData.data[pos], imageData.data[pos + 1], imageData.data[pos + 2]};
 }
 
 struct TraceData {
@@ -350,8 +346,8 @@ struct Image {
 
     [[nodiscard]] string autoTrace(const TraceData& traceData) {
         const auto traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
-        const auto bgRGB = backgroundColour.rgb;
-        const auto traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
+        const auto* bgRGB = &backgroundColour.rgb;
+        const auto traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB] (const RGB& rgb) { return bgRGB->getDifference(rgb); });
         if (traceOne->size() > traceTwo->size()) {
             traceHistory.add(traceOne);
             delete traceTwo;
@@ -388,17 +384,17 @@ struct Image {
     [[nodiscard]] int snapLine(int pos, const int lineDir, const int moveDir) const {
         auto valid = vector<int>{};
         int length, otherDirection;
-        const auto col = backgroundColour;
-        const auto data = imageData;
+        const auto* col = &backgroundColour;
+        const auto* data = &imageData;
         function<bool(int, int)> comparator;
         if(lineDir == 1) { // vertical line, representing x axis
             length = imageData.width;
             otherDirection = imageData.height;
-            comparator = [&col, &data] (const int x, const int y) { return col.withinTolerance(getRGB(x, y, data)); };
+            comparator = [&col, &data] (const int x, const int y) { return col->withinTolerance(getRGB(x, y, *data)); };
         } else {
             length = imageData.height;
             otherDirection = imageData.width;
-            comparator = [&col, &data] (const int y, const int x) { return col.withinTolerance(getRGB(x, y, data)); };
+            comparator = [&col, &data] (const int y, const int x) { return col->withinTolerance(getRGB(x, y, *data)); };
         }
         const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
         const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
@@ -422,20 +418,20 @@ struct Image {
 };
 
 struct ImageQueue {
-    map<int, Image*> images;
+    map<intptr_t, Image*> images;
 
-    ImageQueue() : images(map<int, Image*>()) {}
+    ImageQueue() : images(map<intptr_t, Image*>()) {}
 
-    void add(const int id, Image* image) {
+    void add(const intptr_t id, Image* image) {
         images.insert({id, image});
     }
 
-    void remove(const int id) {
+    void remove(const intptr_t id) {
         delete images.at(id);
         images.erase(id);
     }
 
-    [[nodiscard]] Image* get(const int id) const {
+    [[nodiscard]] Image* get(const intptr_t id) const {
         return images.at(id);
     }
 
@@ -446,35 +442,35 @@ struct ImageQueue {
 
 #define EXTERN extern "C"
 
-EXTERN EMSCRIPTEN_KEEPALIVE char* trace(const int id, const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
+EXTERN EMSCRIPTEN_KEEPALIVE char* trace(const intptr_t id, const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
     const auto s = new string(imageQueue.get(id)->trace(TraceData{x, y, maxLineHeightOffset, maxJumpOffset, colourTolerance}));
     return s->data();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void addImage(const int id, const Colour* data, const int width, const int height) {
+EXTERN EMSCRIPTEN_KEEPALIVE void addImage(const intptr_t id, const Colour* data, const int width, const int height) {
     imageQueue.add(id, new Image{ImageData{data, width, height}});
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE char* undo(const int id) {
+EXTERN EMSCRIPTEN_KEEPALIVE char* undo(const intptr_t id) {
     const auto s = new string(imageQueue.get(id)->undo());
     return s->data();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void clear(const int id) {
+EXTERN EMSCRIPTEN_KEEPALIVE void clear(const intptr_t id) {
     imageQueue.get(id)->clear();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE char* point(const int id, const int x, const int y) {
+EXTERN EMSCRIPTEN_KEEPALIVE char* point(const intptr_t id, const int x, const int y) {
     const auto s = new string(imageQueue.get(id)->point(TraceData{x, y}));
     return s->data();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE char* autoTrace(const int id, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
+EXTERN EMSCRIPTEN_KEEPALIVE char* autoTrace(const intptr_t id, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
     const auto s = new string(imageQueue.get(id)->autoTrace(TraceData{maxLineHeightOffset, maxJumpOffset, colourTolerance}));
     return s->data();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE char* exportTrace(const int id, const int PPO, const int delim, const double lowFRExport,
+EXTERN EMSCRIPTEN_KEEPALIVE char* exportTrace(const intptr_t id, const int PPO, const int delim, const double lowFRExport,
     const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
     const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
     const double FRBottomPixel) {
@@ -484,11 +480,11 @@ EXTERN EMSCRIPTEN_KEEPALIVE char* exportTrace(const int id, const int PPO, const
     return s->data();
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE int snap(const int id, const int pos, const int lineDir, const int moveDir) {
+EXTERN EMSCRIPTEN_KEEPALIVE int snap(const intptr_t id, const int pos, const int lineDir, const int moveDir) {
     return imageQueue.get(id)->snapLine(pos, lineDir, moveDir);
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void removeImage(const int id) {
+EXTERN EMSCRIPTEN_KEEPALIVE void removeImage(const intptr_t id) {
     imageQueue.remove(id);
 }
 
