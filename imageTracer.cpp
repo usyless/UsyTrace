@@ -136,7 +136,7 @@ class Trace {
 private:
     static void checkPixel(const int x, const int y, const RGBTools& baselineColour, vector<RGB>& colours, vector<int>& yValues, const ImageData& imageData) {
         const auto yVal = max(0, min(imageData.height - 1, y));
-        if (const auto&& col = getRGB(x, yVal, imageData); baselineColour.withinTolerance(col)) {
+        if (const auto& col = getRGB(x, yVal, imageData); baselineColour.withinTolerance(col)) {
             colours.push_back(col);
             yValues.push_back(yVal);
         }
@@ -178,10 +178,10 @@ public:
         vector<pair<int, int>>&& simplifiedTrace{};
         if (!trace.empty()) {
             if (trace.size() > 2) {
-                auto&& iter = trace.begin();
+                auto iter = trace.begin();
                 simplifiedTrace.emplace_back(iter->first, iter->second);
                 vector<int>&& identity{};
-                const auto&& end = trace.end();
+                const auto& end = trace.end();
                 for(++iter; iter != end; ++iter) {
                     identity.clear();
                     const auto previousValue = iter->second;
@@ -200,10 +200,10 @@ public:
     }
 
     [[nodiscard]] string toSVG() const {
-        string&& svg{""};
+        string svg;
         if (const auto& res = clean(); !res.empty()) {
-            auto&& iter = res.begin();
-            const auto&& end = res.end();
+            auto iter = res.begin();
+            const auto& end = res.end();
             svg += "M" + to_string(iter->first) + " " + to_string(iter->second);
             for (++iter; iter != end; ++iter) svg += " L" + to_string(iter->first) + " " + to_string(iter->second);
         }
@@ -213,8 +213,8 @@ public:
     [[nodiscard]] Trace* newTrace(const ImageData& imageData, const TraceData& traceData) const {
         const auto maxLineHeight = max(0, imageData.height / 20 + traceData.maxLineHeightOffset);
         const auto maxJump = max(0, imageData.width / 50 + traceData.maxJumpOffset);
-        auto&& baselineColour = RGBTools(getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
-        auto&& newTrace = map(trace);
+        auto baselineColour = RGBTools(getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
+        auto newTrace = map(trace);
 
         traceFor(traceData.x, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
         traceFor(traceData.x + 1, traceData.y, 1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
@@ -223,7 +223,7 @@ public:
     }
 
     [[nodiscard]] Trace* addPoint(const TraceData& traceData) const {
-        auto&& newTrace = map(trace);
+        auto newTrace = map(trace);
         newTrace[traceData.x] = traceData.y;
         return new Trace{newTrace, colour};
     }
@@ -310,7 +310,7 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
             currentDiff = diff;
         }
     }
-    auto trace = new Trace{};
+    auto* trace = new Trace{};
     if (bestY > 0) {
         traceData.x = middleX;
         traceData.y = bestY;
@@ -359,7 +359,7 @@ struct Image {
         logFRBottomValue = exportData.logFRBottomValue, SPLBottomPixel = exportData.SPLBottomPixel,
         SPLRatio = exportData.SPLRatio, SPLBottomValue = exportData.SPLBottomValue,
         PPOStep = exportData.PPOStep, logMaxFR = exportData.logMaxFR;
-        auto&& str = ExportString{exportData.delim};
+        auto str = ExportString{exportData.delim};
 
         vector<pair<double, double>>&& FRxSPL{};
         const auto& clean = traceHistory.getLatest()->clean();
@@ -367,10 +367,10 @@ struct Image {
             FRxSPL.emplace_back(pow(10, (x - FRBottomPixel) * FRRatio + logFRBottomValue), (y - SPLBottomPixel) * SPLRatio + SPLBottomValue);
         }
 
-        const auto&& interp = contiguousLinearInterpolation(FRxSPL);
-        auto&& pos = 0;
+        const auto& interp = contiguousLinearInterpolation(FRxSPL);
+        auto pos = 0;
         for(auto v = exportData.logMinFR; ; v += PPOStep) {
-            const auto&& freq = pow(10, v);
+            const auto freq = pow(10, v);
             str.addData(to_string(freq), to_string(interp(freq, pos)));
             if (v >= logMaxFR) break;
         }
@@ -379,7 +379,7 @@ struct Image {
     }
 
     [[nodiscard]] int snapLine(int pos, const int lineDir, const int moveDir) const {
-        auto valid = vector<int>{};
+        vector<int>&& valid{};
         int length, otherDirection;
         const auto* col = &backgroundColour;
         const auto* data = imageData;
