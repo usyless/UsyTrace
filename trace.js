@@ -91,6 +91,7 @@ multiEventListener('load', image, () => { // image context switching
         ]
         d.d = "";
         d.lines = lines;
+        createLines();
         state.snapLines();
         state.autoPath();
         d.initial = false;
