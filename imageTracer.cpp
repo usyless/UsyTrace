@@ -256,13 +256,11 @@ struct TraceHistory {
     }
 
     Trace* undo() {
-        Trace* last = getLatest();
         if (history.size() > 1) {
-            delete last;
+            delete getLatest();
             history.pop_back();
-            last = getLatest();
         }
-        return last;
+        return getLatest();
     }
 
     ~TraceHistory() {
@@ -328,10 +326,10 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
 
 struct Image {
     const ImageData* imageData;
-    TraceHistory traceHistory{};
+    TraceHistory traceHistory;
     const RGBTools backgroundColour;
 
-    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools(getBackgroundColour(*imageData), 10)) {}
+    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {}
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
         return traceHistory.add(traceHistory.getLatest()->newTrace(*imageData, traceData))->getDefaultReturn();
