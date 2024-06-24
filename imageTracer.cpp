@@ -7,15 +7,19 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <stack>
 #include <string>
 #include <utility>
 #include <vector>
 #include "emscripten.h"
 
 // test:
-// emcc imageTracer.cpp -O3 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_RUNTIME_METHODS='["cwrap"]' -s ASSERTIONS=1 -s NO_DISABLE_EXCEPTION_CATCHING
-// release:
-// emcc imageTracer.cpp -O3 -s WASM=1 -s ALLOW_MEMORY_GROWTH=1 -s EXPORTED_RUNTIME_METHODS='["cwrap"]'
+// emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT='worker' -sINITIAL_HEAP=314572800
+// release: (set heap to 500MB)
+// emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker'
+
+// if stack errors occur: -sSTACK_SIZE=<num>
+// max memory: -sMAXIMUM_MEMORY=<2gb in bytes by default>
 // for c++20: append -std=c++20
 
 
@@ -243,28 +247,35 @@ public:
 };
 
 struct TraceHistory {
-    vector<Trace*> history{new Trace{}};
+    stack<Trace*> history;
+
+    TraceHistory() {
+        history.push(new Trace{});
+    }
 
     Trace* add(Trace* trace) {
-        if(!(trace->size() == 0 && getLatest()->size() == 0)) history.push_back(trace);
+        if(!(trace->size() == 0 && getLatest()->size() == 0)) history.push(trace);
         else delete trace;
         return trace;
     }
 
     [[nodiscard]] Trace* getLatest() const {
-        return history.back();
+        return history.top();
     }
 
     Trace* undo() {
         if (history.size() > 1) {
             delete getLatest();
-            history.pop_back();
+            history.pop();
         }
         return getLatest();
     }
 
     ~TraceHistory() {
-        for(const Trace* trace : history) delete trace;
+        while(!history.empty()) {
+            delete getLatest();
+            history.pop();
+        }
     }
 };
 
