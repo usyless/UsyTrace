@@ -15,7 +15,7 @@
 - Click "Clear Path" to make sure any auto traced line does not mess with your new trace
 - Click "Select Path", then click on your line to trace
 - If you find that it hasn't selected the whole line, you can click on the region it has not selected to try to select more (Adjust settings as a last resort)
-- Made a mistake? The undo button can bring you back one trace
+- Made a mistake? Use the "Undo" button
 - Use "Add Point" to add points manually to the trace
 
 ### Mobile Specifics
@@ -43,7 +43,3 @@
 - The minimum frequency to export to, will draw a straight line from first data point to minimum frequency
 ### Maximum Frequency
 - The maximum frequency to export to, will draw a straight line from the last data point to maximum frequency
-### SPL Precision
-- With how many decimal places to save SPL values to
-### Frequency Precision
-- With how many decimal places to save Frequency values to

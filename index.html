@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UsyTrace</title>
-    <meta property="og:title" content="UsyTrace"/>
-    <meta property="og:description" content="Online Frequency Response Tracing"/>
-    <meta property="og:image" content="https://usyless.github.io/favicon.ico"/>
+    <meta content="Trace frequency responses from images." name="description">
+    <meta property="og:title" content="UsyTrace">
+    <meta property="og:url" content="https://usyless.github.io/trace">
+    <meta property="og:description" content="Online Frequency Response Tracing">
+    <meta property="og:image" content="https://usyless.github.io/favicon.ico">
+    <meta name="keywords" content="usy, frequency response, frequency response trace, frequency response tracing, trace frequency response, trace graph">
     <link rel="stylesheet" href="trace.css">
 </head>
 <body>
@@ -16,7 +19,7 @@
             This website will not function without JavaScript, please enable it to use the site.</h1>
     </div>
 </noscript>
-<div id="overlay" class="hidden">
+<div id="overlay" class="noOpacity">
     <h1>Tracing In Progress</h1>
 </div>
 <div id="main">
@@ -139,14 +142,6 @@
             <div>
                 <label for="highFRExport">Maximum Frequency (Hz)</label>
                 <input type="number" id="highFRExport"/>
-            </div>
-            <div>
-                <label for="exportSPLPrecision">SPL Precision</label>
-                <input type="number" id="exportSPLPrecision"/>
-            </div>
-            <div>
-                <label for="exportFRPrecision">Frequency Precision</label>
-                <input type="number" id="exportFRPrecision"/>
             </div>
         </div>
         <div onclick="restoreDefault()" class="divButton sidebarSection" id="restoreDefault">

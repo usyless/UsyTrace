@@ -9,7 +9,7 @@ const imageMap = new Map(),
     fileInput = document.getElementById('imageInput'),
     state = State(),
     defaults = {
-        "colourTolerance": 65,
+        "colourTolerance": 67,
         "maxLineHeightOffset": 0,
         "maxJumpOffset": 0,
 
@@ -17,8 +17,6 @@ const imageMap = new Map(),
         "delimitation": "tab",
         "lowFRExport": 20,
         "highFRExport": 20000,
-        "exportSPLPrecision": 3,
-        "exportFRPrecision": 5,
 
         "SPLTop": "",
         "SPLBot": "",
@@ -60,10 +58,10 @@ multiEventListener('dragstart', image, (e) => e.preventDefault());
     multiEventListener(['mousemove'], image, (e) => {
         e.preventDefault();
         const parentRect = image.parentElement.getBoundingClientRect(), m = getMouseCoords(e),
-            v = (Math.floor((m.yRel) * sizeRatio) * imageData.width * 4) + (Math.floor((m.xRel) * sizeRatio) * 4);
+            v = (Math.floor((m.yRel) * sizeRatio) * image.naturalWidth * 4) + (Math.floor((m.xRel) * sizeRatio) * 4);
         glass.style.left = `${m.x - parentRect.left}px`;
         glass.style.top = `${m.y - parentRect.top}px`;
-        glass.style.backgroundColor = `rgb(${imageData.data[v]}, ${imageData.data[v + 1]}, ${imageData.data[v + 2]})`;
+        glass.style.backgroundColor = `rgb(${imageData[v]}, ${imageData[v + 1]}, ${imageData[v + 2]})`;
         glass.classList.remove('hidden');
     });
     multiEventListener(['mouseup', 'mouseleave', 'mouseout', 'touchend', 'touchcancel'], image, () => glass.classList.add('hidden'));
@@ -215,7 +213,6 @@ function State() {
         }
 
         imageLoaded() {
-            worker.postMessage({src: image.src, type: 'setImage'});
             createLines();
             this.updateState(this.States.imageLoaded);
             scrollToSelectedImage();
@@ -231,7 +228,7 @@ function State() {
         snapLine(line, direction) {
             worker.postMessage({
                 src: image.src,
-                type: 'snap',
+                type: 'snapLine',
                 dir: direction,
                 line: line
             });
@@ -242,7 +239,7 @@ function State() {
             this.toggleTrace();
             worker.postMessage({
                 src: image.src,
-                type: 'auto',
+                type: 'autoTrace',
                 lineHeightOffset: document.getElementById("maxLineHeightOffset").value,
                 colourTolerance: document.getElementById("colourTolerance").value,
                 maxJumpOffset: document.getElementById("maxJumpOffset").value
@@ -270,7 +267,7 @@ function State() {
         }
 
         toggleTrace() {
-            overlay.classList.toggle("hidden");
+            overlay.classList.toggle("noOpacity");
             main.classList.toggle("lowOpacity");
             main.classList.toggle("not_allowed");
             main.classList.toggle("removePointerEvents");
@@ -292,7 +289,7 @@ function State() {
             } else {
                 worker.postMessage({
                     src: image.src,
-                    type: 'point',
+                    type: 'addPoint',
                     x: x,
                     y: y
                 });
@@ -309,7 +306,7 @@ function clearPath() {
 
 function clearPathAndWorker() {
     clearPath();
-    worker.postMessage({src: image.src, type: "clear"});
+    worker.postMessage({src: image.src, type: "clearTrace"});
     const d = imageMap.get(image.src);
     d.d = '';
 }
@@ -329,7 +326,7 @@ function exportTrace() {
 
     worker.postMessage({
         src: image.src,
-        type: "export",
+        type: "exportTrace",
         SPL: {
             top: SPLTop,
             topPixel: lines[2].pos,
@@ -344,8 +341,6 @@ function exportTrace() {
         },
         lowFR: document.getElementById("lowFRExport").value,
         highFR: document.getElementById("highFRExport").value,
-        FRPrecision: document.getElementById("exportFRPrecision").value,
-        SPLPrecision: document.getElementById("exportSPLPrecision").value,
         PPO: document.getElementById("PPO").value,
         delim: document.getElementById("delimitation").value
     });
@@ -357,17 +352,15 @@ function updateSizeRatio() {
 
 function createWorker() {
     if (!worker) {
-        worker = new Worker("./worker.js");
+        worker = new Worker("./worker_wasm.js");
         worker.onmessage = (e) => {
             const d = e.data, imgData = imageMap.get(d.src);
 
-            // update data
-            if (d.d) imgData.d = d.d;
+            if (d.svg) imgData.d = d.svg;
             if (d.line) imgData.lines[d.line.i] = d.line;
             if (d.colour) imgData.colour = d.colour;
 
-            // export anyway
-            if (d.type === 'export') {
+            if (d.type === 'exportTrace') {
                 const a = document.createElement("a"),
                     url = URL.createObjectURL(new Blob([d.export], {type: "text/plain;charset=utf-8"}));
                 a.href = url;
@@ -379,13 +372,13 @@ function createWorker() {
                     window.URL.revokeObjectURL(url);
                 }, 0);
             } else if (d.src === image.src) {
-                if (d.type === "done") {
-                    setTracePath(d.d, d.colour, height * 0.005);
-                    state.toggleTrace();
-                } else {
+                if (d.type === 'snapLine') {
                     const newLine = d.line, line = lines[newLine.i];
                     line.pos = newLine.pos;
                     moveLine(line);
+                } else {
+                    setTracePath(d.svg, d.colour, height * 0.005);
+                    state.toggleTrace();
                 }
             }
         }
@@ -517,7 +510,7 @@ function getMouseCoords(e) {
 }
 
 function setUpImageData() {
-    const processing_canvas = document.createElement("canvas"),
+    let processing_canvas = document.createElement("canvas"),
         processing_context = processing_canvas.getContext('2d'),
         new_image = new Image;
     processing_canvas.width = width;
@@ -525,12 +518,16 @@ function setUpImageData() {
     new_image.src = image.src;
     processing_context.drawImage(new_image, 0, 0);
     imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
-    imageMap.get(image.src).imageData = imageData;
     worker.postMessage({
         src: image.src,
         type: 'setData',
-        imageData: imageData
-    });
+        data: imageData.data,
+        width: imageData.width,
+        height: imageData.height
+    }, [imageData.data.buffer]);
+    // duplicate copy because silly but prevents the other thing being copied
+    imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight).data;
+    imageMap.get(image.src).imageData = imageData;
 }
 
 // HTML Functions
@@ -541,7 +538,7 @@ function minVal(e) {
 function undo() {
     if (worker) {
         state.toggleTrace();
-        worker.postMessage({src: image.src, type: "undo"});
+        worker.postMessage({src: image.src, type: "undoTrace"});
     }
 }
 
@@ -601,7 +598,7 @@ function createImageQueueItem(src) {
 
 function deleteImage(img) {
     imageMap.delete(img.src);
-    worker.postMessage({src: img.src, type: 'removeImage'})
+    worker.postMessage({src: img.src, type: 'removeImage'});
     img.remove();
 }
 
