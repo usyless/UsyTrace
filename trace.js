@@ -58,10 +58,10 @@ multiEventListener('dragstart', image, (e) => e.preventDefault());
     multiEventListener(['mousemove'], image, (e) => {
         e.preventDefault();
         const parentRect = image.parentElement.getBoundingClientRect(), m = getMouseCoords(e),
-            v = (Math.floor((m.yRel) * sizeRatio) * imageData.width * 4) + (Math.floor((m.xRel) * sizeRatio) * 4);
+            v = (Math.floor((m.yRel) * sizeRatio) * image.naturalWidth * 4) + (Math.floor((m.xRel) * sizeRatio) * 4);
         glass.style.left = `${m.x - parentRect.left}px`;
         glass.style.top = `${m.y - parentRect.top}px`;
-        glass.style.backgroundColor = `rgb(${imageData.data[v]}, ${imageData.data[v + 1]}, ${imageData.data[v + 2]})`;
+        glass.style.backgroundColor = `rgb(${imageData[v]}, ${imageData[v + 1]}, ${imageData[v + 2]})`;
         glass.classList.remove('hidden');
     });
     multiEventListener(['mouseup', 'mouseleave', 'mouseout', 'touchend', 'touchcancel'], image, () => glass.classList.add('hidden'));
@@ -526,7 +526,7 @@ function setUpImageData() {
         height: imageData.height
     }, [imageData.data.buffer]);
     // duplicate copy because silly but prevents the other thing being copied
-    imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
+    imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight).data;
     imageMap.get(image.src).imageData = imageData;
 }
 
