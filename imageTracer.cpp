@@ -65,11 +65,11 @@ struct RGBTools {
 
     RGBTools(const RGB rgb, const long tolerance) : rgb(rgb), tolerance(tolerance) {}
 
-    [[nodiscard]] bool withinTolerance(const RGB& rgb) const {
+    [[nodiscard]] bool withinTolerance(const RGB&& rgb) const {
         return this->rgb.getDifference(rgb) <= tolerance;
     }
 
-    void addToAverage(const RGB& rgb) {
+    void addToAverage(const RGB&& rgb) {
         this->rgb.R += static_cast<Colour>((sqrt((pow(this->rgb.R, 2) + pow(rgb.R, 2)) / 2) - this->rgb.R) / count);
         this->rgb.G += static_cast<Colour>((sqrt((pow(this->rgb.G, 2) + pow(rgb.G, 2)) / 2) - this->rgb.G) / count);
         this->rgb.B += static_cast<Colour>((sqrt((pow(this->rgb.B, 2) + pow(rgb.B, 2)) / 2) - this->rgb.B) / count);
@@ -80,12 +80,12 @@ struct RGBTools {
         if (min(min(this->rgb.R, this->rgb.G), this->rgb.B) == this->rgb.R) return DEFAULT_COLOUR;
         return ALT_COLOUR;
     }
-};
 
-RGB getRGB(const long& x, const long& y, const ImageData& imageData) {
-    const auto pos = y * imageData.width * 4 + x * 4;
-    return RGB{imageData.data[pos], imageData.data[pos + 1], imageData.data[pos + 2]};
-}
+    static inline RGB getRGB(const long& x, const long& y, const ImageData& imageData) {
+        const auto pos = y * imageData.width * 4 + x * 4;
+        return RGB{imageData.data[pos], imageData.data[pos + 1], imageData.data[pos + 2]};
+    }
+};
 
 struct TraceData {
     int x = 0, y = 0, maxLineHeightOffset = 0, maxJumpOffset = 0, colourTolerance = 0;
@@ -131,44 +131,40 @@ struct ExportString {
     }
 };
 
-class Trace {
-private:
-    static void checkPixel(const int x, const int y, RGBTools& baselineColour, vector<int>& yValues, const ImageData& imageData) {
-        const auto yVal = max(0, min(imageData.height - 1, y));
-        if (const auto& col = getRGB(x, yVal, imageData); baselineColour.withinTolerance(col)) {
-            baselineColour.addToAverage(col);
-            yValues.push_back(yVal);
-        }
-    }
+inline void checkPixel(const int x, const int y, const RGBTools& baselineColour, vector<int>& yValues, const ImageData& imageData) {
+    if (const auto yVal = max(0, min(imageData.height - 1, y)); baselineColour.withinTolerance(RGBTools::getRGB(x, yVal, imageData))) yValues.push_back(yVal);
+}
 
-    static void traceFor(int startX, int startY, const int step, map<int, int>& trace, const ImageData& imageData, const int maxLineHeight, const int maxJump, RGBTools& colour) {
-        vector<int>&& yValues{};
-        int currJump = 0;
-        for (const auto width = imageData.width; startX >= 0 && startX < width; startX += step) {
-            yValues.clear();
-            const auto max = maxLineHeight + currJump * 2;
-            checkPixel(startX, startY, colour, yValues, imageData);
-            for (auto z = 1; z <= max; ++z) {
-                checkPixel(startX, startY + z, colour, yValues, imageData);
-                checkPixel(startX, startY - z, colour, yValues, imageData);
-            }
-            if (!yValues.empty()) {
-                currJump = 0;
-                startY = reduce(yValues.begin(), yValues.end()) / static_cast<int>(yValues.size());
-                trace[startX] = startY;
-                continue;
-            }
-            if (currJump < maxJump) ++currJump;
-            else break;
+void traceFor(int startX, int startY, const int step, map<int, int>& trace, const ImageData& imageData, const int maxLineHeight, const int maxJump, RGBTools& colour) {
+    vector<int>&& yValues{};
+    int currJump = 0;
+    for (const auto width = imageData.width; startX >= 0 && startX < width; startX += step) {
+        yValues.clear();
+        const auto max = maxLineHeight + currJump * 2;
+        checkPixel(startX, startY, colour, yValues, imageData);
+        for (auto z = 1; z <= max; ++z) {
+            checkPixel(startX, startY + z, colour, yValues, imageData);
+            checkPixel(startX, startY - z, colour, yValues, imageData);
         }
+        if (!yValues.empty()) {
+            currJump = 0;
+            startY = reduce(yValues.begin(), yValues.end()) / static_cast<int>(yValues.size());
+            trace[startX] = startY;
+            colour.addToAverage(RGBTools::getRGB(startX, startY, imageData));
+            continue;
+        }
+        if (currJump < maxJump) ++currJump;
+        else break;
     }
+}
+
+class Trace {
 public:
     const map<int, int> trace;
     const string colour;
 
     Trace() : trace(std::move(map<int, int>{})), colour(DEFAULT_COLOUR) {}
     Trace(const map<int, int>& trace, string colour) : trace(trace), colour(std::move(colour)) {}
-
 
     [[nodiscard]] vector<pair<int, int>> clean() const {
         vector<pair<int, int>>&& simplifiedTrace{};
@@ -209,7 +205,7 @@ public:
     [[nodiscard]] Trace* newTrace(const ImageData& imageData, const TraceData& traceData) const {
         const auto maxLineHeight = max(0, imageData.height / 20 + traceData.maxLineHeightOffset);
         const auto maxJump = max(0, imageData.width / 50 + traceData.maxJumpOffset);
-        auto baselineColour = RGBTools(getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
+        auto baselineColour = RGBTools(RGBTools::getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
         auto newTrace = map(trace);
 
         traceFor(traceData.x, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
@@ -273,7 +269,7 @@ RGB getBackgroundColour(const ImageData& imageData) {
     const long xJump = max(1, mX / 100);
     const long yJump = max (1, mY / 100);
 
-    for (auto y = 0; y < mY; y += yJump) for (auto x = 0; x < mX; x += xJump) ++colours[getRGB(x, y, imageData)];
+    for (auto y = 0; y < mY; y += yJump) for (auto x = 0; x < mX; x += xJump) ++colours[RGBTools::getRGB(x, y, imageData)];
     return max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, int>& a, const std::pair<RGB, int>& b){ return a.second < b.second; } )->first;
 }
 
@@ -306,7 +302,7 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     auto y = middleY - yRange;
 
     for(const auto endY = middleY + yRange; y <= endY; ++y) {
-        if (const auto diff = differenceFunc(getRGB(middleX, y, imageData)); diff >= max(10, currentDiff)) {
+        if (const auto diff = differenceFunc(RGBTools::getRGB(middleX, y, imageData)); diff >= max(10, currentDiff)) {
             bestY = y;
             currentDiff = diff;
         }
@@ -387,11 +383,11 @@ struct Image {
         if(lineDir == 1) { // vertical line, representing x axis
             length = imageData->width;
             otherDirection = imageData->height;
-            comparator = [&col = backgroundColour, &data = imageData] (const int x, const int y) { return col.withinTolerance(getRGB(x, y, *data)); };
+            comparator = [&col = backgroundColour, &data = imageData] (const int x, const int y) { return col.withinTolerance(RGBTools::getRGB(x, y, *data)); };
         } else {
             length = imageData->height;
             otherDirection = imageData->width;
-            comparator = [&col = backgroundColour, &data = imageData] (const int y, const int x) { return col.withinTolerance(getRGB(x, y, *data)); };
+            comparator = [&col = backgroundColour, &data = imageData] (const int y, const int x) { return col.withinTolerance(RGBTools::getRGB(x, y, *data)); };
         }
         const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
         const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
