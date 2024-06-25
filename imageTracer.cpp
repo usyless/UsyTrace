@@ -133,30 +133,27 @@ struct ExportString {
 
 class Trace {
 private:
-    static void checkPixel(const int x, const int y, const RGBTools& baselineColour, vector<RGB>& colours, vector<int>& yValues, const ImageData& imageData) {
+    static void checkPixel(const int x, const int y, RGBTools& baselineColour, vector<int>& yValues, const ImageData& imageData) {
         const auto yVal = max(0, min(imageData.height - 1, y));
         if (const auto& col = getRGB(x, yVal, imageData); baselineColour.withinTolerance(col)) {
-            colours.push_back(col);
+            baselineColour.addToAverage(col);
             yValues.push_back(yVal);
         }
     }
 
     static void traceFor(int startX, int startY, const int step, map<int, int>& trace, const ImageData& imageData, const int maxLineHeight, const int maxJump, RGBTools& colour) {
-        vector<RGB>&& colours{};
         vector<int>&& yValues{};
         int currJump = 0;
         for (const auto width = imageData.width; startX >= 0 && startX < width; startX += step) {
-            colours.clear();
             yValues.clear();
             const auto max = maxLineHeight + currJump * 2;
-            checkPixel(startX, startY, colour, colours, yValues, imageData);
+            checkPixel(startX, startY, colour, yValues, imageData);
             for (auto z = 1; z <= max; ++z) {
-                checkPixel(startX, startY + z, colour, colours, yValues, imageData);
-                checkPixel(startX, startY - z, colour, colours, yValues, imageData);
+                checkPixel(startX, startY + z, colour, yValues, imageData);
+                checkPixel(startX, startY - z, colour, yValues, imageData);
             }
-            if (!colours.empty()) {
+            if (!yValues.empty()) {
                 currJump = 0;
-                for (const RGB& col : colours) colour.addToAverage(col);
                 startY = reduce(yValues.begin(), yValues.end()) / static_cast<int>(yValues.size());
                 trace[startX] = startY;
                 continue;
