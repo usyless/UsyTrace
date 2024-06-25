@@ -43,3 +43,17 @@
 - The minimum frequency to export to, will draw a straight line from first data point to minimum frequency
 ### Maximum Frequency
 - The maximum frequency to export to, will draw a straight line from the last data point to maximum frequency
+
+# Compiling Instructions
+1. Download and install [emscripten](https://emscripten.org/)
+2. Paste glue code file (a.out.js) into the top of the worker file (worker.js) after compiling
+ ### Testing:
+`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT='worker' -sINITIAL_HEAP=314572800 -sFILESYSTEM=0`
+### Release:
+`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker' -sFILESYSTEM=0`
+
+### Info/Extras:
+- Default heap size set to 300mb
+- Set stack size with -sSTACK_SIZE=size in bytes
+- Set max memory with -sMAXIMUM_MEMORY=size in bytes (2gb by default, >2gb has performance penalty afaik)
+- To use c++20 features: -std=c++20

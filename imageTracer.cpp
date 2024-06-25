@@ -13,16 +13,6 @@
 #include <vector>
 #include "emscripten.h"
 
-// test:
-// emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT='worker' -sINITIAL_HEAP=314572800
-// release: (set heap to 500MB)
-// emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker'
-
-// if stack errors occur: -sSTACK_SIZE=<num>
-// max memory: -sMAXIMUM_MEMORY=<2gb in bytes by default>
-// for c++20: append -std=c++20
-
-
 using namespace std;
 
 typedef uint8_t Colour;
@@ -254,8 +244,8 @@ struct TraceHistory {
     }
 
     Trace* add(Trace* trace) {
-        if(!(trace->size() == 0 && getLatest()->size() == 0)) history.push(trace);
-        else delete trace;
+        if(getLatest()->size() == 0) undo();
+        history.push(trace);
         return trace;
     }
 
