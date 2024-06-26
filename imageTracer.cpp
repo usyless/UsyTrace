@@ -158,8 +158,7 @@ void traceFor(int startX, int startY, const int step, map<int, int>& trace, cons
     }
 }
 
-class Trace {
-public:
+struct Trace {
     const map<int, int> trace;
     const string colour;
 
