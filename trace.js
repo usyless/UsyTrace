@@ -1,12 +1,12 @@
 'use strict';
 
-// update site if out of date
-const VERSION = "1";
+// show site out of date alert
+const VERSION = 2;
 (async () => {
-    let r = await fetch("https://usyless.pythonanywhere.com/api/version", {cache: "no-store"});
+    let r = await fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'});
     if (r.status === 200) {
         r = await r.json();
-        if (VERSION < r['v']) window.location.reload(true);
+        if (VERSION < parseInt(r['v'])) document.getElementById('updateAvailable').classList.remove('hidden');
     }
 })();
 
