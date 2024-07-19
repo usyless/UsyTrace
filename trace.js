@@ -1,5 +1,15 @@
 'use strict';
 
+// update site if out of date
+const VERSION = "0";
+(async () => {
+    let r = await fetch("https://usyless.pythonanywhere.com/api/version", {cache: "no-store"});
+    if (r.status === 200) {
+        r = await r.json();
+        if (VERSION < r['v']) window.location.reload(true);
+    }
+})();
+
 // global constants
 let lineSVG = document.getElementById('lines');
 
