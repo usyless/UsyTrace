@@ -1,7 +1,7 @@
 'use strict';
 
 // update site if out of date
-const VERSION = "0";
+const VERSION = "1";
 (async () => {
     let r = await fetch("https://usyless.pythonanywhere.com/api/version", {cache: "no-store"});
     if (r.status === 200) {
