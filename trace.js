@@ -1,7 +1,7 @@
 'use strict';
 
 // show site out of date alert
-const VERSION = 2;
+const VERSION = 3;
 (async () => {
     let r = await fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'});
     if (r.status === 200) {
@@ -19,6 +19,9 @@ const imageMap = new Map(),
     fileInput = document.getElementById('imageInput'),
     state = State(),
     defaults = {
+        "FRTop": 20000,
+        "FRBot": 20,
+
         "colourTolerance": 67,
         "maxLineHeightOffset": 0,
         "maxJumpOffset": 0,
@@ -30,8 +33,6 @@ const imageMap = new Map(),
 
         "SPLTop": "",
         "SPLBot": "",
-        "FRTop": "",
-        "FRBot": ""
     };
 
 // create global variables
