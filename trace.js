@@ -46,6 +46,18 @@ state.toInitial();
 // assign event listeners
 multiEventListener('dragstart', image, (e) => e.preventDefault());
 
+{ // Paste image stuff
+    multiEventListener('paste', document, (e) => {
+        e.preventDefault();
+        const d = new DataTransfer();
+        for (const item of e.clipboardData.items) if (item.kind === 'file' && item.type.includes('image/')) d.items.add(item.getAsFile());
+        if (d.files.length > 0) {
+            fileInput.files = d.files;
+            fileInput.dispatchEvent(new Event('change'));
+        }
+    });
+}
+
 { // Drag and drop stuff
     multiEventListener('dragover', main, (e) => {
         e.preventDefault()
