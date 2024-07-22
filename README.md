@@ -6,7 +6,7 @@
 - #### Found a bug? Report it to @usy_ on Discord!
 
 ## General use
-- Press "Choose Image" and choose an image to trace from
+- Press "Choose Image" and choose an image to trace from, drop any images onto the page, or paste an image into the page using Ctrl+V
 - Align the top and bottom lines for SPL and Frequency to known values, then input those in the sidebar
 - The line should be traced initially, if it is not, refer below
 - Press "Export Trace"
