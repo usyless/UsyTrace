@@ -52,6 +52,9 @@
 ### Release
 `emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker' -sFILESYSTEM=0`
 
+#### For Website
+- Run release-builder.py, 'out' directory will contain files to host
+
 ### Info/Extras
 - Default heap size set to 300mb
 - Set stack size with -sSTACK_SIZE=size in bytes
