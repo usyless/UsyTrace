@@ -1,7 +1,7 @@
 'use strict';
 
 { // version stuff
-    const VERSION = 5;
+    const VERSION = 6;
     window.history.pushState({}, '', window.location.href.split('?')[0]);
     (async () => {
         let r = await fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'});
