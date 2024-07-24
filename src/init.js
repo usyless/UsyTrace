@@ -5,5 +5,5 @@ if (window.localStorage.getItem('update') === 'true') {
     window.localStorage.removeItem('update');
     window.localStorage.setItem('trace', t);
 }
-else js.setAttribute('src', `trace.js${window.localStorage.getItem('trace')}`);
+else js.setAttribute('src', `trace.js?${window.localStorage.getItem('trace')}`);
 document.body.appendChild(js);
