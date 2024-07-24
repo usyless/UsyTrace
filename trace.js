@@ -1,14 +1,23 @@
 'use strict';
 
-// show site out of date alert
-const VERSION = 4;
-(async () => {
-    let r = await fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'});
-    if (r.status === 200) {
-        r = await r.json();
-        if (VERSION < parseInt(r['v'])) document.getElementById('updateAvailable').classList.remove('hidden');
-    }
-})();
+{ // version stuff
+    const VERSION = 5;
+    window.history.pushState({}, '', window.location.href.split('?')[0]);
+    (async () => {
+        let r = await fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'});
+        if (r.status === 200) {
+            r = await r.json();
+            if (window.localStorage.getItem('update') !== 'true' && VERSION < parseInt(r['v'])) {
+                const b = document.getElementById('updateAvailable');
+                b.addEventListener('click', () => {
+                    window.localStorage.setItem('update', 'true');
+                    window.open(window.location.href + '?update', '_self'); // updates html
+                });
+                b.classList.remove('hidden');
+            }
+        }
+    })();
+}
 
 // global constants
 let lineSVG = document.getElementById('lines');
