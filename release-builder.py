@@ -2,8 +2,9 @@ import shutil
 from pathlib import Path
 from time import time
 
-src_dir = Path(__file__).resolve().parent / 'src'
-out_dir = src_dir / 'out'
+main_dir = Path(__file__).resolve().parent
+src_dir = main_dir / 'src'
+out_dir = main_dir / 'out'
 
 unix_time = str(int(time()))
 
