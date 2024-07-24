@@ -1,7 +1,7 @@
 'use strict';
 
 // show site out of date alert
-const VERSION = 3;
+const VERSION = 4;
 (async () => {
     let r = await fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'});
     if (r.status === 200) {
@@ -17,6 +17,7 @@ const imageMap = new Map(),
     image = document.getElementById('uploadedImage'),
     main = document.getElementById('main'),
     fileInput = document.getElementById('imageInput'),
+    glass = document.getElementById('glass'),
     state = State(),
     defaults = {
         "FRTop": 20000,
@@ -36,7 +37,7 @@ const imageMap = new Map(),
     };
 
 // create global variables
-let worker, lines, sizeRatio, imageData, width, height;
+let worker, lines, sizeRatio, width, height;
 
 // call initial functions
 restoreDefault();
@@ -77,14 +78,18 @@ multiEventListener('dragstart', image, (e) => e.preventDefault());
 }
 
 { // magnifying glass stuff
-    const glass = document.getElementById('glass');
     multiEventListener(['mousemove'], image, (e) => {
         e.preventDefault();
         const parentRect = image.parentElement.getBoundingClientRect(), m = getMouseCoords(e),
             v = (Math.floor((m.yRel) * sizeRatio) * image.naturalWidth * 4) + (Math.floor((m.xRel) * sizeRatio) * 4);
         glass.style.left = `${m.x - parentRect.left}px`;
         glass.style.top = `${m.y - parentRect.top}px`;
-        glass.style.backgroundColor = `rgb(${imageData[v]}, ${imageData[v + 1]}, ${imageData[v + 2]})`;
+        worker.postMessage({
+            src: image.src,
+            type: 'getPixelColour',
+            x: m.xRel * sizeRatio,
+            y: m.yRel * sizeRatio
+        });
         glass.classList.remove('hidden');
     });
     multiEventListener(['mouseup', 'mouseleave', 'mouseout', 'touchend', 'touchcancel'], image, () => glass.classList.add('hidden'));
@@ -119,7 +124,6 @@ multiEventListener('load', image, () => { // image context switching
         state.autoPath();
         d.initial = false;
     } else {
-        imageData = d.imageData;
         lines = d.lines;
         setTracePath(d.d, d.colour, height * 0.005);
     }
@@ -396,7 +400,8 @@ function createWorker() {
                     window.URL.revokeObjectURL(url);
                 }, 0);
             } else if (d.src === image.src) {
-                if (d.type === 'snapLine') {
+                if (d.type === 'getPixelColour') glass.style.backgroundColor = `rgb(${d.pixelColour})`;
+                else if (d.type === 'snapLine') {
                     const newLine = d.line, line = lines[newLine.i];
                     line.pos = newLine.pos;
                     moveLine(line);
@@ -541,7 +546,7 @@ function setUpImageData() {
     processing_canvas.height = height;
     new_image.src = image.src;
     processing_context.drawImage(new_image, 0, 0);
-    imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
+    const imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
     worker.postMessage({
         src: image.src,
         type: 'setData',
@@ -549,9 +554,6 @@ function setUpImageData() {
         width: imageData.width,
         height: imageData.height
     }, [imageData.data.buffer]);
-    // duplicate copy because silly but prevents the other thing being copied
-    imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight).data;
-    imageMap.get(image.src).imageData = imageData;
 }
 
 // HTML Functions

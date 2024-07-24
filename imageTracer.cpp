@@ -54,7 +54,7 @@ struct RGB {
     }
 
     [[nodiscard]] string toString() const {
-        return to_string(R) + " " + to_string(G) + " " + to_string(B);
+        return to_string(R) + ", " + to_string(G) + ", " + to_string(B);
     }
 };
 
@@ -404,6 +404,10 @@ struct Image {
         return pos;
     }
 
+    [[nodiscard]] RGB getPixelColour(const int x, const int y) const {
+        return RGBTools::getRGB(x, y, *imageData);
+    }
+
     void clear() {
         traceHistory.add(new Trace{});
     }
@@ -483,4 +487,10 @@ EXTERN EMSCRIPTEN_KEEPALIVE const char* exportTrace(const char* id, const int PP
 // Lines
 EXTERN EMSCRIPTEN_KEEPALIVE int snap(const char* id, const int pos, const int lineDir, const int moveDir) {
     return imageQueue.get(id).snapLine(pos, lineDir, moveDir);
+}
+
+// Image Data
+EXTERN EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const int x, const int y) {
+    const auto* s = new string(imageQueue.get(id).getPixelColour(x, y).toString());
+    return s->data();
 }
