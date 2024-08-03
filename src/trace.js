@@ -1,12 +1,11 @@
 'use strict';
 
 { // version stuff
-    const VERSION = 6;
+    const VERSION = 7;
     window.history.pushState({}, '', window.location.href.split('?')[0]);
-    (async () => {
-        let r = await fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'});
-        if (r.status === 200) {
-            r = await r.json();
+    fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'})
+        .then((r) => r.json())
+        .then((r) => {
             if (window.localStorage.getItem('update') !== 'true' && VERSION < parseInt(r['v'])) {
                 const b = document.getElementById('updateAvailable');
                 b.addEventListener('click', () => {
@@ -15,8 +14,7 @@
                 });
                 b.classList.remove('hidden');
             }
-        }
-    })();
+        });
 }
 
 // global constants
