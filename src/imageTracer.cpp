@@ -119,7 +119,7 @@ struct ExportString {
         } else {
             this->delim = " ";
         }
-        data = "* Exported with UsyTrace, available at https://usyless.github.io/trace\n* Freq(Hz)" + this->delim + "SPL(dB)";
+        data = "* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz)" + this->delim + "SPL(dB)";
     }
 
     void addData(const string&& freq, const string&& spl) {
@@ -376,6 +376,7 @@ struct Image {
     }
 
     [[nodiscard]] int snapLine(int pos, const int lineDir, const int moveDir) const {
+        int initialPos = pos;
         vector<int>&& valid{};
         int length, otherDirection;
         function<bool(int, int)> comparator;
@@ -390,7 +391,15 @@ struct Image {
         }
         const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
         const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
-        pos += length / 100 * moveDir;
+        {
+            auto trueCount = bound;
+            while (trueCount >= bound && pos < length && pos >= 0) {
+                trueCount = 0;
+                for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
+                if (trueCount >= bound) pos += moveDir;
+                else break;
+            }
+        }
         auto foundline = false;
         for (; pos < length && pos >= 0; pos += moveDir) {
             auto trueCount = 0;
@@ -401,7 +410,8 @@ struct Image {
             } else if (foundline) break;
         }
         if (!valid.empty()) pos = reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size());
-        return pos;
+        if (foundline) return pos;
+        return initialPos;
     }
 
     [[nodiscard]] RGB getPixelColour(const int x, const int y) const {
