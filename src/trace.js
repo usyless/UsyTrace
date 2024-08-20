@@ -1,7 +1,7 @@
 'use strict';
 
 { // version stuff
-    const VERSION = 7;
+    const VERSION = 8;
     window.history.pushState({}, '', window.location.href.split('?')[0]);
     fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'})
         .then((r) => r.json())
@@ -450,16 +450,20 @@ function createSVGText(text, x, y) {
     t.setAttribute('x', x);
     t.setAttribute('y', y);
     t.setAttribute('font-size', `${1.3 * sizeRatio}em`);
+    t.setAttribute('text-anchor', 'middle');
     return t;
 }
 
 function moveLine(line) {
-    const l = lineSVG.querySelector(`line[dir="${line.dir}"][type="${line.type}"]`);
+    const other = lineSVG.querySelector(`line[dir="${line.dir}"]:not([type="${line.type}"])`),
+        l = lineSVG.querySelector(`line[dir="${line.dir}"][type="${line.type}"]`);
     if (line.dir === 'x') {
-        line.pos = Math.floor(Math.max(1, Math.min(width - 1, line.pos)));
+        if (line.type === 'High') line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('x1')), Math.min(width - 1, line.pos)));
+        else line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('x1')), line.pos)));
         updateLine(l, line, line.pos, '0', line.pos, height);
     } else {
-        line.pos = Math.floor(Math.max(1, Math.min(height - 1, line.pos)));
+        if (line.type === 'High') line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('y1')), line.pos)));
+        else line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('y1')), Math.min(height - 1, line.pos)));
         updateLine(l, line, '0', line.pos, width, line.pos);
     }
 }
@@ -524,9 +528,12 @@ function createLines() {
         if (line.dir === "x") {
             l = createSVGLine(line.pos, "0", line.pos, height, 'green', sizeRatio);
             t = createSVGText(line.type, line.pos, height / 2);
+            if (line.type === 'High') t.setAttribute("dx", "1em");
+            else t.setAttribute("dx", "-1em");
         } else {
             l = createSVGLine("0", line.pos, width, line.pos, 'blue', sizeRatio);
             t = createSVGText(line.type, width / 2, line.pos);
+            if (line.type !== 'High') t.setAttribute("dy", "0.6em");
         }
         l.setAttribute("dir", line.dir);
         l.setAttribute("type", line.type);
