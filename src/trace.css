@@ -127,6 +127,12 @@ select {
     justify-content: center;
 }
 
+.sidebarSection p {
+    line-height: 1;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
 .sidebarSection h3 {
     margin-top: 3px;
     margin-bottom: 3px;
