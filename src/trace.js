@@ -458,12 +458,12 @@ function moveLine(line) {
     const other = lineSVG.querySelector(`line[dir="${line.dir}"]:not([type="${line.type}"])`),
         l = lineSVG.querySelector(`line[dir="${line.dir}"][type="${line.type}"]`);
     if (line.dir === 'x') {
-        if (line.type === 'High') line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('x1')), Math.min(width - 1, line.pos)));
-        else line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('x1')), line.pos)));
+        if (line.type === 'High') line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('x1')) + 1, Math.min(width - 1, line.pos)));
+        else line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('x1')) - 1, line.pos)));
         updateLine(l, line, line.pos, '0', line.pos, height);
     } else {
-        if (line.type === 'High') line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('y1')), line.pos)));
-        else line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('y1')), Math.min(height - 1, line.pos)));
+        if (line.type === 'High') line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('y1')) - 1, line.pos)));
+        else line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('y1')) + 1, Math.min(height - 1, line.pos)));
         updateLine(l, line, '0', line.pos, width, line.pos);
     }
 }
@@ -492,27 +492,22 @@ function createLines() {
 
     { // Move canvas lines with mouse
         let selectedLine = null, offset = 0;
-        const sizes = {
-            x: width,
-            y: height
-        }
 
         multiEventListener('mousedown', lineSVG, (e) => {
             const m = getMouseCoords(e);
-
-            for (const line of lines) {
-                offset = m[`${line.dir}Rel`] * sizeRatio - line.pos;
-                if (Math.abs(offset) < sizes[line.dir] * 0.02) {
-                    selectedLine = line;
-                    return;
-                }
+            const sizes = {
+                x: width * 0.02,
+                y: height * 0.02
             }
+            for (const line of lines) line.offset = m[`${line.dir}Rel`] * sizeRatio - line.pos;
+            const closest = lines.reduce((acc, curr) => Math.abs(curr.offset) < Math.abs(acc.offset) ? curr : acc, lines[0]);
+            if (Math.abs(closest.offset) < sizes[closest.dir]) selectedLine = closest;
         });
 
         multiEventListener('mousemove', lineSVG, (e) => {
             if (selectedLine) {
                 const m = getMouseCoords(e);
-                selectedLine.pos = Math.floor(m[`${selectedLine.dir}Rel`] * sizeRatio - offset);
+                selectedLine.pos = Math.floor(m[`${selectedLine.dir}Rel`] * sizeRatio - selectedLine.offset);
                 moveLine(selectedLine);
             }
         });
