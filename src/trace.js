@@ -5,7 +5,7 @@ if ("serviceWorker" in navigator) {
         window.location.reload();
     });
 
-    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+    navigator.serviceWorker.register('./service-worker.js').then(registration => {
         registration.addEventListener('updatefound', () => {
             const installingWorker = registration.installing;
             installingWorker.addEventListener('statechange', () => {
