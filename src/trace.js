@@ -1,20 +1,26 @@
 'use strict';
 
-{ // version stuff
-    const VERSION = 8;
-    window.history.pushState({}, '', window.location.href.split('?')[0]);
-    fetch('https://usyless.pythonanywhere.com/api/version', {cache: 'no-store'})
-        .then((r) => r.json())
-        .then((r) => {
-            if (window.localStorage.getItem('update') !== 'true' && VERSION < parseInt(r['v'])) {
-                const b = document.getElementById('updateAvailable');
-                b.addEventListener('click', () => {
-                    window.localStorage.setItem('update', 'true');
-                    window.open(window.location.href + '?update', '_self'); // updates html
-                });
-                b.classList.remove('hidden');
-            }
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+    });
+
+    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+        registration.addEventListener('updatefound', () => {
+            const installingWorker = registration.installing;
+            installingWorker.addEventListener('statechange', () => {
+                if (installingWorker.state === 'installed') {
+                    if (navigator.serviceWorker.controller) {
+                        const b = document.getElementById('updateAvailable');
+                        b.addEventListener('click', () => {
+                            installingWorker.postMessage({ action: 'skipWaiting' });
+                        });
+                        b.classList.remove('hidden');
+                    }
+                }
+            });
         });
+    });
 }
 
 // global constants
