@@ -1,4 +1,4 @@
-const cacheName = 'v1';
+const cacheName = 'v2';
 
 contentToCache = [
     'favicon.ico',
@@ -37,7 +37,7 @@ self.addEventListener('fetch', (e) => {
     e.respondWith((async () => {
         const r = await caches.match(e.request);
         if (r) return r;
-        const response = await fetch(e.request);
+        const response = await fetch(e.request, {cache: "no-cache"});
         const cache = await caches.open(cacheName);
         cache.put(e.request, response.clone());
         return response;
