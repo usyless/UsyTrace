@@ -1,0 +1,16 @@
+{
+    "name": "UsyTrace",
+    "short_name": "usytrace",
+    "description": "App for frequency response image tracing.",
+    "icons": [
+        {
+            "src": "./favicon.ico",
+            "sizes": "32x32",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "./index.html",
+    "display": "standalone",
+    "theme_color": "#1e1f22",
+    "background_color": "#1e1f22"
+}
