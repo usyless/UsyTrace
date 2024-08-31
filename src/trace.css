@@ -22,6 +22,24 @@ body {
     position: absolute;
 }
 
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--background-tertiary);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--background-quaternary);
+}
+
+
 #overlay {
     height: 100vh;
     width: 100vw;
