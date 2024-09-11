@@ -12,7 +12,8 @@
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <meta name="keywords" content="usy, frequency response, frequency response trace, frequency response tracing, trace frequency response, trace graph">
     <link rel="manifest" href="usytrace.webmanifest"/>
-    <link rel="stylesheet" href="trace.css">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="popup.css">
 </head>
 <body>
 <noscript>
@@ -21,82 +22,54 @@
             This website will not function without JavaScript, please enable it to use the site.</h1>
     </div>
 </noscript>
-<div id="overlay" class="noOpacity">
-    <h1>Tracing In Progress</h1>
-</div>
 <div id="main">
     <div id="sidebar">
-        <div>
-            <h1>UsyTrace</h1>
-        </div>
-        <div class="sidebarSection divButton hidden" id="updateAvailable">
-            Update Available, click here to update.
-        </div>
-        <div onclick="fileInput.click()" class="divButton sidebarSection" id="imageInputDiv">
-            <input onchange="state.loadNewImage()" type='file' id='imageInput' class="hidden" multiple="multiple" accept="image/*"/>
-            Choose Images
+        <h1>UsyTrace</h1>
+        <button class="sidebarSection standardButton hidden" id="updateAvailable">
+            <b>Update Available, click here to update.</b>
+        </button>
+        <input type='file' id='imageInput' class="hidden" multiple="multiple" accept="image/*"/>
+        <button class="standardButton sidebarSection" id="imageInputDiv">
+            <b>Choose Images</b>
+        </button>
+        <div class="sidebarSection">
+            <button id="autoPath" class="standardButton" data-disabled>Auto Trace</button>
+            <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-disabled>Select Path</button>
+            <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-disabled>Add Point</button>
+            <button class="standardButton" data-disabled>Undo</button>
+            <button class="standardButton" data-disabled>Clear Path</button>
+            <button id="export" class="standardButton" data-disabled>Export Trace</button>
         </div>
         <div class="sidebarSection">
-            <div>
-                <button onclick="state.autoPath()" id="autoPath" class="disableme">Auto Trace</button>
+            <label for="SPLTop">Higher SPL (dB)</label>
+            <input type="number" id="SPLTop"/>
+            <div class="moveButtons" data-type="y-high">
+                <button class="standardButton" data-direction="1" data-disabled>▼</button>
+                <button class="standardButton" data-direction="-1" data-disabled>▲</button>
             </div>
-            <div>
-                <button onclick="state.togglePath()" id="selectPath" def="Select Path" alt="Stop Selecting" class="disableme">Select Path</button>
+
+            <label for="SPLBot">Lower SPL (dB)</label>
+            <input type="number" id="SPLBot"/>
+            <div class="moveButtons" data-type="y-low">
+                <button class="standardButton" data-direction="1" data-disabled>▼</button>
+                <button class="standardButton" data-direction="-1" data-disabled>▲</button>
             </div>
-            <div>
-                <button onclick="state.togglePoint()" id="selectPoint" def="Add Point" alt="Stop Adding Points" class="disableme">Add Point</button>
+
+            <label for="FRTop">Higher Frequency (Hz)</label>
+            <input type="number" id="FRTop"/>
+            <div class="moveButtons" data-type="x-high">
+                <button class="standardButton" data-direction="-1" data-disabled>◀</button>
+                <button class="standardButton" data-direction="1" data-disabled>▶</button>
             </div>
-            <div>
-                <button onclick="undo()" class="disableme">Undo</button>
+
+
+            <label for="FRBot">Lower Frequency (Hz)</label>
+            <input type="number" id="FRBot" min="0" onchange="minVal(this)"/>
+            <div class="moveButtons" data-type="x-low">
+                <button class="standardButton" data-direction="-1" data-disabled>◀</button>
+                <button class="standardButton" data-direction="1" data-disabled>▶</button>
             </div>
-            <div>
-                <button onclick="clearPathAndWorker()" class="disableme">Clear Path</button>
-            </div>
-            <div>
-                <button onclick="exportTrace()" id="export" class="disableme">Export Trace</button>
-            </div>
-        </div>
-        <div class="sidebarSection">
-            <div>
-                <div>
-                    <label for="SPLTop">Higher SPL (dB)</label>
-                    <input type="number" id="SPLTop"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="2" dir="1" class="disableme">▼</button>
-                    <button i="2" dir="-1" class="disableme">▲</button>
-                </div>
-            </div>
-            <div>
-                <div>
-                    <label for="SPLBot">Lower SPL (dB)</label>
-                    <input type="number" id="SPLBot"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="3" dir="1" class="disableme">▼</button>
-                    <button i="3" dir="-1" class="disableme">▲</button>
-                </div>
-            </div>
-            <div>
-                <div>
-                    <label for="FRTop">Higher Frequency (Hz)</label>
-                    <input type="number" id="FRTop"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="1" dir="-1" class="disableme">◀</button>
-                    <button i="1" dir="1" class="disableme">▶</button>
-                </div>
-            </div>
-            <div>
-                <div>
-                    <label for="FRBot">Lower Frequency (Hz)</label>
-                    <input type="number" id="FRBot" min="0" onchange="minVal(this)"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="0" dir="-1" class="disableme">◀</button>
-                    <button i="0" dir="1" class="disableme">▶</button>
-                </div>
-            </div>
+
             <div>
                 <label for="snap">Buttons snap to axis</label>
                 <input id="snap" type="checkbox" checked>
@@ -106,26 +79,16 @@
             </div>
         </div>
         <div class="sidebarSection">
-            <div>
-                <h3>Trace Settings</h3>
-            </div>
-            <div>
-                <label for="colourTolerance">Colour Tolerance</label>
-                <input type="number" id="colourTolerance" min="1" onchange="minVal(this)"/>
-            </div>
-            <div>
-                <label for="maxLineHeightOffset">Max Line Thickness Offset</label>
-                <input type="number" id="maxLineHeightOffset"/>
-            </div>
-            <div>
-                <label for="maxJumpOffset">Largest Contiguous Jump Offset</label>
-                <input type="number" id="maxJumpOffset"/>
-            </div>
+            <h3>Trace Settings</h3>
+            <label for="colourTolerance">Colour Tolerance</label>
+            <input type="number" id="colourTolerance" min="1" onchange="minVal(this)"/>
+            <label for="maxLineHeightOffset">Max Line Thickness Offset</label>
+            <input type="number" id="maxLineHeightOffset"/>
+            <label for="maxJumpOffset">Largest Contiguous Jump Offset</label>
+            <input type="number" id="maxJumpOffset"/>
         </div>
         <div class="sidebarSection">
-            <div>
-                <h3>Export Settings</h3>
-            </div>
+            <h3>Export Settings</h3>
             <div>
                 <label for="PPO">Points Per Octave (PPO)</label>
                 <select name="PPO" id="PPO">
@@ -143,26 +106,22 @@
                     <option value="space">Space</option>
                 </select>
             </div>
-            <div>
-                <label for="lowFRExport">Minimum Frequency (Hz)</label>
-                <input type="number" id="lowFRExport" min="1" onchange="minVal(this)"/>
-            </div>
-            <div>
-                <label for="highFRExport">Maximum Frequency (Hz)</label>
-                <input type="number" id="highFRExport"/>
-            </div>
+            <label for="lowFRExport">Minimum Frequency (Hz)</label>
+            <input type="number" id="lowFRExport" min="1" onchange="minVal(this)"/>
+            <label for="highFRExport">Maximum Frequency (Hz)</label>
+            <input type="number" id="highFRExport"/>
         </div>
-        <div onclick="restoreDefault()" class="divButton sidebarSection" id="restoreDefault">
-            <label>Restore Default Settings</label>
-        </div>
-        <div class="divButton sidebarSection">
-            <a href="https://github.com/usyless/UsyTrace?tab=readme-ov-file#general-use" target="_blank">Help/Repository</a>
-        </div>
+        <button class="sidebarSection standardButton" id="restoreDefault">
+            <b>Restore Default Settings</b>
+        </button>
+        <a class="sidebarSection standardButton" href="https://github.com/usyless/UsyTrace?tab=readme-ov-file#general-use" target="_blank">
+            <b>Help/Repository</b>
+        </a>
         <div class="sidebarSection">
-            <p>Report an issue or suggest features:</p>
-            <p>Discord: @usy_</p>
-            <p>Email: <a href="mailto:usy@usyless.uk">usy@usyless.uk</a></p>
-            <p>GitHub: <a href="https://github.com/usyless/UsyTrace/issues" target="_blank">usyless</a></p>
+            <div>Report an issue or suggest features:</div>
+            <div>Discord: @usy_</div>
+            <div>Email: <a href="mailto:usy@usyless.uk">usy@usyless.uk</a></div>
+            <div>GitHub: <a href="https://github.com/usyless/UsyTrace/issues" target="_blank">usyless</a></div>
         </div>
     </div>
 
@@ -192,6 +151,6 @@
     </div>
 </div>
 
-<script src='trace.js'></script>
+<script src="popups.js"></script>
 </body>
 </html>

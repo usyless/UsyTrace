@@ -1,0 +1,57 @@
+:root {
+    --primary: #1e1f22;
+    --secondary: #2b2d30;
+    --tertiary: #3d3f42;
+    --quaternary: #4c4d53;
+    --text-primary: #b6b6b6;
+    --disabled: #686868;
+
+    --radius-smaller: 5px;
+    --radius: 10px;
+    --radius-larger: 15px;
+
+    --spacing: 5px;
+    --spacing-smaller: 3px;
+    --spacing-larger: 8px;
+
+    --padding: 5px;
+    --padding-larger: 8px;
+    --padding-largest: 12px;
+
+    --border-width: 3px;
+}
+
+.pad {
+    padding: var(--padding);
+}
+
+.pad-larger {
+    padding: var(--padding-larger);
+}
+
+.standardButton {
+    outline: none;
+    border: none;
+    border-radius: var(--radius);
+    background-color: var(--secondary);
+    cursor: pointer;
+    transition: 0.1s;
+    padding: var(--padding-larger);
+}
+
+.standardButton:hover {
+    background-color: var(--tertiary);
+}
+
+.standardButton:active {
+    background: var(--quaternary);
+}
+
+.standardButton:disabled {
+    cursor: not-allowed;
+    background: var(--primary);
+}
+
+.hidden {
+    display: none;
+}

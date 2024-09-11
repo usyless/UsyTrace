@@ -1,0 +1,116 @@
+@import 'shared.css';
+
+* {
+    user-select: none;
+    color: var(--text-primary);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+body {
+    margin: 0;
+    background: var(--primary);
+    font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+}
+
+::-webkit-scrollbar {
+    width: var(--padding-larger);
+}
+
+::-webkit-scrollbar-track {
+    background: var(--secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--tertiary);
+    border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--quaternary);
+}
+
+#main {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+}
+
+#sidebar {
+    background-color: var(--secondary);
+    overflow-y: scroll;
+    min-width: 130px;
+    max-width: 200px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing-larger);
+    padding: var(--padding-larger);
+    overflow-x: hidden;
+}
+
+#sidebar h3 {
+    margin: var(--padding-larger);
+}
+
+.sidebarSection {
+    background-color: var(--primary);
+    border-radius: var(--radius);
+    padding: var(--padding-largest);
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing);
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.sidebarSection.standardButton {
+    background-color: var(--primary);
+    border: var(--border-width) solid var(--primary);
+}
+
+.moveButtons {
+    display: flex;
+    width: 100%;
+    column-gap: var(--spacing);
+}
+
+.moveButtons button {
+    flex-grow: 1;
+    padding: var(--padding);
+}
+
+input[type="number"] {
+    width: 100%;
+    text-align: left;
+}
+
+input[type="number"], select {
+    border: var(--border-width) solid var(--tertiary);
+    border-radius: var(--radius-smaller);
+    background-color: var(--primary);
+    transition: 0.1s;
+}
+
+input[type="number"]:hover, select:hover {
+    border-color: var(--background-quaternary);
+}
+
+input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--background-quaternary);
+}
+
+#main-content {
+    flex: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+
