@@ -127,25 +127,23 @@
 
     <div id="main-content">
         <div id="imageContainer">
-            <div id="inner-content">
+            <div id="imageContainerInner">
                 <div id="glass" class="hidden magnify"></div>
                 <img id='uploadedImage' src='' alt='' class="canvasSizing"/>
                 <svg id="lines" class="canvasSizing"></svg>
                 <svg id="trace" class="canvasSizing removePointerEvents">
                     <path stroke="#ff0000" fill="transparent" d=""></path>
                 </svg>
-                <h1 temp_thing="">Please Load Images (Or drop any images onto the page, or paste with Ctrl+V)</h1>
+                <h1 data-temp>Please Load Images (Or drop any images onto the page, or paste with Ctrl+V)</h1>
             </div>
         </div>
         <div id="imageQueueContainer">
             <div id="imageQueueBar">
-                <button id="toggleImageQueue" onclick="toggleImageQueue(this)">Hide</button>
-                <button id="removeImage" onclick="removeImage()">Remove</button>
+                <button id="toggleImageQueue" class="standardButton altButton">Hide</button>
+                <button id="removeImage" class="standardButton altButton">Remove</button>
             </div>
             <div id="imageQueueOuter">
-                <div id="imageQueueInner">
-
-                </div>
+                <div id="imageQueueInner"></div>
             </div>
         </div>
     </div>

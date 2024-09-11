@@ -18,12 +18,18 @@
     --border-width: 3px;
 }
 
-.pad {
-    padding: var(--spacing);
+button.altButton {
+    background-color: var(--tertiary);
+    padding: var(--spacing-smaller);
+    border-radius: 0;
 }
 
-.pad-larger {
-    padding: var(--spacing-larger);
+button.altButton:hover {
+    background-color: var(--quaternary);
+}
+
+button.altButton:active {
+    background-color: var(--tertiary);
 }
 
 .standardButton {
@@ -49,6 +55,39 @@
     background: var(--primary);
 }
 
-.hidden {
+.hidden, .hidden * {
     display: none;
+}
+
+.removePointerEvents, .removePointerEvents * {
+    pointer-events: none;
+}
+
+.crosshair_hover {
+    cursor: crosshair;
+}
+
+.not_allowed, .not_allowed * {
+    cursor: not-allowed;
+}
+
+.lowOpacity {
+    opacity: 0.2;
+}
+
+.noOpacity {
+    opacity: 0;
+}
+
+.magnify {
+    position: absolute;
+    border: 3px solid #000;
+    border-radius: 50%;
+    width: 2em;
+    height: 2em;
+    z-index: 9999999;
+}
+
+svg text {
+    fill: red;
 }

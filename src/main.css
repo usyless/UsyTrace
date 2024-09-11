@@ -111,6 +111,58 @@ input[type="number"]:focus, select:focus {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    width: 100%;
 }
 
+#imageContainer {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-largest);
+}
 
+#imageContainerInner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.canvasSizing {
+    position: absolute;
+    max-height: 100%;
+    max-width: 100%;
+}
+
+#imageQueueContainer {
+    width: 100%;
+    background-color: var(--secondary);
+    display: flex;
+    flex-direction: column;
+}
+
+#imageQueueBar {
+    background-color: var(--background-tertiary);
+    min-height: fit-content;
+    max-height: fit-content;
+    width: 100%;
+    display: flex;
+    column-gap: var(--spacing-smaller);
+}
+
+#imageQueueOuter {
+    background-color: var(--secondary);
+    max-height: 150px;
+    width: 100%;
+    height: 150px;
+    padding: var(--spacing-largest);
+}
+
+#imageQueueInner {
+    height: 100%;
+    overflow-x: scroll;
+}
