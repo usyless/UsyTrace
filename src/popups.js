@@ -5,6 +5,7 @@
      * @param confirmation whether to add cancel button that returns false
      */
     async function createPopup(textContent, confirmation = false) {
+        document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
         return new Promise((resolve) => {
             const page_overlay = document.createElement('div'),
                 center_div = document.createElement('div'),
@@ -15,6 +16,8 @@
                 ok_button = document.createElement('button'),
                 cancel_button = document.createElement('button');
 
+            page_overlay.setAttribute('usy-overlay', '');
+            center_div.setAttribute('usy-overlay', '');
             page_overlay.classList.add('fullscreen', 'dim');
             center_div.classList.add('fullscreen');
             main_div.classList.add('popupOuter');
