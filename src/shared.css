@@ -13,20 +13,17 @@
     --spacing: 5px;
     --spacing-smaller: 3px;
     --spacing-larger: 8px;
-
-    --padding: 5px;
-    --padding-larger: 8px;
-    --padding-largest: 12px;
+    --spacing-largest: 12px;
 
     --border-width: 3px;
 }
 
 .pad {
-    padding: var(--padding);
+    padding: var(--spacing);
 }
 
 .pad-larger {
-    padding: var(--padding-larger);
+    padding: var(--spacing-larger);
 }
 
 .standardButton {
@@ -36,7 +33,7 @@
     background-color: var(--secondary);
     cursor: pointer;
     transition: 0.1s;
-    padding: var(--padding-larger);
+    padding: var(--spacing-larger);
 }
 
 .standardButton:hover {

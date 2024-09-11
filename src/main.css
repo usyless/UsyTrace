@@ -14,7 +14,7 @@ body {
 }
 
 ::-webkit-scrollbar {
-    width: var(--padding-larger);
+    width: var(--spacing-larger);
 }
 
 ::-webkit-scrollbar-track {
@@ -48,18 +48,18 @@ body {
     display: flex;
     flex-direction: column;
     row-gap: var(--spacing-larger);
-    padding: var(--padding-larger);
+    padding: var(--spacing-larger);
     overflow-x: hidden;
 }
 
 #sidebar h3 {
-    margin: var(--padding-larger);
+    margin: var(--spacing-larger);
 }
 
 .sidebarSection {
     background-color: var(--primary);
     border-radius: var(--radius);
-    padding: var(--padding-largest);
+    padding: var(--spacing-largest);
     display: flex;
     flex-direction: column;
     row-gap: var(--spacing);
@@ -81,7 +81,7 @@ body {
 
 .moveButtons button {
     flex-grow: 1;
-    padding: var(--padding);
+    padding: var(--spacing);
 }
 
 input[type="number"] {
