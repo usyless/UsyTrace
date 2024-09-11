@@ -7,7 +7,7 @@ contentToCache = [
     'popups.js',
     'popups.css',
     'shared.css',
-    'trace.css',
+    'main.css',
     'worker.js',
     'a.out.wasm',
     'usytrace.webmanifest'
