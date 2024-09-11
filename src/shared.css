@@ -19,17 +19,17 @@
 }
 
 button.altButton {
-    background-color: var(--tertiary);
-    padding: var(--spacing-smaller);
+    background-color: var(--quaternary);
     border-radius: 0;
+    padding: var(--spacing-smaller) var(--spacing-larger);
 }
 
 button.altButton:hover {
-    background-color: var(--quaternary);
+    background-color: var(--disabled);
 }
 
 button.altButton:active {
-    background-color: var(--tertiary);
+    background-color: var(--quaternary);
 }
 
 .standardButton {
@@ -52,7 +52,11 @@ button.altButton:active {
 
 .standardButton:disabled {
     cursor: not-allowed;
-    background: var(--primary);
+    color: var(--disabled);
+}
+
+.standardButton:disabled:hover {
+    background-color: var(--primary);
 }
 
 .hidden, .hidden * {
