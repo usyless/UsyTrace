@@ -5,7 +5,7 @@
      * @param confirmation whether to add cancel button that returns false
      */
     async function createPopup(textContent, confirmation = false) {
-        document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
+        clearPopups();
         return new Promise((resolve) => {
             const page_overlay = document.createElement('div'),
                 center_div = document.createElement('div'),
@@ -55,7 +55,12 @@
         });
     }
 
+    function clearPopups() {
+        document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
+    }
+
     window.Popups = {
         createPopup: createPopup,
+        clearPopups: clearPopups
     }
 })();

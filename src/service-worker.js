@@ -3,7 +3,8 @@ const cacheName = 'v6';
 contentToCache = [
     'favicon.ico',
     'index.html',
-    'trace.js',
+    'main.js',
+    'updater.js',
     'popups.js',
     'popups.css',
     'shared.css',
