@@ -11,6 +11,7 @@ body {
     margin: 0;
     background: var(--primary);
     font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+    transition: 0.1s;
 }
 
 ::-webkit-scrollbar {
@@ -106,7 +107,7 @@ input[type="number"]:focus, select:focus {
 }
 
 #main-content {
-    flex: 2;
+    flex: 4;
     display: flex;
     justify-content: center;
     align-items: center;
