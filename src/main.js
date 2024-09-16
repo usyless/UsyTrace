@@ -1,5 +1,30 @@
 'use strict';
 
+// Defaults
+const defaults = {
+    "FRHigher": 20000,
+    "FRLower": 20,
+
+    "colourTolerance": 67,
+    "maxLineHeightOffset": 0,
+    "maxJumpOffset": 0,
+
+    "PPO": 48,
+    "delimitation": "tab",
+    "lowFRExport": 20,
+    "highFRExport": 20000,
+
+    "SPLHigher": "",
+    "SPLLower": "",
+}
+document.getElementById('restoreDefault').addEventListener('click', () => {
+    resetToDefault();
+    Popups.createPopup("Restored settings to default");
+});
+function resetToDefault() {
+    for (const val in defaults) document.getElementById(val).value = defaults[val];
+}
+
 // Global Variables
 let sizeRatio, width, height, CURRENT_MODE = null;
 
@@ -11,7 +36,6 @@ const lines = {
         yHigh: document.getElementById('yHigh'),
         yLow: document.getElementById('yLow'),
     },
-    lineArray: [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow],
     updateLinePosition: (line, position) => {
         const attr = line.dataset.direction
         line.nextElementSibling.setAttribute(attr, position);
@@ -34,6 +58,7 @@ const lines = {
         // TODO: set text params from image
     }
 }
+lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
 
 const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
@@ -54,14 +79,14 @@ const preferences = {
 
     snapToLines: () => document.getElementById('snapToLines').checked,
 
-    colourTolerance: () => document.getElementById('colourTolerance').value,
-    maxLineHeightOffset: () => document.getElementById('maxLineHeightOffset').value,
-    largestContiguousJumpOffset: () => document.getElementById('maxJumpOffset').value,
+    colourTolerance: () => document.getElementById('colourTolerance').value || defaults.colourTolerance,
+    maxLineHeightOffset: () => document.getElementById('maxLineHeightOffset').value || defaults.maxLineHeightOffset,
+    largestContiguousJumpOffset: () => document.getElementById('maxJumpOffset').value || defaults.maxJumpOffset,
 
-    PPO: () => document.getElementById('PPO').value,
-    delimitation: () => document.getElementById('delimitation').value,
-    lowFRExport: () => document.getElementById('lowFRExport').value,
-    highFRExport: () => document.getElementById('highFRExport').value,
+    PPO: () => document.getElementById('PPO').value || defaults.ppo,
+    delimitation: () => document.getElementById('delimitation').value || defaults.delimitation,
+    lowFRExport: () => document.getElementById('lowFRExport').value || defaults.lowFRExport,
+    highFRExport: () => document.getElementById('highFRExport').value || defaults.highFRExport,
 }
 
 const worker = {
@@ -123,61 +148,74 @@ const worker = {
             height: imageData.height
         }, [imageData.data.buffer]);
     },
-    clearTrace: (src) => {
+    clearTrace: () => {
         worker.worker.postMessage({
             type: 'clearTrace',
-            src: src,
+            src: image.src,
         });
     },
-    undoTrace: (src) => {
+    undoTrace: () => {
         worker.worker.postMessage({
             type: 'undoTrace',
-            src: src,
+            src: image.src,
         });
     },
-    exportTrace: (src) => {
-        worker.worker.postMessage({
+    exportTrace: () => {
+        const hasNullOrEmpty = (obj) => {
+            return Object.values(obj).some(value => {
+                if (value && typeof value === 'object') {
+                    return hasNullOrEmpty(value);
+                }
+                return value === null || value === '';
+            });
+        };
+        const data = {
             type: 'exportTrace',
-            src: src,
+            src: image.src,
             PPO: preferences.PPO(),
             delim: preferences.delimitation(),
             lowFR: preferences.lowFRExport(),
             highFR: preferences.highFRExport(),
-            SPL: { // TODO: implement getting value of lines easily
+            SPL: {
                 top: preferences.SPLHigher(),
-                topPixel: null,
+                topPixel: lines.getPosition(lines.lines.yHigh),
                 bottom: preferences.SPLLower(),
-                bottomPixel: null
+                bottomPixel: lines.getPosition(lines.lines.yLow)
             },
-            FR: { // TODO: implement getting value of lines easily
+            FR: {
                 top: preferences.FRHigher(),
-                topPixel: null,
+                topPixel: lines.getPosition(lines.lines.xHigh),
                 bottom: preferences.FRLower(),
-                bottomPixel: null,
+                bottomPixel: lines.getPosition(lines.lines.xLow),
             }
-        });
+        }
+        if (hasNullOrEmpty(data)) {
+            Popups.createPopup("Please Fill in all required values to export (SPL and FR values)");
+            return;
+        }
+        worker.worker.postMessage(data);
     },
-    addPoint: (src, x, y) => {
+    addPoint: (x, y) => {
         worker.worker.postMessage({
             type: 'addPoint',
-            src: src,
+            src: image.src,
             x: x,
             y: y
         });
     },
-    autoTrace: (src) => {
+    autoTrace: () => {
         worker.worker.postMessage({
             type: 'autoTrace',
-            src: src,
+            src: image.src,
             maxLineHeightOffset: preferences.maxLineHeightOffset(),
             maxJumpOffset: preferences.largestContiguousJumpOffset(),
             colourTolerance: preferences.colourTolerance(),
         });
     },
-    trace: (src, x, y) => {
+    trace: (x, y) => {
         worker.worker.postMessage({
             type: 'trace',
-            src: src,
+            src: image.src,
             x: x,
             y: y
         });
@@ -186,10 +224,10 @@ const worker = {
         // TODO: line stuff idk not implemented yet
         throw new Error("Not yet implemented");
     },
-    getPixelColour: (src, x, y) => {
+    getPixelColour: (x, y) => {
         worker.worker.postMessage({
             type: 'getPixelColour',
-            src: src,
+            src: image.src,
             x: x,
             y: y
         });
@@ -225,7 +263,7 @@ const buttons = {
     }
 
     for (const button of MODE_BUTTON_IDS) {
-        button.addEventListener('click', cb);
+        document.getElementById(button).addEventListener('click', cb);
     }
 }
 const graphs = {
@@ -251,6 +289,60 @@ const graphs = {
         imageMap.get(image.src).d = '';
     },
 }
+const imageQueue = {
+    elem: document.getElementById('imageQueueInner'),
+    removeSelectedImage: () => {
+        for (const i of imageQueue.elem.querySelectorAll('img[class="selectedImage"]')) i.classList.remove('selectedImage');
+    },
+    deleteImage: (img) => {
+        imageMap.delete(img.src);
+        worker.removeImage(img.src);
+        img.remove();
+    },
+    scrollToSelected: () => {
+        imageQueue.elem.querySelector('img[class="selectedImage"]').scrollIntoView({inline: 'center'});
+    },
+    addImage: (src, display=false) => {
+        const img = document.createElement('img'),
+            a = document.getElementById('imageQueueInner');
+        img.src = src;
+        imageMap.set(img.src, {
+            initial: true
+        });
+        img.addEventListener('dragstart', (e) => e.preventDefault());
+        img.addEventListener('click', (e) => {
+            // TODO: initialise website incase of last image
+            e.preventDefault();
+            e.stopPropagation();
+            image.src = src;
+            imageQueue.removeSelectedImage();
+            img.classList.add('selectedImage');
+        });
+        img.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            if (img.classList.contains('selectedImage')) {
+                let newImage = img.nextElementSibling;
+                if (!newImage) newImage = img.previousElementSibling;
+                if (!newImage) null; // TODO: initialise website incase of last image
+                else newImage.click();
+            }
+            imageQueue.deleteImage(img);
+        })
+        a.appendChild(img);
+        return img;
+    }
+}
+document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]').dispatchEvent(new Event('contextmenu')));
+document.getElementById('toggleImageQueue').addEventListener('click', (e) => {
+    const button = e.target, container = document.getElementById('imageQueueContainer');
+    if (button.textContent === button.dataset.active) {
+        button.textContent = button.dataset.default;
+        container.removeAttribute('style');
+    } else {
+        button.textContent = button.dataset.active;
+        container.style.marginBottom = '-150px';
+    }
+});
 
 // Initialise the page
 launch();
@@ -259,9 +351,11 @@ fileInput.loadFiles = (files) => {
     const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (validFiles.length > 0) {
         Popups.clearPopups();
-        for (const file of validFiles) {
-            console.log(file.name);
-        }
+        validFiles.forEach((file, index) => {
+            file = URL.createObjectURL(file);
+            if (index === validFiles.length - 1) imageQueue.addImage(file, true);
+            else imageQueue.addImage(file);
+        });
     }
     else Popups.createPopup("Invalid image/file(s) added!");
 }
@@ -270,6 +364,8 @@ fileInput.addEventListener('change', (e) => {
 });
 
 image.addEventListener('dragstart',(e) => e.preventDefault());
+
+document.getElementById('fileInputButton').addEventListener('click', () => fileInput.click());
 
 { // Pasting file stuff
     document.addEventListener('paste', (e) => {
@@ -303,18 +399,13 @@ image.addEventListener('dragstart',(e) => e.preventDefault());
         const parentRect = image.parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
         glass.style.left = `${m.x - parentRect.left}px`;
         glass.style.top = `${m.y - parentRect.top}px`;
-        worker.postMessage({
-            src: image.src,
-            type: 'getPixelColour',
-            x: m.xRel * sizeRatio,
-            y: m.yRel * sizeRatio
-        });
+        worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
         glass.classList.remove('hidden');
     });
     multiEventListener(['mouseup', 'mouseleave', 'mouseout', 'touchend', 'touchcancel'], image, () => glass.classList.add('hidden'));
 }
 
-{ // Move canvas lines with mouse
+{ // Move canvas lines
     let selectedLine = null, getCoords = image.getMouseCoords;
 
     lines.parent.addEventListener('pointerdown', (e) => {
@@ -344,16 +435,14 @@ window.addEventListener('resize', () => {
 });
 
 // where everything starts
-image.addEventListener('load', (e) => {
+image.addEventListener('load', () => {
     document.getElementById('defaultMainText').classList.add('hidden');
     buttons.enableButtons();
     width = image.naturalWidth;
     height = image.naturalHeight;
     graphs.updateSize();
+    // TODO: auto stuff, reloading previous image stuff
 });
-function resetToDefault() {
-    for (const val in defaults) document.getElementById(val).value = defaults[val];
-}
 
 // Helper Functions
 function multiEventListener(events, target, callback) {
@@ -371,10 +460,6 @@ function initAll() {
 
 function launch() {
     initAll();
-    for (const line of graphs.lines) {
-        if (line.dataset.diretion === "x") line.pos = () => line.getAttribute('x1');
-        else line.pos = () => line.getAttribute('y1');
-    }
 }
 
 function updateSizeRatio() {
@@ -385,31 +470,3 @@ function updateSizeRatio() {
 function minVal(e) {
     if (e.value < e.min) e.value = e.min;
 }
-
-// Defaults
-(() => {
-    const defaults = {
-        "FRHigher": 20000,
-        "FRLower": 20,
-
-        "colourTolerance": 67,
-        "maxLineHeightOffset": 0,
-        "maxJumpOffset": 0,
-
-        "PPO": 48,
-        "delimitation": "tab",
-        "lowFRExport": 20,
-        "highFRExport": 20000,
-
-        "SPLHigher": "",
-        "SPLLower": "",
-    }
-    document.getElementById('restoreDefault').addEventListener('click', () => {
-        resetToDefault();
-        Popups.createPopup("Restored settings to default");
-    });
-    function resetToDefault() {
-        for (const val in defaults) document.getElementById(val).value = defaults[val];
-    }
-    window.resetToDefault = resetToDefault;
-})();

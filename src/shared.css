@@ -95,3 +95,7 @@ button.altButton:active {
 svg text {
     fill: red;
 }
+
+.selectedImage {
+    outline: 5px solid red;
+}

@@ -1,5 +1,9 @@
 @import 'shared.css';
 
+:root {
+    --sidebar-min-width: 130px;
+}
+
 * {
     user-select: none;
     color: var(--text-primary);
@@ -43,7 +47,7 @@ body {
 #sidebar {
     background-color: var(--secondary);
     overflow-y: scroll;
-    min-width: 130px;
+    min-width: var(--sidebar-min-width);
     max-width: 200px;
     flex: 1;
     display: flex;
@@ -112,7 +116,7 @@ input[type="number"]:focus, select:focus {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    width: 100%;
+    width: calc(100% - var(--sidebar-min-width));
 }
 
 #imageContainer {
@@ -144,6 +148,7 @@ input[type="number"]:focus, select:focus {
     background-color: var(--secondary);
     display: flex;
     flex-direction: column;
+    transition: 0.3s !important;
 }
 
 #imageQueueBar {
@@ -158,12 +163,22 @@ input[type="number"]:focus, select:focus {
 #imageQueueOuter {
     background-color: var(--secondary);
     max-height: 150px;
+    min-height: 150px;
     width: 100%;
     height: 150px;
     padding: var(--spacing-largest);
+    overflow-x: scroll;
 }
 
 #imageQueueInner {
     height: 100%;
-    overflow-x: scroll;
+    display: flex;
+    column-gap: var(--spacing-largest);
+    min-width: fit-content;
+    padding-right: var(--spacing-largest);
+}
+
+#imageQueueInner img {
+    max-height: 100%;
+    cursor: pointer;
 }

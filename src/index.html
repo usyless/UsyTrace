@@ -29,7 +29,7 @@
             <b>Update Available, click here to update.</b>
         </button>
         <input type='file' id='fileInput' class="hidden" multiple="multiple" accept="image/*"/>
-        <button class="standardButton sidebarSection" id="imageInputDiv">
+        <button class="standardButton sidebarSection" id="fileInputButton">
             <b>Choose Images</b>
         </button>
         <div class="sidebarSection">
@@ -148,7 +148,7 @@
         </div>
         <div id="imageQueueContainer">
             <div id="imageQueueBar">
-                <button id="toggleImageQueue" class="standardButton altButton">Hide</button>
+                <button id="toggleImageQueue" class="standardButton altButton" data-default="Hide" data-active="Show">Hide</button>
                 <button id="removeImage" class="standardButton altButton">Remove</button>
             </div>
             <div id="imageQueueOuter">
