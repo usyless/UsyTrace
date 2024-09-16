@@ -37,7 +37,7 @@ const lines = {
         yLow: document.getElementById('yLow'),
     },
     updateLinePosition: (line, position) => {
-        const attr = line.dataset.direction
+        const attr = line.dataset.direction;
         line.nextElementSibling.setAttribute(attr, position);
         line.setAttribute(`${attr}1`, position);
         line.setAttribute(`${attr}2`, position);
@@ -48,14 +48,30 @@ const lines = {
     },
     getPosition: (line) => parseFloat(line.getAttribute(`${line.dataset.direction}1`)),
     setPosition: (line, position) => {
-        const ls = lines.lines, otherLinePos = lines.getPosition(ls[line.dataset.other]);
-        if (line === ls.xHigh || line === ls.yLow) lines.updateLinePosition(line, Math.max(otherLinePos + 1, Math.min(width - 1, position)));
+        const ls = lines.lines, otherLinePos = lines.getPosition(ls[line.dataset.other]), sizeAttr = line.dataset.direction === 'x' ? width : height;
+        if (line === ls.xHigh || line === ls.yLow) lines.updateLinePosition(line, Math.max(otherLinePos + 1, Math.min(sizeAttr - 1, position)));
         else lines.updateLinePosition(line, Math.max(1, Math.min(otherLinePos - 1, position)));
     },
     showLines: () => lines.parent.classList.remove('hidden'),
     hideLines: () => lines.parent.classList.add('hidden'),
     initialise: () => {
-        // TODO: set text params from image
+        lines.setPosition(lines.lines.xHigh, width);
+        lines.lines.xHigh.setAttribute('y1', 0);
+        lines.lines.xHigh.setAttribute('y2', height);
+        lines.lines.xHigh.nextElementSibling.setAttribute('y', height / 2);
+        lines.setPosition(lines.lines.xLow, 0);
+        lines.lines.xLow.setAttribute('y1', 0);
+        lines.lines.xLow.setAttribute('y2', height);
+        lines.lines.xLow.nextElementSibling.setAttribute('y', height / 2);
+        lines.setPosition(lines.lines.yHigh, 0);
+        lines.lines.yHigh.setAttribute('x1', 0);
+        lines.lines.yHigh.setAttribute('x2', width);
+        lines.lines.yHigh.nextElementSibling.setAttribute('x', width / 2);
+        lines.setPosition(lines.lines.yLow, height);
+        lines.lines.yLow.setAttribute('x1', 0);
+        lines.lines.yLow.setAttribute('x2', width);
+        lines.lines.yLow.nextElementSibling.setAttribute('x', width / 2);
+        lines.showLines();
     }
 }
 lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
@@ -69,6 +85,20 @@ image.getMouseCoords = (e) => {
         xRel: x - r.left,
         yRel: y - r.top
     }
+}
+image.saveLines = () => {
+    const imageData = imageMap.get(image.src);
+    if (imageData) imageData.lines = lines.parent.outerHTML;
+}
+image.loadLines = () => {
+    lines.parent.outerHTML = imageMap.get(image.src).lines;
+    lines.parent = document.getElementById('lines');
+    lines.lines.xHigh = document.getElementById('xHigh');
+    lines.lines.xLow = document.getElementById('xLow');
+    lines.lines.yHigh = document.getElementById('yHigh');
+    lines.lines.yLow = document.getElementById('yLow');
+    lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
+    lines.showLines();
 }
 
 const preferences = {
@@ -96,7 +126,7 @@ const worker = {
         worker.onmessage = (e) => {
             const data = e.data, imgData = imageMap.get(data.src);
 
-            if (data.svg) imgData.d = data.svg;
+            if (data.svg) imgData.path = data.svg;
             if (data.line) imgData.lines[data.line.i] = data.line;
             if (data.colour) imgData.colour = data.colour;
 
@@ -190,7 +220,7 @@ const worker = {
             }
         }
         if (hasNullOrEmpty(data)) {
-            Popups.createPopup("Please Fill in all required values to export (SPL and FR values)");
+            Popups.createPopup("Please fill in all required values to export (SPL and FR values)");
             return;
         }
         worker.worker.postMessage(data);
@@ -234,38 +264,6 @@ const worker = {
     }
 }
 
-const imageMap = new Map();
-const fileInput = document.getElementById('fileInput');
-const buttons = {
-    resetButtons: () => {
-        document.querySelectorAll('[data-default]').forEach((e) => {
-            e.textContent = e.dataset.default;
-        });
-    },
-    enableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {
-            e.disabled = false;
-        });
-    }
-}
-{ // Handling modes with buttons
-    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
-    const cb = (t) => {
-        const button = t.target, mode = button.dataset.mode;
-        buttons.resetButtons();
-        if (CURRENT_MODE === mode) {
-            CURRENT_MODE = null;
-        } else {
-            button.textContent = button.dataset.active;
-            CURRENT_MODE = mode;
-        }
-        document.dispatchEvent(new CustomEvent('modeChange'));
-    }
-
-    for (const button of MODE_BUTTON_IDS) {
-        document.getElementById(button).addEventListener('click', cb);
-    }
-}
 const graphs = {
     updateSize: () => {
         document.querySelectorAll('svg').forEach((e) => {
@@ -281,13 +279,55 @@ const graphs = {
         path.setAttribute('stroke-width', width);
     },
     clearTracePath: () => {
-        this.setTracePath('', '#ff0000', 0);
+        graphs.setTracePath('', '#ff0000', 0);
     },
     clearTracePathAndWorker: () => {
-        this.clearTracePath();
-        worker.postMessage({src: image.src, type: "clearTrace"});
-        imageMap.get(image.src).d = '';
+        graphs.clearTracePath();
+        worker.clearTrace();
+        imageMap.get(image.src).path = '';
     },
+}
+
+document.getElementById('autoPath').addEventListener('click', worker.autoTrace);
+document.getElementById('undo').addEventListener('click', worker.undoTrace);
+document.getElementById('clearPath').addEventListener('click', graphs.clearTracePathAndWorker);
+document.getElementById('export').addEventListener('click', worker.exportTrace);
+
+const imageMap = new Map();
+const fileInput = document.getElementById('fileInput');
+const buttons = {
+    resetButtons: () => {
+        document.querySelectorAll('[data-default]').forEach((e) => {
+            e.textContent = e.dataset.default;
+        });
+        CURRENT_MODE = null;
+    },
+    enableButtons: () => {
+        document.querySelectorAll('[data-disabled]').forEach((e) => {
+            e.disabled = false;
+        });
+        CURRENT_MODE = null;
+    }
+}
+{ // Handling modes with buttons
+    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
+    const cb = (t) => {
+        const button = t.target, mode = button.dataset.mode;
+        buttons.resetButtons();
+        if (CURRENT_MODE === mode) {
+            CURRENT_MODE = null;
+            lines.showLines();
+        } else {
+            button.textContent = button.dataset.active;
+            CURRENT_MODE = mode;
+            lines.hideLines();
+        }
+        document.dispatchEvent(new CustomEvent('modeChange'));
+    }
+
+    for (const button of MODE_BUTTON_IDS) {
+        document.getElementById(button).addEventListener('click', cb);
+    }
 }
 const imageQueue = {
     elem: document.getElementById('imageQueueInner'),
@@ -312,6 +352,7 @@ const imageQueue = {
         });
         img.addEventListener('dragstart', (e) => e.preventDefault());
         img.addEventListener('click', (e) => {
+            image.saveLines();
             imageLoadedDefault();
             e.preventDefault();
             e.stopPropagation();
@@ -398,7 +439,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 }
 
 { // magnifying glass stuff
-    image.addEventListener('mousemove', (e) => {
+    image.addEventListener('pointermove', (e) => {
         e.preventDefault();
         const parentRect = image.parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
         glass.style.left = `${m.x - parentRect.left}px`;
@@ -406,7 +447,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
         worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
         glass.classList.remove('hidden');
     });
-    multiEventListener(['mouseup', 'mouseleave', 'mouseout', 'touchend', 'touchcancel'], image, () => glass.classList.add('hidden'));
+    multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], image, () => glass.classList.add('hidden'));
 }
 
 { // Move canvas lines
@@ -419,12 +460,12 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
             y: height * 0.02
         }
         for (const line of lines.lineArray) line.offset = m[`${line.dataset.direction}Rel`] * sizeRatio - lines.getPosition(line);
-        const closest = lines.reduce((acc, curr) => Math.abs(curr.offset) < Math.abs(acc.offset) ? curr : acc, lines[0]);
+        const closest = lines.lineArray.reduce((acc, curr) => Math.abs(curr.offset) < Math.abs(acc.offset) ? curr : acc, lines.lineArray[0]);
         if (Math.abs(closest.offset) < sizes[closest.dataset.direction]) selectedLine = closest;
     });
 
     lines.parent.addEventListener('pointermove', (e) => {
-        if (selectedLine) lines.setPosition(selectedLine, getCoords(e)[`${selectedLine.dir}Rel`] * sizeRatio - selectedLine.offset);
+        if (selectedLine) lines.setPosition(selectedLine, getCoords(e)[`${selectedLine.dataset.direction}Rel`] * sizeRatio - selectedLine.offset);
     });
 
     multiEventListener(['pointerup', 'pointerleave'], lines.parent, (e) => {
@@ -444,8 +485,22 @@ image.addEventListener('load', () => {
     width = image.naturalWidth;
     height = image.naturalHeight;
     graphs.updateSize();
+    graphs.clearTracePath();
     updateSizeRatio();
-    // TODO: auto stuff, reloading previous image stuff
+
+    const imageData = imageMap.get(image.src);
+    if (imageData.initial) {
+        worker.addImage(image.src, width, height);
+        imageData.path = '';
+        lines.initialise();
+        imageData.initial = false;
+        // SNAP LINES
+        // AUTO TRACE
+    } else {
+        image.loadLines();
+        graphs.setTracePath(imageData.path, imageData.colour, height * 0.005);
+    }
+    lines.updateLineWidth();
 });
 
 // Helper Functions

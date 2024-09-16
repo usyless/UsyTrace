@@ -36,8 +36,8 @@
             <button id="autoPath" class="standardButton" data-disabled>Auto Trace</button>
             <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" data-disabled>Select Path</button>
             <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" data-disabled>Add Point</button>
-            <button class="standardButton" data-disabled>Undo</button>
-            <button class="standardButton" data-disabled>Clear Path</button>
+            <button id="undo" class="standardButton" data-disabled>Undo</button>
+            <button id="clearPath" class="standardButton" data-disabled>Clear Path</button>
             <button id="export" class="standardButton" data-disabled>Export Trace</button>
         </div>
         <div class="sidebarSection">
@@ -132,13 +132,13 @@
                 <img id='uploadedImage' src='' alt='' class="canvasSizing"/>
                 <svg id="lines" class="canvasSizing hidden">
                     <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xLow" data-other="xHigh"></line>
-                    <text x="0" y="0" dx="-1em" text-anchor="middle">Low</text>
+                    <text x="0" y="0" dx="1em" text-anchor="middle">Low</text>
                     <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xHigh" data-other="xLow"></line>
-                    <text x="0" y="0" dx="1em" text-anchor="middle">High</text>
+                    <text x="0" y="0" dx="-1em" text-anchor="middle">High</text>
                     <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yHigh" data-other="yLow"></line>
-                    <text x="0" y="0" text-anchor="middle">High</text>
+                    <text x="0" y="0" dy="0.6em" text-anchor="middle">High</text>
                     <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yLow" data-other="yHigh"></line>
-                    <text x="0" y="0" dy="0.6em" text-anchor="middle">Low</text>
+                    <text x="0" y="0" text-anchor="middle">Low</text>
                 </svg>
                 <svg id="trace" class="canvasSizing removePointerEvents">
                     <path stroke="#ff0000" fill="transparent" d=""></path>
