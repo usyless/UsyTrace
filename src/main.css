@@ -117,6 +117,7 @@ input[type="number"]:focus, select:focus {
     align-items: center;
     flex-direction: column;
     width: calc(100% - var(--sidebar-min-width));
+    position: relative;
 }
 
 #imageContainer {
@@ -149,6 +150,8 @@ input[type="number"]:focus, select:focus {
     display: flex;
     flex-direction: column;
     transition: 0.3s !important;
+    position: absolute;
+    bottom: 0;
 }
 
 #imageQueueBar {
