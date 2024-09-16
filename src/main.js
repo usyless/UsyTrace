@@ -1,7 +1,38 @@
 'use strict';
 
 // Global Variables
-let sizeRatio, width, height;
+let sizeRatio, width, height, CURRENT_MODE = null;
+
+const lines = {
+    parent: document.getElementById('lines'),
+    lines: {
+        xHigh: document.getElementById('xHigh'),
+        xLow: document.getElementById('xLow'),
+        yHigh: document.getElementById('yHigh'),
+        yLow: document.getElementById('yLow'),
+    },
+    updateLinePosition: (line, position) => {
+        const attr = line.dataset.direction
+        line.nextElementSibling.setAttribute(attr, position);
+        line.setAttribute(`${attr}1`, position);
+        line.setAttribute(`${attr}2`, position);
+    },
+    updateLineWidth: (line, width) => {
+        for (const line of lines.parent.querySelectorAll('line')) line.setAttribute('stroke-width', sizeRatio);
+        for (const text of lines.parent.querySelectorAll('text')) text.setAttribute('font-size', `${1.3 * sizeRatio}em`);
+    },
+    getPosition: (line) => parseFloat(line.getAttribute(`${line.dataset.direction}1`)),
+    setPosition: (line, position) => {
+        const ls = lines.lines, otherLinePos = lines.getPosition(ls[line.dataset.other]);
+        if (line === ls.xHigh || line === ls.yLow) lines.updateLinePosition(line, Math.max(otherLinePos + 1, Math.min(width - 1, position)));
+        else lines.updateLinePosition(line, Math.max(1, Math.min(otherLinePos - 1, position)));
+    },
+    showLines: () => lines.parent.classList.remove('hidden'),
+    hideLines: () => lines.parent.classList.add('hidden'),
+    initialise: () => {
+        // TODO: set text params from image
+    }
+}
 
 const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
@@ -178,9 +209,25 @@ const buttons = {
         });
     }
 }
+{ // Handling modes with buttons
+    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
+    const cb = (t) => {
+        const button = t.target, mode = button.dataset.mode;
+        buttons.resetButtons();
+        if (CURRENT_MODE === mode) {
+            CURRENT_MODE = null;
+        } else {
+            button.textContent = button.dataset.active;
+            CURRENT_MODE = mode;
+        }
+        document.dispatchEvent(new CustomEvent('modeChange'));
+    }
+
+    for (const button of MODE_BUTTON_IDS) {
+        button.addEventListener('click', cb);
+    }
+}
 const graphs = {
-    lineSVG: document.getElementById('lines'),
-    lines: this.lineSVG.querySelectorAll('line'),
     updateSize: () => {
         document.querySelectorAll('svg').forEach((e) => {
             e.setAttribute("width", width);
@@ -202,33 +249,6 @@ const graphs = {
         worker.postMessage({src: image.src, type: "clearTrace"});
         imageMap.get(image.src).d = '';
     },
-    clearLines: () => {
-        this.lineSVG.classList.add('hidden');
-    },
-    updateLineWidth: () => {
-        for (const line of this.lines) line.setAttribute('stroke-width', sizeRatio);
-        for (const text of this.lineSVG.querySelectorAll('text')) text.setAttribute('font-size', `${1.3 * sizeRatio}em`);
-    },
-    updateLine: (line) => {
-        l.nextElementSibling.setAttribute(line.dir, line.pos);
-        l.setAttribute('x1', x1);
-        l.setAttribute('y1', y1);
-        l.setAttribute('x2', x2);
-        l.setAttribute('y2', y2);
-    },
-    moveLine: (line) => {
-        const other = lineSVG.querySelector(`line[dir="${line.dir}"]:not([type="${line.type}"])`),
-            l = lineSVG.querySelector(`line[dir="${line.dir}"][type="${line.type}"]`);
-        if (line.dir === 'x') {
-            if (line.type === 'High') line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('x1')) + 1, Math.min(width - 1, line.pos)));
-            else line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('x1')) - 1, line.pos)));
-            updateLine(l, line, line.pos, '0', line.pos, height);
-        } else {
-            if (line.type === 'High') line.pos = Math.floor(Math.max(1, Math.min(parseInt(other.getAttribute('y1')) - 1, line.pos)));
-            else line.pos = Math.ceil(Math.max(parseInt(other.getAttribute('y1')) + 1, Math.min(height - 1, line.pos)));
-            updateLine(l, line, '0', line.pos, width, line.pos);
-        }
-    }
 }
 
 // Initialise the page
@@ -323,7 +343,7 @@ image.addEventListener('dragstart',(e) => e.preventDefault());
 
 window.addEventListener('resize', () => {
     updateSizeRatio();
-    graphs.updateLineWidth();
+    lines.updateLineWidth();
 });
 
 // where everything starts
@@ -358,8 +378,6 @@ function launch() {
         if (line.dataset.diretion === "x") line.pos = () => line.getAttribute('x1');
         else line.pos = () => line.getAttribute('y1');
     }
-
-
 }
 
 function updateSizeRatio() {
