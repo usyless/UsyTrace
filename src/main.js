@@ -314,28 +314,24 @@ image.addEventListener('dragstart',(e) => e.preventDefault());
 }
 
 { // Move canvas lines with mouse
-    let selectedLine = null, getCoords = image.getMouseCoords;
+    let selectedLine = null, getCoords = image.getMouseCoords, linesArr = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow], position = lines.getPosition;
 
-    graphs.lineSVG.addEventListener('pointerdown', (e) => {
+    lines.parent.addEventListener('pointerdown', (e) => {
         const m = getCoords(e);
         const sizes = {
             x: width * 0.02,
             y: height * 0.02
         }
-        for (const line of graphs.lines) line.offset = m[`${line.dataset.direction}Rel`] * sizeRatio - line.pos;
+        for (const line of linesArr) line.offset = m[`${line.dataset.direction}Rel`] * sizeRatio - position(line);
         const closest = lines.reduce((acc, curr) => Math.abs(curr.offset) < Math.abs(acc.offset) ? curr : acc, lines[0]);
-        if (Math.abs(closest.offset) < sizes[closest.dir]) selectedLine = closest;
+        if (Math.abs(closest.offset) < sizes[closest.dataset.direction]) selectedLine = closest;
     });
 
-    graphs.lineSVG.addEventListener('pointermove', (e) => {
-        if (selectedLine) {
-            const m = getCoords(e);
-            selectedLine.pos = Math.floor(m[`${selectedLine.dir}Rel`] * sizeRatio - selectedLine.offset);
-            moveLine(selectedLine);
-        }
+    lines.parent.addEventListener('pointermove', (e) => {
+        if (selectedLine) lines.setPosition(selectedLine, getCoords(e)[`${selectedLine.dir}Rel`] * sizeRatio - selectedLine.offset);
     });
 
-    multiEventListener(['pointerup', 'pointerleave'], graphs.lineSVG, (e) => {
+    multiEventListener(['pointerup', 'pointerleave'], lines.parent, (e) => {
         e.preventDefault();
         selectedLine = null;
     });
