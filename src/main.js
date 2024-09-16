@@ -11,6 +11,7 @@ const lines = {
         yHigh: document.getElementById('yHigh'),
         yLow: document.getElementById('yLow'),
     },
+    lineArray: [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow],
     updateLinePosition: (line, position) => {
         const attr = line.dataset.direction
         line.nextElementSibling.setAttribute(attr, position);
@@ -314,7 +315,7 @@ image.addEventListener('dragstart',(e) => e.preventDefault());
 }
 
 { // Move canvas lines with mouse
-    let selectedLine = null, getCoords = image.getMouseCoords, linesArr = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow], position = lines.getPosition;
+    let selectedLine = null, getCoords = image.getMouseCoords;
 
     lines.parent.addEventListener('pointerdown', (e) => {
         const m = getCoords(e);
@@ -322,7 +323,7 @@ image.addEventListener('dragstart',(e) => e.preventDefault());
             x: width * 0.02,
             y: height * 0.02
         }
-        for (const line of linesArr) line.offset = m[`${line.dataset.direction}Rel`] * sizeRatio - position(line);
+        for (const line of lines.lineArray) line.offset = m[`${line.dataset.direction}Rel`] * sizeRatio - lines.getPosition(line);
         const closest = lines.reduce((acc, curr) => Math.abs(curr.offset) < Math.abs(acc.offset) ? curr : acc, lines[0]);
         if (Math.abs(closest.offset) < sizes[closest.dataset.direction]) selectedLine = closest;
     });
