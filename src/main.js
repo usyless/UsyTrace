@@ -42,7 +42,7 @@ const lines = {
         line.setAttribute(`${attr}1`, position);
         line.setAttribute(`${attr}2`, position);
     },
-    updateLineWidth: (line, width) => {
+    updateLineWidth: () => {
         for (const line of lines.parent.querySelectorAll('line')) line.setAttribute('stroke-width', sizeRatio);
         for (const text of lines.parent.querySelectorAll('text')) text.setAttribute('font-size', `${1.3 * sizeRatio}em`);
     },
@@ -298,6 +298,7 @@ const imageQueue = {
         imageMap.delete(img.src);
         worker.removeImage(img.src);
         img.remove();
+        if (imageQueue.elem.children.length <= 0) image.src = '';
     },
     scrollToSelected: () => {
         imageQueue.elem.querySelector('img[class="selectedImage"]').scrollIntoView({inline: 'center'});
@@ -311,7 +312,7 @@ const imageQueue = {
         });
         img.addEventListener('dragstart', (e) => e.preventDefault());
         img.addEventListener('click', (e) => {
-            // TODO: initialise website incase of last image
+            imageLoadedDefault();
             e.preventDefault();
             e.stopPropagation();
             image.src = src;
@@ -323,24 +324,27 @@ const imageQueue = {
             if (img.classList.contains('selectedImage')) {
                 let newImage = img.nextElementSibling;
                 if (!newImage) newImage = img.previousElementSibling;
-                if (!newImage) null; // TODO: initialise website incase of last image
+                if (!newImage) initAll();
                 else newImage.click();
             }
             imageQueue.deleteImage(img);
         })
         a.appendChild(img);
+        if (display) img.click();
         return img;
     }
 }
 document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]').dispatchEvent(new Event('contextmenu')));
 document.getElementById('toggleImageQueue').addEventListener('click', (e) => {
-    const button = e.target, container = document.getElementById('imageQueueContainer');
+    const button = e.target, container = document.getElementById('imageQueueContainer'), imageContainer = document.getElementById('imageContainer');
     if (button.textContent === button.dataset.active) {
         button.textContent = button.dataset.default;
         container.removeAttribute('style');
+        imageContainer.classList.remove('expand');
     } else {
         button.textContent = button.dataset.active;
         container.style.marginBottom = '-150px';
+        imageContainer.classList.add('expand');
     }
 });
 
@@ -436,11 +440,11 @@ window.addEventListener('resize', () => {
 
 // where everything starts
 image.addEventListener('load', () => {
-    document.getElementById('defaultMainText').classList.add('hidden');
-    buttons.enableButtons();
+    imageLoadedDefault();
     width = image.naturalWidth;
     height = image.naturalHeight;
     graphs.updateSize();
+    updateSizeRatio();
     // TODO: auto stuff, reloading previous image stuff
 });
 
@@ -450,10 +454,16 @@ function multiEventListener(events, target, callback) {
     events.forEach((ev) => target.addEventListener(ev, callback));
 }
 
+function imageLoadedDefault() {
+    document.getElementById('defaultMainText').classList.add('hidden');
+    buttons.enableButtons();
+    buttons.resetButtons();
+}
+
 function initAll() {
     document.getElementById('defaultMainText').classList.remove('hidden');
     document.querySelectorAll('[data-disabled]').forEach((elem) => {elem.disabled = true;});
-    document.querySelectorAll('line').forEach((elem) => elem.classList.add('hidden'));
+    lines.hideLines();
     buttons.resetButtons();
     resetToDefault();
 }

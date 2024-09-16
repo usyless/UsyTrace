@@ -2,6 +2,8 @@
 
 :root {
     --sidebar-min-width: 130px;
+    --image-queue-height: 172px;
+    --image-queue-bar-height: 22px;
 }
 
 * {
@@ -127,6 +129,12 @@ input[type="number"]:focus, select:focus {
     justify-content: center;
     align-items: center;
     padding: var(--spacing-largest);
+    margin-bottom: var(--image-queue-height);
+    transition: 0.3s;
+}
+
+#imageContainer.expand {
+    margin-bottom: var(--image-queue-bar-height);
 }
 
 #imageContainerInner {
@@ -146,6 +154,9 @@ input[type="number"]:focus, select:focus {
 
 #imageQueueContainer {
     width: 100%;
+    height: var(--image-queue-height);
+    max-height: var(--image-queue-height);
+    min-height: var(--image-queue-height);
     background-color: var(--secondary);
     display: flex;
     flex-direction: column;
@@ -156,8 +167,8 @@ input[type="number"]:focus, select:focus {
 
 #imageQueueBar {
     background-color: var(--tertiary);
-    min-height: fit-content;
-    max-height: fit-content;
+    min-height: var(--image-queue-bar-height);
+    max-height: var(--image-queue-bar-height);
     width: 100%;
     display: flex;
     column-gap: var(--spacing-smaller);
