@@ -335,7 +335,7 @@ const imageQueue = {
         if (imageQueue.elem.children.length <= 0) image.src = '';
     },
     scrollToSelected: () => {
-        imageQueue.elem.querySelector('img[class="selectedImage"]').scrollIntoView({inline: 'center'});
+        imageQueue.elem.querySelector('img[class="selectedImage"]').scrollIntoView({inline: 'center', behavior: 'smooth'});
     },
     addImage: (src, display=false) => {
         const img = document.createElement('img'),
@@ -353,6 +353,7 @@ const imageQueue = {
             image.src = src;
             imageQueue.removeSelectedImage();
             img.classList.add('selectedImage');
+            imageQueue.scrollToSelected();
         });
         img.addEventListener('contextmenu', (e) => {
             e.preventDefault();
@@ -365,7 +366,10 @@ const imageQueue = {
             imageQueue.deleteImage(img);
         })
         a.appendChild(img);
-        if (display) img.click();
+        if (display) {
+            img.click();
+            setTimeout(() => imageQueue.scrollToSelected(), 50);
+        }
         return img;
     }
 }
