@@ -372,21 +372,22 @@ const imageQueue = {
             setTimeout(() => imageQueue.scrollToSelected(), 50);
         }
         return img;
+    },
+    toggle: (e) => {
+        const button = e.target, container = document.getElementById('imageQueueContainer'), imageContainer = document.getElementById('imageContainer');
+        if (button.textContent === button.dataset.active) {
+            button.textContent = button.dataset.default;
+            container.removeAttribute('style');
+            imageContainer.classList.remove('expand');
+        } else {
+            button.textContent = button.dataset.active;
+            container.style.marginBottom = '-150px';
+            imageContainer.classList.add('expand');
+        }
     }
 }
 document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]').dispatchEvent(new Event('contextmenu')));
-document.getElementById('toggleImageQueue').addEventListener('click', (e) => {
-    const button = e.target, container = document.getElementById('imageQueueContainer'), imageContainer = document.getElementById('imageContainer');
-    if (button.textContent === button.dataset.active) {
-        button.textContent = button.dataset.default;
-        container.removeAttribute('style');
-        imageContainer.classList.remove('expand');
-    } else {
-        button.textContent = button.dataset.active;
-        container.style.marginBottom = '-150px';
-        imageContainer.classList.add('expand');
-    }
-});
+document.getElementById('toggleImageQueue').addEventListener('click', imageQueue.toggle);
 
 // Initialise the page
 resetToDefault();
