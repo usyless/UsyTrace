@@ -296,15 +296,14 @@ const imageMap = new Map();
 const fileInput = document.getElementById('fileInput');
 const buttons = {
     resetButtons: () => {
-        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {
-            e.textContent = e.dataset.default;
-        });
+        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset.default;});
         CURRENT_MODE = null;
     },
     enableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {
-            e.disabled = false;
-        });
+        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = false;});
+    },
+    disableButtons: () => {
+        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
     }
 }
 { // Handling modes with buttons
@@ -558,7 +557,7 @@ function multiEventListener(events, target, callback) {
 
 function initAll() {
     document.getElementById('defaultMainText').classList.remove('hidden');
-    document.querySelectorAll('[data-disabled]').forEach((elem) => {elem.disabled = true;});
+    buttons.disableButtons();
     lines.hideLines();
     buttons.resetButtons();
     image.src = ''
