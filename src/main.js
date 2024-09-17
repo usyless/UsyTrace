@@ -315,7 +315,6 @@ const buttons = {
             CURRENT_MODE = mode;
             lines.hideLines();
         }
-        document.dispatchEvent(new CustomEvent('modeChange'));
     }
 
     for (const button of MODE_BUTTON_IDS) {
@@ -331,7 +330,6 @@ const imageQueue = {
         imageMap.delete(img.src);
         worker.removeImage(img.src);
         img.remove();
-        if (imageQueue.elem.children.length <= 0) image.src = '';
     },
     scrollToSelected: () => {
         imageQueue.elem.querySelector('img[class="selectedImage"]').scrollIntoView({inline: 'center', behavior: 'smooth'});
@@ -345,10 +343,9 @@ const imageQueue = {
         });
         img.addEventListener('dragstart', (e) => e.preventDefault());
         img.addEventListener('click', (e) => {
-            image.saveLines();
-            imageLoadedDefault();
             e.preventDefault();
             e.stopPropagation();
+            image.saveLines();
             image.src = src;
             imageQueue.removeSelectedImage();
             img.classList.add('selectedImage');
@@ -387,16 +384,16 @@ document.getElementById('toggleImageQueue').addEventListener('click', (e) => {
 });
 
 // Initialise the page
-launch();
+resetToDefault();
+initAll();
 
 fileInput.loadFiles = (files) => {
-    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/")), lastId = validFiles.length - 1;
     if (validFiles.length > 0) {
         Popups.clearPopups();
         validFiles.forEach((file, index) => {
             file = URL.createObjectURL(file);
-            if (index === validFiles.length - 1) imageQueue.addImage(file, true);
-            else imageQueue.addImage(file);
+            imageQueue.addImage(file, index === lastId);
         });
     }
     else Popups.createPopup("Invalid image/file(s) added!");
@@ -465,9 +462,33 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
         if (selectedLine) lines.setPosition(selectedLine, getCoords(e)[`${selectedLine.dataset.direction}Rel`] * sizeRatio - selectedLine.offset);
     });
 
-    multiEventListener(['pointerup', 'pointerleave'], lines.parent, (e) => {
+    multiEventListener(['pointerup', 'pointerleave', 'pointercancel'], lines.parent, (e) => {
         e.preventDefault();
         selectedLine = null;
+    });
+}
+
+{ // Move canvas lines with buttons
+    let holdInterval, line, speed, snap = preferences.snapToLines();
+    document.getElementById('snapToLines').addEventListener('change', () => snap = preferences.snapToLines());
+
+    document.querySelectorAll(".moveButtons button").forEach((btn) => {
+        btn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            line = lines.lines[e.target.parentNode.dataset.for];
+            speed = parseInt(e.target.dataset.direction);
+            if (snap) worker.snapLine(line, speed);
+            else {
+                holdInterval = setInterval(() => {
+                    lines.setPosition(line, lines.getPosition(line) + speed * sizeRatio);
+                }, 10);
+            }
+        });
+
+        multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], btn, (e) => {
+            e.preventDefault();
+            clearInterval(holdInterval);
+        });
     });
 }
 
@@ -478,7 +499,9 @@ window.addEventListener('resize', () => {
 
 // where everything starts
 image.addEventListener('load', () => {
-    imageLoadedDefault();
+    document.getElementById('defaultMainText').classList.add('hidden');
+    buttons.enableButtons();
+    buttons.resetButtons();
     width = image.naturalWidth;
     height = image.naturalHeight;
     graphs.updateSize();
@@ -511,22 +534,12 @@ function multiEventListener(events, target, callback) {
     events.forEach((ev) => target.addEventListener(ev, callback));
 }
 
-function imageLoadedDefault() {
-    document.getElementById('defaultMainText').classList.add('hidden');
-    buttons.enableButtons();
-    buttons.resetButtons();
-}
-
 function initAll() {
     document.getElementById('defaultMainText').classList.remove('hidden');
     document.querySelectorAll('[data-disabled]').forEach((elem) => {elem.disabled = true;});
     lines.hideLines();
     buttons.resetButtons();
-    resetToDefault();
-}
-
-function launch() {
-    initAll();
+    image.src = ''
 }
 
 function updateSizeRatio() {
