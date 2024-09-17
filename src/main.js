@@ -244,6 +244,7 @@ const worker = {
     snapLine: (line, direction) => {
         worker.worker.postMessage({
             type: 'snapLine',
+            src: image.src,
             line: {
                 name: line.id,
                 position: lines.getPosition(line),
