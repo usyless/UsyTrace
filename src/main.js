@@ -508,7 +508,6 @@ window.addEventListener('resize', () => {
         point: worker.addPoint
     }
     image.addEventListener('click', (e) => {
-        console.log(CURRENT_MODE);
         if (CURRENT_MODE != null) {
             const m = image.getMouseCoords(e);
             callbacks[CURRENT_MODE](m.xRel * sizeRatio, m.yRel * sizeRatio);
