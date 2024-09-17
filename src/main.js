@@ -524,8 +524,11 @@ image.addEventListener('load', () => {
         lines.initialise();
         lines.showLines();
         imageData.initial = false;
-        // SNAP LINES
-        // AUTO TRACE
+        worker.snapLine(lines.lines.xHigh, -1);
+        worker.snapLine(lines.lines.xLow, 1);
+        worker.snapLine(lines.lines.yHigh, 1);
+        worker.snapLine(lines.lines.yLow, -1);
+        worker.autoTrace();
     } else {
         image.loadLines();
         graphs.setTracePath(imageData.path, imageData.colour, height * 0.005);
