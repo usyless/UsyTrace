@@ -28,6 +28,11 @@ function resetToDefault() {
 // Global Variables
 let sizeRatio, width, height, CURRENT_MODE = null;
 
+const glass = document.getElementById('glass');
+glass.setColour = (colour) => {
+    glass.style.backgroundColor = `rgb(${colour})`;
+}
+
 const lines = {
     parent: document.getElementById('lines'),
     lines: {
@@ -116,12 +121,10 @@ const preferences = {
 const worker = {
     worker: (() => {
         let worker = new Worker("./worker.js");
-        // TODO: worker onmessage
         worker.onmessage = (e) => {
             const data = e.data, imgData = imageMap.get(data.src);
 
             if (data.svg) imgData.path = data.svg;
-            if (data.line) imgData.lines[data.line.i] = data.line;
             if (data.colour) imgData.colour = data.colour;
 
             if (data.type === 'exportTrace') {
@@ -136,15 +139,9 @@ const worker = {
                     window.URL.revokeObjectURL(url);
                 }, 0);
             } else if (data.src === image.src) {
-                if (data.type === 'getPixelColour') glass.style.backgroundColor = `rgb(${data.pixelColour})`;
-                else if (data.type === 'snapLine') {
-                    const newLine = data.line, line = lines[newLine.i];
-                    line.pos = newLine.pos;
-                    moveLine(line);
-                } else {
-                    setTracePath(data.svg, data.colour, height * 0.005);
-                    state.toggleTrace();
-                }
+                if (data.type === 'getPixelColour') glass.setColour(data.pixelColour);
+                else if (data.type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
+                else graphs.setTracePath(data.svg, data.colour, height * 0.005);
             }
         }
         return worker;
@@ -244,9 +241,16 @@ const worker = {
             y: y
         });
     },
-    snapLine: () => {
-        // TODO: line stuff idk not implemented yet
-        throw new Error("Not yet implemented");
+    snapLine: (line, direction) => {
+        worker.worker.postMessage({
+            type: 'snapLine',
+            line: {
+                name: line.id,
+                position: lines.getPosition(line),
+                direction: line.dataset.direction
+            },
+            direction: direction
+        });
     },
     getPixelColour: (x, y) => {
         worker.worker.postMessage({
