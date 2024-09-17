@@ -296,7 +296,7 @@ const imageMap = new Map();
 const fileInput = document.getElementById('fileInput');
 const buttons = {
     resetButtons: () => {
-        document.querySelectorAll('[data-default]').forEach((e) => {
+        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {
             e.textContent = e.dataset.default;
         });
         CURRENT_MODE = null;
