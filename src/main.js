@@ -502,6 +502,20 @@ window.addEventListener('resize', () => {
     lines.updateLineWidth();
 });
 
+{ // Image click handling
+    const callbacks = {
+        path: worker.trace,
+        point: worker.addPoint
+    }
+    image.addEventListener('click', (e) => {
+        console.log(CURRENT_MODE);
+        if (CURRENT_MODE != null) {
+            const m = image.getMouseCoords(e);
+            callbacks[CURRENT_MODE](m.xRel * sizeRatio, m.yRel * sizeRatio);
+        }
+    });
+}
+
 // where everything starts
 image.addEventListener('load', () => {
     document.getElementById('defaultMainText').classList.add('hidden');
