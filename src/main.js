@@ -54,24 +54,19 @@ const lines = {
     },
     showLines: () => lines.parent.classList.remove('hidden'),
     hideLines: () => lines.parent.classList.add('hidden'),
-    initialise: () => {
-        lines.setPosition(lines.lines.xHigh, width);
-        lines.lines.xHigh.setAttribute('y1', 0);
-        lines.lines.xHigh.setAttribute('y2', height);
+    initialiseTextPosition: () => {
         lines.lines.xHigh.nextElementSibling.setAttribute('y', height / 2);
-        lines.setPosition(lines.lines.xLow, 0);
-        lines.lines.xLow.setAttribute('y1', 0);
-        lines.lines.xLow.setAttribute('y2', height);
         lines.lines.xLow.nextElementSibling.setAttribute('y', height / 2);
-        lines.setPosition(lines.lines.yHigh, 0);
-        lines.lines.yHigh.setAttribute('x1', 0);
-        lines.lines.yHigh.setAttribute('x2', width);
         lines.lines.yHigh.nextElementSibling.setAttribute('x', width / 2);
-        lines.setPosition(lines.lines.yLow, height);
-        lines.lines.yLow.setAttribute('x1', 0);
-        lines.lines.yLow.setAttribute('x2', width);
         lines.lines.yLow.nextElementSibling.setAttribute('x', width / 2);
-        lines.showLines();
+    },
+    initialise: () => {
+        for (const name in lines.lines) {
+            const line = lines.lines[name], [otherDir, sizeAttr] = line.dataset.direction === 'x' ? ['y', height] : ['x', width];
+            line.setAttribute(`${otherDir}1`, 0);
+            line.setAttribute(`${otherDir}2`, sizeAttr);
+        }
+        lines.initialiseTextPosition();
     }
 }
 lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
@@ -87,17 +82,16 @@ image.getMouseCoords = (e) => {
     }
 }
 image.saveLines = () => {
-    const imageData = imageMap.get(image.src);
-    if (imageData) imageData.lines = lines.parent.outerHTML;
+    const imageData = imageMap.get(image.src), lineData = {};
+    if (imageData) {
+        for (const name in lines.lines) lineData[name] = lines.getPosition(lines.lines[name]);
+        imageData.lines = lineData;
+    }
 }
 image.loadLines = () => {
-    lines.parent.outerHTML = imageMap.get(image.src).lines;
-    lines.parent = document.getElementById('lines');
-    lines.lines.xHigh = document.getElementById('xHigh');
-    lines.lines.xLow = document.getElementById('xLow');
-    lines.lines.yHigh = document.getElementById('yHigh');
-    lines.lines.yLow = document.getElementById('yLow');
-    lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
+    const prev = imageMap.get(image.src).lines;
+    for (const name in lines.lines) lines.setPosition(lines.lines[name], prev[name]);
+    lines.initialise();
     lines.showLines();
 }
 
@@ -492,7 +486,12 @@ image.addEventListener('load', () => {
     if (imageData.initial) {
         worker.addImage(image.src, width, height);
         imageData.path = '';
+        lines.setPosition(lines.lines.xHigh, width);
+        lines.setPosition(lines.lines.xLow, 0);
+        lines.setPosition(lines.lines.yHigh, 0);
+        lines.setPosition(lines.lines.yLow, height);
         lines.initialise();
+        lines.showLines();
         imageData.initial = false;
         // SNAP LINES
         // AUTO TRACE
