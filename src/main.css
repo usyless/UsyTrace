@@ -1,7 +1,6 @@
 @import 'shared.css';
 
 :root {
-    --sidebar-min-width: 130px;
     --image-queue-height: 172px;
     --image-queue-bar-height: 22px;
 }
@@ -49,7 +48,7 @@ body {
 #sidebar {
     background-color: var(--secondary);
     overflow-y: scroll;
-    min-width: var(--sidebar-min-width);
+    min-width: min-content;
     max-width: 200px;
     flex: 1;
     display: flex;
@@ -118,7 +117,7 @@ input[type="number"]:focus, select:focus {
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    width: calc(100% - var(--sidebar-min-width));
+    width: 100%;
     position: relative;
 }
 
