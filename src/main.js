@@ -559,6 +559,7 @@ function initAll() {
     document.getElementById('defaultMainText').classList.remove('hidden');
     buttons.disableButtons();
     lines.hideLines();
+    graphs.clearTracePath();
     buttons.resetButtons();
     image.src = ''
 }
