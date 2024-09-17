@@ -474,20 +474,23 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 }
 
 { // Move canvas lines with buttons
-    let holdInterval, line, speed, snap = preferences.snapToLines();
+    let holdInterval, line, snap = preferences.snapToLines();
     document.getElementById('snapToLines').addEventListener('change', () => snap = preferences.snapToLines());
 
     document.querySelectorAll(".moveButtons button").forEach((btn) => {
         btn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
             line = lines.lines[e.target.parentNode.dataset.for];
-            speed = parseInt(e.target.dataset.direction);
-            if (snap) worker.snapLine(line, speed);
-            else {
+            if (!snap) {
                 holdInterval = setInterval(() => {
-                    lines.setPosition(line, lines.getPosition(line) + speed * sizeRatio);
+                    lines.setPosition(line, lines.getPosition(line) + parseInt(e.target.dataset.direction) * sizeRatio);
                 }, 10);
             }
+        });
+
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (snap) worker.snapLine(lines.lines[e.target.parentNode.dataset.for], parseInt(e.target.dataset.direction));
         });
 
         multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], btn, (e) => {
