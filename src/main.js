@@ -300,15 +300,14 @@ const buttons = {
         document.querySelectorAll('[data-disabled]').forEach((e) => {
             e.disabled = false;
         });
-        CURRENT_MODE = null;
     }
 }
 { // Handling modes with buttons
     const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
     const cb = (t) => {
-        const button = t.target, mode = button.dataset.mode;
+        const button = t.target, mode = button.dataset.mode, prevMode = {m: CURRENT_MODE}.m;
         buttons.resetButtons();
-        if (CURRENT_MODE === mode) {
+        if (prevMode === mode) {
             CURRENT_MODE = null;
             lines.showLines();
         } else {

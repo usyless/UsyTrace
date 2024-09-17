@@ -152,6 +152,10 @@ input[type="number"]:focus, select:focus {
     max-width: 100%;
 }
 
+#uploadedImage {
+    cursor: crosshair;
+}
+
 #imageQueueContainer {
     width: 100%;
     height: var(--image-queue-height);
