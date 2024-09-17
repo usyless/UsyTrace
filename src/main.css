@@ -1,0 +1,202 @@
+@import 'shared.css';
+
+:root {
+    --sidebar-min-width: 130px;
+    --image-queue-height: 172px;
+    --image-queue-bar-height: 22px;
+}
+
+* {
+    user-select: none;
+    color: var(--text-primary);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+body {
+    margin: 0;
+    background: var(--primary);
+    font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
+    transition: 0.1s;
+}
+
+::-webkit-scrollbar {
+    width: var(--spacing-larger);
+}
+
+::-webkit-scrollbar-track {
+    background: var(--secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--tertiary);
+    border-radius: var(--radius);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--quaternary);
+}
+
+#main {
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    display: flex;
+}
+
+#sidebar {
+    background-color: var(--secondary);
+    overflow-y: scroll;
+    min-width: var(--sidebar-min-width);
+    max-width: 200px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing-larger);
+    padding: var(--spacing-larger);
+    overflow-x: hidden;
+}
+
+#sidebar h3 {
+    margin: var(--spacing-larger);
+}
+
+.sidebarSection {
+    background-color: var(--primary);
+    border-radius: var(--radius);
+    padding: var(--spacing-largest);
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing);
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.sidebarSection.standardButton {
+    background-color: var(--primary);
+    border: var(--border-width) solid var(--primary);
+}
+
+.moveButtons {
+    display: flex;
+    width: 100%;
+    column-gap: var(--spacing);
+}
+
+.moveButtons button {
+    flex-grow: 1;
+    padding: var(--spacing);
+}
+
+input[type="number"] {
+    width: 100%;
+    text-align: left;
+}
+
+input[type="number"], select {
+    border: var(--border-width) solid var(--tertiary);
+    border-radius: var(--radius-smaller);
+    background-color: var(--primary);
+    transition: 0.1s;
+}
+
+input[type="number"]:hover, select:hover {
+    border-color: var(--quaternary);
+}
+
+input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--quaternary);
+}
+
+#main-content {
+    flex: 4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: calc(100% - var(--sidebar-min-width));
+    position: relative;
+}
+
+#imageContainer {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-largest);
+    margin-bottom: var(--image-queue-height);
+    transition: 0.3s;
+}
+
+#imageContainer.expand {
+    margin-bottom: var(--image-queue-bar-height);
+}
+
+#imageContainerInner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.canvasSizing {
+    position: absolute;
+    max-height: 100%;
+    max-width: 100%;
+}
+
+#uploadedImage {
+    cursor: crosshair;
+}
+
+#imageQueueContainer {
+    width: 100%;
+    height: var(--image-queue-height);
+    max-height: var(--image-queue-height);
+    min-height: var(--image-queue-height);
+    background-color: var(--secondary);
+    display: flex;
+    flex-direction: column;
+    transition: 0.3s !important;
+    position: absolute;
+    bottom: 0;
+}
+
+#imageQueueBar {
+    background-color: var(--tertiary);
+    min-height: var(--image-queue-bar-height);
+    max-height: var(--image-queue-bar-height);
+    width: 100%;
+    display: flex;
+    column-gap: var(--spacing-smaller);
+}
+
+#imageQueueOuter {
+    background-color: var(--secondary);
+    max-height: 150px;
+    min-height: 150px;
+    width: 100%;
+    height: 150px;
+    padding: var(--spacing-largest);
+    overflow-x: scroll;
+}
+
+#imageQueueInner {
+    height: 100%;
+    display: flex;
+    column-gap: var(--spacing-largest);
+    min-width: fit-content;
+    padding-right: var(--spacing-largest);
+}
+
+#imageQueueInner img {
+    max-height: 100%;
+    cursor: pointer;
+}

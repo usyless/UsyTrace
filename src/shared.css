@@ -1,0 +1,101 @@
+:root {
+    --primary: #1e1f22;
+    --secondary: #2b2d30;
+    --tertiary: #3d3f42;
+    --quaternary: #4c4d53;
+    --text-primary: #b6b6b6;
+    --disabled: #686868;
+
+    --radius-smaller: 5px;
+    --radius: 10px;
+    --radius-larger: 15px;
+
+    --spacing: 5px;
+    --spacing-smaller: 3px;
+    --spacing-larger: 8px;
+    --spacing-largest: 12px;
+
+    --border-width: 3px;
+}
+
+button.altButton {
+    background-color: var(--quaternary);
+    border-radius: 0;
+    padding: var(--spacing-smaller) var(--spacing-larger);
+}
+
+button.altButton:hover {
+    background-color: var(--disabled);
+}
+
+button.altButton:active {
+    background-color: var(--quaternary);
+}
+
+.standardButton {
+    outline: none;
+    border: none;
+    border-radius: var(--radius);
+    background-color: var(--secondary);
+    cursor: pointer;
+    transition: 0.1s;
+    padding: var(--spacing-larger);
+}
+
+.standardButton:hover {
+    background-color: var(--tertiary);
+}
+
+.standardButton:active {
+    background: var(--quaternary);
+}
+
+.standardButton:disabled {
+    cursor: not-allowed;
+    color: var(--disabled);
+}
+
+.standardButton:disabled:hover {
+    background-color: var(--primary);
+}
+
+.hidden, .hidden * {
+    display: none;
+}
+
+.removePointerEvents, .removePointerEvents * {
+    pointer-events: none;
+}
+
+.crosshair_hover {
+    cursor: crosshair;
+}
+
+.not_allowed, .not_allowed * {
+    cursor: not-allowed;
+}
+
+.lowOpacity {
+    opacity: 0.2;
+}
+
+.noOpacity {
+    opacity: 0;
+}
+
+.magnify {
+    position: absolute;
+    border: 3px solid #000;
+    border-radius: 50%;
+    width: 2em;
+    height: 2em;
+    z-index: 9999999;
+}
+
+svg text {
+    fill: red;
+}
+
+.selectedImage {
+    outline: 5px solid red;
+}

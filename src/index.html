@@ -12,7 +12,8 @@
     <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
     <meta name="keywords" content="usy, frequency response, frequency response trace, frequency response tracing, trace frequency response, trace graph">
     <link rel="manifest" href="usytrace.webmanifest"/>
-    <link rel="stylesheet" href="trace.css">
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="popup.css">
 </head>
 <body>
 <noscript>
@@ -21,111 +22,73 @@
             This website will not function without JavaScript, please enable it to use the site.</h1>
     </div>
 </noscript>
-<div id="overlay" class="noOpacity">
-    <h1>Tracing In Progress</h1>
-</div>
 <div id="main">
     <div id="sidebar">
-        <div>
-            <h1>UsyTrace</h1>
-        </div>
-        <div class="sidebarSection divButton hidden" id="updateAvailable">
-            Update Available, click here to update.
-        </div>
-        <div onclick="fileInput.click()" class="divButton sidebarSection" id="imageInputDiv">
-            <input onchange="state.loadNewImage()" type='file' id='imageInput' class="hidden" multiple="multiple" accept="image/*"/>
-            Choose Images
+        <h1>UsyTrace</h1>
+        <button class="sidebarSection standardButton hidden" id="updateAvailable">
+            <b>Update Available, click here to update.</b>
+        </button>
+        <input type='file' id='fileInput' class="hidden" multiple="multiple" accept="image/*"/>
+        <button class="standardButton sidebarSection" id="fileInputButton">
+            <b>Choose Images</b>
+        </button>
+        <div class="sidebarSection">
+            <button id="autoPath" class="standardButton" data-disabled>Auto Trace</button>
+            <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" data-disabled>Select Path</button>
+            <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" data-disabled>Add Point</button>
+            <button id="undo" class="standardButton" data-disabled>Undo</button>
+            <button id="clearPath" class="standardButton" data-disabled>Clear Path</button>
+            <button id="export" class="standardButton" data-disabled>Export Trace</button>
         </div>
         <div class="sidebarSection">
-            <div>
-                <button onclick="state.autoPath()" id="autoPath" class="disableme">Auto Trace</button>
+            <label for="SPLHigher">Higher SPL (dB)</label>
+            <input type="number" id="SPLHigher"/>
+            <div class="moveButtons" data-for="yHigh">
+                <button class="standardButton" data-direction="1" data-disabled>▼</button>
+                <button class="standardButton" data-direction="-1" data-disabled>▲</button>
             </div>
-            <div>
-                <button onclick="state.togglePath()" id="selectPath" def="Select Path" alt="Stop Selecting" class="disableme">Select Path</button>
+
+            <label for="SPLLower">Lower SPL (dB)</label>
+            <input type="number" id="SPLLower"/>
+            <div class="moveButtons" data-for="yLow">
+                <button class="standardButton" data-direction="1" data-disabled>▼</button>
+                <button class="standardButton" data-direction="-1" data-disabled>▲</button>
             </div>
-            <div>
-                <button onclick="state.togglePoint()" id="selectPoint" def="Add Point" alt="Stop Adding Points" class="disableme">Add Point</button>
+
+            <label for="FRHigher">Higher Frequency (Hz)</label>
+            <input type="number" id="FRHigher"/>
+            <div class="moveButtons" data-for="xHigh">
+                <button class="standardButton" data-direction="-1" data-disabled>◀</button>
+                <button class="standardButton" data-direction="1" data-disabled>▶</button>
             </div>
-            <div>
-                <button onclick="undo()" class="disableme">Undo</button>
+
+
+            <label for="FRLower">Lower Frequency (Hz)</label>
+            <input type="number" id="FRLower" min="0" onchange="minVal(this)"/>
+            <div class="moveButtons" data-for="xLow">
+                <button class="standardButton" data-direction="-1" data-disabled>◀</button>
+                <button class="standardButton" data-direction="1" data-disabled>▶</button>
             </div>
+
             <div>
-                <button onclick="clearPathAndWorker()" class="disableme">Clear Path</button>
-            </div>
-            <div>
-                <button onclick="exportTrace()" id="export" class="disableme">Export Trace</button>
-            </div>
-        </div>
-        <div class="sidebarSection">
-            <div>
-                <div>
-                    <label for="SPLTop">Higher SPL (dB)</label>
-                    <input type="number" id="SPLTop"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="2" dir="1" class="disableme">▼</button>
-                    <button i="2" dir="-1" class="disableme">▲</button>
-                </div>
-            </div>
-            <div>
-                <div>
-                    <label for="SPLBot">Lower SPL (dB)</label>
-                    <input type="number" id="SPLBot"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="3" dir="1" class="disableme">▼</button>
-                    <button i="3" dir="-1" class="disableme">▲</button>
-                </div>
-            </div>
-            <div>
-                <div>
-                    <label for="FRTop">Higher Frequency (Hz)</label>
-                    <input type="number" id="FRTop"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="1" dir="-1" class="disableme">◀</button>
-                    <button i="1" dir="1" class="disableme">▶</button>
-                </div>
-            </div>
-            <div>
-                <div>
-                    <label for="FRBot">Lower Frequency (Hz)</label>
-                    <input type="number" id="FRBot" min="0" onchange="minVal(this)"/>
-                </div>
-                <div class="moveButtons">
-                    <button i="0" dir="-1" class="disableme">◀</button>
-                    <button i="0" dir="1" class="disableme">▶</button>
-                </div>
-            </div>
-            <div>
-                <label for="snap">Buttons snap to axis</label>
-                <input id="snap" type="checkbox" checked>
+                <label for="snapToLines">Buttons snap to axis</label>
+                <input id="snapToLines" type="checkbox" checked>
             </div>
             <div>
                 Input the chosen values with the bars on the image into the fields above
             </div>
         </div>
         <div class="sidebarSection">
-            <div>
-                <h3>Trace Settings</h3>
-            </div>
-            <div>
-                <label for="colourTolerance">Colour Tolerance</label>
-                <input type="number" id="colourTolerance" min="1" onchange="minVal(this)"/>
-            </div>
-            <div>
-                <label for="maxLineHeightOffset">Max Line Thickness Offset</label>
-                <input type="number" id="maxLineHeightOffset"/>
-            </div>
-            <div>
-                <label for="maxJumpOffset">Largest Contiguous Jump Offset</label>
-                <input type="number" id="maxJumpOffset"/>
-            </div>
+            <h3>Trace Settings</h3>
+            <label for="colourTolerance">Colour Tolerance</label>
+            <input type="number" id="colourTolerance" min="1" onchange="minVal(this)"/>
+            <label for="maxLineHeightOffset">Max Line Thickness Offset</label>
+            <input type="number" id="maxLineHeightOffset"/>
+            <label for="maxJumpOffset">Largest Contiguous Jump Offset</label>
+            <input type="number" id="maxJumpOffset"/>
         </div>
         <div class="sidebarSection">
-            <div>
-                <h3>Export Settings</h3>
-            </div>
+            <h3>Export Settings</h3>
             <div>
                 <label for="PPO">Points Per Octave (PPO)</label>
                 <select name="PPO" id="PPO">
@@ -143,55 +106,60 @@
                     <option value="space">Space</option>
                 </select>
             </div>
-            <div>
-                <label for="lowFRExport">Minimum Frequency (Hz)</label>
-                <input type="number" id="lowFRExport" min="1" onchange="minVal(this)"/>
-            </div>
-            <div>
-                <label for="highFRExport">Maximum Frequency (Hz)</label>
-                <input type="number" id="highFRExport"/>
-            </div>
+            <label for="lowFRExport">Minimum Frequency (Hz)</label>
+            <input type="number" id="lowFRExport" min="1" onchange="minVal(this)"/>
+            <label for="highFRExport">Maximum Frequency (Hz)</label>
+            <input type="number" id="highFRExport"/>
         </div>
-        <div onclick="restoreDefault()" class="divButton sidebarSection" id="restoreDefault">
-            <label>Restore Default Settings</label>
-        </div>
-        <div class="divButton sidebarSection">
-            <a href="https://github.com/usyless/UsyTrace?tab=readme-ov-file#general-use" target="_blank">Help/Repository</a>
-        </div>
+        <button class="sidebarSection standardButton" id="restoreDefault">
+            <b>Restore Default Settings</b>
+        </button>
+        <a class="sidebarSection standardButton" href="https://github.com/usyless/UsyTrace?tab=readme-ov-file#general-use" target="_blank">
+            <b>Help/Repository</b>
+        </a>
         <div class="sidebarSection">
-            <p>Report an issue or suggest features:</p>
-            <p>Discord: @usy_</p>
-            <p>Email: <a href="mailto:usy@usyless.uk">usy@usyless.uk</a></p>
-            <p>GitHub: <a href="https://github.com/usyless/UsyTrace/issues" target="_blank">usyless</a></p>
+            <div>Report an issue or suggest features:</div>
+            <div>Discord: @usy_</div>
+            <div>Email: <a href="mailto:usy@usyless.uk">usy@usyless.uk</a></div>
+            <div>GitHub: <a href="https://github.com/usyless/UsyTrace/issues" target="_blank">usyless</a></div>
         </div>
     </div>
 
     <div id="main-content">
         <div id="imageContainer">
-            <div id="inner-content">
+            <div id="imageContainerInner">
                 <div id="glass" class="hidden magnify"></div>
                 <img id='uploadedImage' src='' alt='' class="canvasSizing"/>
-                <svg id="lines" class="canvasSizing"></svg>
+                <svg id="lines" class="canvasSizing hidden">
+                    <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xLow" data-other="xHigh"></line>
+                    <text x="0" y="0" dx="1em" text-anchor="middle">Low</text>
+                    <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xHigh" data-other="xLow"></line>
+                    <text x="0" y="0" dx="-1em" text-anchor="middle">High</text>
+                    <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yHigh" data-other="yLow"></line>
+                    <text x="0" y="0" dy="0.6em" text-anchor="middle">High</text>
+                    <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yLow" data-other="yHigh"></line>
+                    <text x="0" y="0" text-anchor="middle">Low</text>
+                </svg>
                 <svg id="trace" class="canvasSizing removePointerEvents">
                     <path stroke="#ff0000" fill="transparent" d=""></path>
                 </svg>
-                <h1 temp_thing="">Please Load Images (Or drop any images onto the page, or paste with Ctrl+V)</h1>
+                <h1 id="defaultMainText">Please Load Images (Or drop any images onto the page, or paste with Ctrl+V)</h1>
             </div>
         </div>
         <div id="imageQueueContainer">
             <div id="imageQueueBar">
-                <button id="toggleImageQueue" onclick="toggleImageQueue(this)">Hide</button>
-                <button id="removeImage" onclick="removeImage()">Remove</button>
+                <button id="toggleImageQueue" class="standardButton altButton" data-default="Hide" data-active="Show">Hide</button>
+                <button id="removeImage" class="standardButton altButton">Remove</button>
             </div>
             <div id="imageQueueOuter">
-                <div id="imageQueueInner">
-
-                </div>
+                <div id="imageQueueInner"></div>
             </div>
         </div>
     </div>
 </div>
 
-<script src='trace.js'></script>
+<script src="updater.js"></script>
+<script src="popups.js"></script>
+<script src="main.js"></script>
 </body>
 </html>

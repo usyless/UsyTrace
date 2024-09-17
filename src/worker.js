@@ -92,7 +92,7 @@ function exportTrace(data) {
 
 // Lines
 function snapLine(data) {
-    data.line.pos = api.snap(data.src, parseInt(data.line.pos), data.line.dir === "x" ? 1 : 0, parseInt(data.dir));
+    data.line.position = api.snap(data.src, parseInt(data.line.position), data.line.direction === "x" ? 1 : 0, parseInt(data.direction));
     return data;
 }
 
