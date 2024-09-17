@@ -5,7 +5,7 @@ contentToCache = [
 
     'index.html',
 
-    'popups.css',
+    'popup.css',
     'shared.css',
     'main.css',
 
