@@ -523,12 +523,12 @@ image.addEventListener('load', () => {
         lines.setPosition(lines.lines.yLow, height);
         lines.initialise();
         lines.showLines();
-        imageData.initial = false;
         worker.snapLine(lines.lines.xHigh, -1);
         worker.snapLine(lines.lines.xLow, 1);
         worker.snapLine(lines.lines.yHigh, 1);
         worker.snapLine(lines.lines.yLow, -1);
         worker.autoTrace();
+        imageData.initial = false;
     } else {
         image.loadLines();
         graphs.setTracePath(imageData.path, imageData.colour, height * 0.005);
