@@ -16,13 +16,15 @@
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-<noscript>
-    <div>
-        <h1>It seems your JavaScript is disabled.
-            This website will not function without JavaScript, please enable it to use the site.</h1>
-    </div>
-</noscript>
 <div id="main">
+    <noscript>
+        <div class="fullscreen dim" style="z-index: 99"></div>
+        <div class="fullscreen dim" style="z-index: 99"></div>
+        <div class="fullscreen" style="z-index: 100">
+            <h1>Your JavaScript is disabled.
+                This website will not function without JavaScript, please enable it to use the site.</h1>
+        </div>
+    </noscript>
     <div id="sidebar">
         <h1>UsyTrace</h1>
         <button class="sidebarSection standardButton hidden" id="updateAvailable">
