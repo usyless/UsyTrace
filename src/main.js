@@ -235,7 +235,10 @@ const worker = {
             type: 'trace',
             src: image.src,
             x: x,
-            y: y
+            y: y,
+            maxLineHeightOffset: preferences.maxLineHeightOffset(),
+            maxJumpOffset: preferences.largestContiguousJumpOffset(),
+            colourTolerance: preferences.colourTolerance()
         });
     },
     snapLine: (line, direction) => {
