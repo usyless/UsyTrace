@@ -269,10 +269,12 @@ const graphs = {
         });
     },
     setTracePath: (d, colour, width) => {
-        const path = document.getElementById('trace').firstElementChild;
+        const trace = document.getElementById('trace'), path = trace.lastElementChild, path2 = trace.firstElementChild;
         path.setAttribute('d', d);
         path.setAttribute('stroke', colour);
         path.setAttribute('stroke-width', width);
+        path2.setAttribute('d', d);
+        path2.setAttribute('stroke-width', width * 1.5);
     },
     clearTracePath: () => {
         graphs.setTracePath('', '#ff0000', 0);
