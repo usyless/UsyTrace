@@ -26,7 +26,7 @@ function resetToDefault() {
 }
 
 // Global Variables
-let sizeRatio, width, height, CURRENT_MODE = null;
+let sizeRatio, width, height, lineWidth, CURRENT_MODE = null;
 
 const glass = document.getElementById('glass');
 glass.setColour = (colour) => {
@@ -141,7 +141,7 @@ const worker = {
             } else if (data.src === image.src) {
                 if (data.type === 'getPixelColour') glass.setColour(data.pixelColour);
                 else if (data.type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
-                else graphs.setTracePath(data.svg, data.colour, height * 0.005);
+                else graphs.setTracePath(data.svg, data.colour);
             }
         }
         return worker;
@@ -268,13 +268,13 @@ const graphs = {
             e.setAttribute("viewBox", `0 0 ${width} ${height}`);
         });
     },
-    setTracePath: (d, colour, width) => {
+    setTracePath: (d, colour) => {
         const trace = document.getElementById('trace'), path = trace.lastElementChild, path2 = trace.firstElementChild;
         path.setAttribute('d', d);
         path.setAttribute('stroke', colour);
-        path.setAttribute('stroke-width', width);
+        path.setAttribute('stroke-width', lineWidth);
         path2.setAttribute('d', d);
-        path2.setAttribute('stroke-width', width * 1.5);
+        path2.setAttribute('stroke-width', lineWidth * 1.5);
     },
     clearTracePath: () => {
         graphs.setTracePath('', '#ff0000', 0);
@@ -544,7 +544,7 @@ image.addEventListener('load', () => {
         imageData.initial = false;
     } else {
         image.loadLines();
-        graphs.setTracePath(imageData.path, imageData.colour, height * 0.005);
+        graphs.setTracePath(imageData.path, imageData.colour);
     }
     lines.updateLineWidth();
 });
@@ -567,6 +567,7 @@ function initAll() {
 function updateSizes() {
     width = image.naturalWidth;
     height = image.naturalHeight;
+    lineWidth = Math.max(width, height) * 0.003;
     updateSizeRatio();
 }
 
