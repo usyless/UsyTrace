@@ -210,11 +210,8 @@ const worker = {
                 bottomPixel: lines.getPosition(lines.lines.xLow),
             }
         }
-        if (hasNullOrEmpty(data)) {
-            Popups.createPopup("Please fill in all required values to export (SPL and FR values)");
-            return;
-        }
-        worker.worker.postMessage(data);
+        if (hasNullOrEmpty(data)) Popups.createPopup("Please fill in all required values to export (SPL and FR values)");
+        else worker.worker.postMessage(data);
     },
     addPoint: (x, y) => {
         worker.worker.postMessage({
@@ -523,11 +520,9 @@ image.addEventListener('load', () => {
     document.getElementById('defaultMainText').classList.add('hidden');
     buttons.enableButtons();
     buttons.resetButtons();
-    width = image.naturalWidth;
-    height = image.naturalHeight;
     graphs.updateSize();
     graphs.clearTracePath();
-    updateSizeRatio();
+    updateSizes();
 
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
@@ -565,6 +560,12 @@ function initAll() {
     graphs.clearTracePath();
     buttons.resetButtons();
     image.src = ''
+}
+
+function updateSizes() {
+    width = image.naturalWidth;
+    height = image.naturalHeight;
+    updateSizeRatio();
 }
 
 function updateSizeRatio() {
