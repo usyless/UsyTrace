@@ -520,9 +520,9 @@ image.addEventListener('load', () => {
     document.getElementById('defaultMainText').classList.add('hidden');
     buttons.enableButtons();
     buttons.resetButtons();
+    updateSizes();
     graphs.updateSize();
     graphs.clearTracePath();
-    updateSizes();
 
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
