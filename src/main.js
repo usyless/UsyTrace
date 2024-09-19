@@ -99,6 +99,8 @@ image.loadLines = () => {
     lines.initialise();
     lines.showLines();
 }
+image.stopPointerEvents = () => image.classList.add('removePointerEvents');
+image.startPointerEvents = () => image.classList.remove('removePointerEvents');
 
 const preferences = {
     SPLHigher: () => document.getElementById('SPLHigher').value,
@@ -352,6 +354,7 @@ const imageQueue = {
             e.preventDefault();
             e.stopPropagation();
             image.saveLines();
+            image.stopPointerEvents();
             image.src = src;
             imageQueue.removeSelectedImage();
             img.classList.add('selectedImage');
@@ -550,6 +553,7 @@ image.addEventListener('load', () => {
         graphs.setTracePath(imageData.path, imageData.colour);
     }
     lines.updateLineWidth();
+    image.startPointerEvents();
 });
 
 // Helper Functions
