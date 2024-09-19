@@ -152,17 +152,17 @@ const worker = {
             src: src
         });
     },
-    addImage: (src, width, height) => {
+    addImage: (width, height) => {
         let processing_canvas = document.createElement("canvas"),
             processing_context = processing_canvas.getContext('2d'),
             new_image = new Image;
         processing_canvas.width = width;
         processing_canvas.height = height;
-        new_image.src = src;
+        new_image.src = image.src;
         processing_context.drawImage(new_image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
         worker.worker.postMessage({
-            src: src,
+            src: image.src,
             type: 'setData',
             data: imageData.data,
             width: imageData.width,
@@ -531,7 +531,7 @@ image.addEventListener('load', () => {
 
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
-        worker.addImage(image.src, width, height);
+        worker.addImage(width, height);
         imageData.path = '';
         lines.setPosition(lines.lines.xHigh, width);
         lines.setPosition(lines.lines.xLow, 0);
