@@ -13,6 +13,7 @@ contentToCache = [
     'main.js',
     'updater.js',
     'popups.js',
+    'tutorial.js',
 
     'a.out.wasm',
     'usytrace.webmanifest'
