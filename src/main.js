@@ -587,6 +587,11 @@ function minVal(e) {
     if (e.value < e.min) e.value = e.min;
 }
 
+// returns one
+function one() {
+    return 1;
+}
+
 console.log('Welcome to the console!')
 console.log('If you want to mess with the javascript in this site, objects of note are:');
 console.log('graphs', graphs);
