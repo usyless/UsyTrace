@@ -201,14 +201,15 @@ struct Trace {
         return svg;
     }
 
-    [[nodiscard]] Trace* newTrace(const ImageData& imageData, const TraceData& traceData) const {
+    [[nodiscard]] Trace* newTrace(const ImageData& imageData, const TraceData& traceData, const bool traceLeft=false) const {
         const auto maxLineHeight = max(0, imageData.height / 20 + traceData.maxLineHeightOffset);
         const auto maxJump = max(0, imageData.width / 50 + traceData.maxJumpOffset);
         auto baselineColour = RGBTools(RGBTools::getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
         auto newTrace = map(trace);
+        newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
 
-        traceFor(traceData.x, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
-        traceFor(traceData.x + 1, traceData.y, 1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
+        if (traceLeft) traceFor(traceData.x - 1, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
+        traceFor(traceData.x, traceData.y, 1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
 
         return new Trace{newTrace, baselineColour.getTraceColour()};
     }
@@ -310,7 +311,7 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     if (bestY > 0) {
         traceData.x = middleX;
         traceData.y = bestY;
-        const auto newTrace = trace->newTrace(imageData, traceData);
+        const auto newTrace = trace->newTrace(imageData, traceData, true);
         delete trace; // prevent memory leak i guess
         trace = newTrace;
     }
