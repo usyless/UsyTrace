@@ -79,10 +79,6 @@ button.altButton:active {
     opacity: 0.2;
 }
 
-.noOpacity {
-    opacity: 0;
-}
-
 .magnify {
     position: absolute;
     border: 3px solid #000;

@@ -18,7 +18,7 @@
 
             page_overlay.setAttribute('usy-overlay', '');
             center_div.setAttribute('usy-overlay', '');
-            page_overlay.classList.add('fullscreen', 'dim');
+            page_overlay.classList.add('fullscreen', 'blur');
             center_div.classList.add('fullscreen');
             main_div.classList.add('popupOuter');
             inner_div.classList.add('popupInner');
