@@ -8,6 +8,7 @@ contentToCache = [
     'popup.css',
     'shared.css',
     'main.css',
+    'tutorial.css',
 
     'worker.js',
     'main.js',

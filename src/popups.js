@@ -7,8 +7,7 @@
     async function createPopup(textContent, confirmation = false) {
         clearPopups();
         return new Promise((resolve) => {
-            const page_overlay = document.createElement('div'),
-                center_div = document.createElement('div'),
+            const center_div = document.createElement('div'),
                 main_div = document.createElement('div'),
                 inner_div = document.createElement('div'),
                 text_div = document.createElement('div'),
@@ -16,9 +15,7 @@
                 ok_button = document.createElement('button'),
                 cancel_button = document.createElement('button');
 
-            page_overlay.setAttribute('usy-overlay', '');
             center_div.setAttribute('usy-overlay', '');
-            page_overlay.classList.add('fullscreen', 'blur');
             center_div.classList.add('fullscreen');
             main_div.classList.add('popupOuter');
             inner_div.classList.add('popupInner');
@@ -36,13 +33,11 @@
             if (confirmation) buttons_div.appendChild(cancel_button);
 
             ok_button.addEventListener('click', () => {
-                page_overlay.remove();
-                center_div.remove();
+                clearPopups();
                 resolve(true);
             });
             cancel_button.addEventListener('click', () => {
-                page_overlay.remove();
-                center_div.remove();
+                clearPopups();
                 resolve(false);
             });
 
@@ -50,7 +45,7 @@
 
             center_div.appendChild(main_div);
 
-            document.body.appendChild(page_overlay);
+            document.body.appendChild(createOverlay());
             document.body.appendChild(center_div);
         });
     }
@@ -59,8 +54,16 @@
         document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
     }
 
+    function createOverlay() {
+        const page_overlay = document.createElement('div');
+        page_overlay.setAttribute('usy-overlay', '');
+        page_overlay.classList.add('fullscreen', 'blur');
+        return page_overlay;
+    }
+
     window.Popups = {
         createPopup: createPopup,
-        clearPopups: clearPopups
+        clearPopups: clearPopups,
+        createOverlay: createOverlay
     }
 })();

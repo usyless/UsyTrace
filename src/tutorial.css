@@ -1,0 +1,9 @@
+@import "shared.css";
+
+.headContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    column-gap: var(--spacing-largest);
+}
