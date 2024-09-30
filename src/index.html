@@ -130,7 +130,9 @@
     <div id="main-content">
         <div id="imageContainer">
             <div id="imageContainerInner">
-                <div id="glass" class="hidden magnify"></div>
+                <div id="glass" class="hidden magnify removePointerEvents">
+                    <img src="" alt="">
+                </div>
                 <img id='uploadedImage' src='' alt='' class="canvasSizing removePointerEvents"/>
                 <svg id="trace" class="canvasSizing removePointerEvents">
                     <path stroke="#000000" fill="transparent" d=""></path>
@@ -161,7 +163,7 @@
     </div>
 </div>
 
-<script src="updater.js"></script>
+<!--<script src="updater.js"></script>-->
 <script src="popups.js"></script>
 <script src="main.js"></script>
 </body>

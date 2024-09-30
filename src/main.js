@@ -17,6 +17,7 @@ const defaults = {
     "SPLHigher": "",
     "SPLLower": "",
 }
+const MAGNIFICATION = 3;
 document.getElementById('restoreDefault').addEventListener('click', () => {
     resetToDefault();
     Popups.createPopup("Restored settings to default");
@@ -29,8 +30,14 @@ function resetToDefault() {
 let sizeRatio, width, height, lineWidth, CURRENT_MODE = null;
 
 const glass = document.getElementById('glass');
+glass.img = glass.querySelector('img');
 glass.setColour = (colour) => {
-    glass.style.backgroundColor = `rgb(${colour})`;
+    glass.style.borderColor = `rgb(${colour})`;
+}
+glass.updateImage = () => {
+    glass.img.src = image.src;
+    glass.img.width = image.clientWidth * MAGNIFICATION;
+    glass.img.height = image.clientHeight * MAGNIFICATION;
 }
 
 const lines = {
@@ -448,6 +455,8 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
         const parentRect = image.parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
         glass.style.left = `${m.x - parentRect.left}px`;
         glass.style.top = `${m.y - parentRect.top}px`;
+        glass.img.style.left = `${(m.xRel * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
+        glass.img.style.top = `${(m.yRel * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
         worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
         glass.classList.remove('hidden');
     });
@@ -508,6 +517,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 window.addEventListener('resize', () => {
     updateSizeRatio();
     lines.updateLineWidth();
+    glass.updateImage();
 });
 
 { // Image click handling
@@ -531,6 +541,7 @@ image.addEventListener('load', () => {
     updateSizes();
     graphs.updateSize();
     graphs.clearTracePath();
+    glass.updateImage();
 
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
