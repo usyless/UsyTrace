@@ -29,7 +29,7 @@
     padding: var(--spacing-largest);
     display: flex;
     flex-direction: column;
-    row-gap: var(--spacing);
+    row-gap: var(--spacing-largest);
 }
 
 .popupText {
