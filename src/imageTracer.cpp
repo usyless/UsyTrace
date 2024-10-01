@@ -11,6 +11,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <opencv2/opencv.hpp>
 #include "emscripten.h"
 
 using namespace std;
@@ -323,7 +324,33 @@ struct Image {
     TraceHistory traceHistory;
     const RGBTools backgroundColour;
 
-    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {}
+    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {
+        cv::Mat image = cv::Mat(imageData->height, imageData->width, CV_8UC4, imageData->data);
+
+        cv::Mat edges;
+        cv::Mat gray, grad_x;
+        cv::cvtColor(image, gray, cv::COLOR_RGBA2GRAY);
+        cv::Scharr(gray, grad_x, CV_16S, 1, 0); // look into scale, delta, bordertype
+        cv::convertScaleAbs(grad_x, edges);
+
+        std::vector<cv::Vec2f> lines;
+        cv::HoughLines(edges, lines, 1, CV_PI / 180, 150);
+
+        std::vector<int> xCoordinates;
+        for (size_t i = 0; i < lines.size(); i++) {
+            float rho = lines[i][0], theta = lines[i][1];
+            if (theta > CV_PI / 4 && theta < 3 * CV_PI / 4) { // Vertical lines
+                int x = cvRound(rho / cos(theta));
+                if (abs(x) >= 0.8 * imageData->height) {
+                    xCoordinates.push_back(x);
+                }
+            }
+        }
+
+        for (int x : xCoordinates) {
+            std::cout << "X Coordinate: " << x << std::endl;
+        }
+    }
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
         return traceHistory.add(traceHistory.getLatest()->newTrace(*imageData, traceData))->getDefaultReturn();
