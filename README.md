@@ -48,9 +48,9 @@
 1. Download and install [emscripten](https://emscripten.org/)
 2. Paste glue code file (a.out.js) into the top of the worker file (worker.js) after compiling
  ### Testing
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -sENVIRONMENT='worker' -sFILESYSTEM=0 -I/usr/include/opencv4 -L/usr/lib/x86_64-linux-gnu -lopencv_core -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING`
+`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -sENVIRONMENT='worker' -sFILESYSTEM=0 -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING`
 ### Release
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker' -sFILESYSTEM=0 -I/usr/include/opencv4 -L/usr/lib/x86_64-linux-gnu -lopencv_core`
+`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -sENVIRONMENT='worker' -sFILESYSTEM=0 -fno-exceptions`
 
 ### Info/Extras
 - Default heap size set to 300mb

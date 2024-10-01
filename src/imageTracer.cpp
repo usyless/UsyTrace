@@ -11,7 +11,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <opencv2/opencv.hpp>
+#include <iostream>
 #include "emscripten.h"
 
 using namespace std;
@@ -319,36 +319,92 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     return trace;
 }
 
+void rgbaToGrayscale(const ImageData& imageData, ImageData& grayscaleImage) {
+    int width = imageData.width;
+    int height = imageData.height;
+
+    for (int x = 0; x < width; ++x) {
+        for (int y = 0; y < height; ++y) {
+            const auto rgb = RGBTools::getRGB(x, y, imageData);
+            grayscaleImage.data[y * width + x] = static_cast<Colour>(0.299 * rgb.R + 0.587 * rgb.G + 0.114 * rgb.B);
+        }
+    }
+}
+
+void scharr(const ImageData& imageData, vector<vector<Colour>>& grad_x, vector<vector<Colour>>& grad_y) {
+    int width = imageData.width;
+    int height = imageData.height;
+
+    int scharr_x[3][3] = {
+        { 3,  0, -3},
+        { 10,  0, -10},
+        { 3,  0, -3}
+    };
+
+    int scharr_y[3][3] = {
+        { 3,  10,  3},
+        { 0,   0,  0},
+        {-3, -10, -3}
+    };
+
+    for (int i = 1; i < width - 1; ++i) {
+        for (int j = 1; j < height - 1; ++j) {
+            int gx = 0, gy = 0;
+            for (int k = -1; k <= 1; ++k) {
+                for (int l = -1; l <= 1; ++l) {
+                    const int pos = ((j + l) * width) + i + k;
+                    gx += imageData.data[pos] * scharr_x[k + 1][l + 1];
+                    gy += imageData.data[pos] * scharr_y[k + 1][l + 1];
+                }
+            }
+            grad_x[i][j] = static_cast<Colour>(clamp(gx, 0, 255));
+            grad_y[i][j] = static_cast<Colour>(clamp(gy, 0, 255));
+        }
+    }
+}
+
 struct Image {
     const ImageData* imageData;
     TraceHistory traceHistory;
     const RGBTools backgroundColour;
 
     explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {
-        cv::Mat image = cv::Mat(imageData->height, imageData->width, CV_8UC4, imageData->data);
+        int width = imageData->width;
+        int height = imageData->height;
 
-        cv::Mat edges;
-        cv::Mat gray, grad_x;
-        cv::cvtColor(image, gray, cv::COLOR_RGBA2GRAY);
-        cv::Scharr(gray, grad_x, CV_16S, 1, 0); // look into scale, delta, bordertype
-        cv::convertScaleAbs(grad_x, edges);
+        vector<vector<Colour>> grad_x(width, vector<Colour>(height, 0));
+        vector<vector<Colour>> grad_y(width, vector<Colour>(height, 0));
 
-        std::vector<cv::Vec2f> lines;
-        cv::HoughLines(edges, lines, 1, CV_PI / 180, 150);
+        auto greyscaleImage = ImageData{static_cast<Colour*>(malloc(width * height * sizeof(Colour))), width, height};
+        rgbaToGrayscale(*imageData, greyscaleImage);
+        scharr(greyscaleImage, grad_x, grad_y);
 
-        std::vector<int> xCoordinates;
-        for (size_t i = 0; i < lines.size(); i++) {
-            float rho = lines[i][0], theta = lines[i][1];
-            if (theta > CV_PI / 4 && theta < 3 * CV_PI / 4) { // Vertical lines
-                int x = cvRound(rho / cos(theta));
-                if (abs(x) >= 0.8 * imageData->height) {
-                    xCoordinates.push_back(x);
-                }
+        Colour threshold = 1;
+        { // vertical lines
+            cout << "Vertical: " << endl;
+            long max = static_cast<long>(0.8 * imageData->height);
+            int x = 0;
+            int l = 0;
+
+            for (const vector<Colour> row : grad_y) {
+                for (const Colour a : row) if (a > threshold) ++l;
+                if (l >= max) cout << "X: " << x << endl;
+                l = 0;
+                ++x;
             }
         }
+        { // horizontal lines
+            cout << "horizontal: " << endl;
+            long max = static_cast<long>(0.8 * imageData->width);
+            int y = 0;
+            int l = 0;
 
-        for (int x : xCoordinates) {
-            std::cout << "X Coordinate: " << x << std::endl;
+            for (const vector<Colour> row : grad_x) {
+                for (const Colour a : row) if (a > threshold) ++l;
+                if (l >= max) cout << "Y: " << y << endl;
+                l = 0;
+                ++y;
+            }
         }
     }
 
