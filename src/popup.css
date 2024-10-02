@@ -21,7 +21,7 @@
     align-items: center;
     display: flex;
     justify-content: center;
-    max-width: 60%;
+    max-width: 20em;
     box-shadow: 0 0 10px 10px rgba(0, 0, 0, 0.3);
 }
 
