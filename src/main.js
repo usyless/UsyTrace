@@ -6,8 +6,6 @@ const defaults = {
     "FRLower": 20,
 
     "colourTolerance": 67,
-    "maxLineHeightOffset": 0,
-    "maxJumpOffset": 0,
 
     "PPO": 48,
     "delimitation": "tab",
@@ -118,8 +116,6 @@ const preferences = {
     snapToLines: () => document.getElementById('snapToLines').checked,
 
     colourTolerance: () => document.getElementById('colourTolerance').value || defaults.colourTolerance,
-    maxLineHeightOffset: () => document.getElementById('maxLineHeightOffset').value || defaults.maxLineHeightOffset,
-    largestContiguousJumpOffset: () => document.getElementById('maxJumpOffset').value || defaults.maxJumpOffset,
 
     PPO: () => document.getElementById('PPO').value || defaults.ppo,
     delimitation: () => document.getElementById('delimitation').value || defaults.delimitation,
@@ -234,8 +230,6 @@ const worker = {
         worker.worker.postMessage({
             type: 'autoTrace',
             src: image.src,
-            maxLineHeightOffset: preferences.maxLineHeightOffset(),
-            maxJumpOffset: preferences.largestContiguousJumpOffset(),
             colourTolerance: preferences.colourTolerance(),
         });
     },
@@ -245,8 +239,6 @@ const worker = {
             src: image.src,
             x: x,
             y: y,
-            maxLineHeightOffset: preferences.maxLineHeightOffset(),
-            maxJumpOffset: preferences.largestContiguousJumpOffset(),
             colourTolerance: preferences.colourTolerance()
         });
     },

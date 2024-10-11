@@ -54,7 +54,7 @@ function removeImage(data) {
 // Tracing
 function trace(data) {
     return defaultTraceResponse(data, api.trace(data.src, parseInt(data.x), parseInt(data.y),
-        parseInt(data.maxLineHeightOffset), parseInt(data.maxJumpOffset), parseInt(data.colourTolerance)));
+        0, 0, parseInt(data.colourTolerance))); // Zeros replacing line jump and thickness
 }
 
 function point(data) {
@@ -62,8 +62,7 @@ function point(data) {
 }
 
 function auto(data) {
-    return defaultTraceResponse(data, api.auto(data.src, parseInt(data.maxLineHeightOffset),
-        parseInt(data.maxJumpOffset), parseInt(data.colourTolerance)));
+    return defaultTraceResponse(data, api.auto(data.src, 0, 0, parseInt(data.colourTolerance)));
 }
 
 function undo(data) {

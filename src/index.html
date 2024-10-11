@@ -14,12 +14,12 @@
     <link rel="manifest" href="usytrace.webmanifest"/>
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="tutorial.css">
 </head>
 <body>
 <div id="main">
     <noscript>
-        <div class="fullscreen dim" style="z-index: 99"></div>
-        <div class="fullscreen dim" style="z-index: 99"></div>
+        <div class="fullscreen blur" style="z-index: 99"></div>
         <div class="fullscreen" style="z-index: 100">
             <h1>Your JavaScript is disabled.
                 This website will not function without JavaScript, please enable it to use the site.</h1>
@@ -84,10 +84,6 @@
             <h3>Trace Settings</h3>
             <label for="colourTolerance" title="Maximum variation in colour of the line, increase if whole line is not being traced">Colour Tolerance</label>
             <input type="number" id="colourTolerance" min="1" onchange="minVal(this)" title="Maximum variation in colour of the line, increase if whole line is not being traced"/>
-            <label for="maxLineHeightOffset" title="Offset to maximum thickness of line being trace">Max Line Thickness Offset</label>
-            <input type="number" id="maxLineHeightOffset" title="Offset to maximum thickness of line being trace"/>
-            <label for="maxJumpOffset" title="Offset to largest gap between line being traced">Largest Contiguous Jump Offset</label>
-            <input type="number" id="maxJumpOffset" title="Offset to largest gap between line being traced"/>
         </div>
         <div class="sidebarSection">
             <h3>Export Settings</h3>
@@ -116,9 +112,9 @@
         <button class="sidebarSection standardButton" id="restoreDefault">
             <b>Restore Default Settings</b>
         </button>
-        <a class="sidebarSection standardButton" href="https://github.com/usyless/UsyTrace?tab=readme-ov-file#general-use" target="_blank">
-            <b>Help/Repository</b>
-        </a>
+        <button id="tutorial" class="sidebarSection standardButton">
+            <b>Tutorial/Help</b>
+        </button>
         <div class="sidebarSection">
             <div>Report an issue or suggest features:</div>
             <div>Discord: @usy_</div>
@@ -165,6 +161,7 @@
 
 <script src="updater.js"></script>
 <script src="popups.js"></script>
+<script src="tutorial.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
