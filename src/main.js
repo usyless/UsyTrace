@@ -491,12 +491,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
                 holdInterval = setInterval(() => {
                     lines.setPosition(line, lines.getPosition(line) + parseInt(e.target.dataset.direction) * sizeRatio);
                 }, 10);
-            }
-        });
-
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (snap) worker.snapLine(lines.lines[e.target.parentNode.dataset.for], parseInt(e.target.dataset.direction));
+            } else worker.snapLine(line, parseInt(e.target.dataset.direction));
         });
 
         multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], btn, (e) => {

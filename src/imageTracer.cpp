@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 #include "emscripten.h"
+#include <set>
 
 using namespace std;
 
@@ -28,6 +29,11 @@ struct ImageData {
 
     ~ImageData() {
         free(data);
+    }
+
+    // ONLY USE ON GREYSCALE IMAGES
+    inline Colour getGreyscale(const long x, const long y) const {
+        return data[y * width + x];
     }
 };
 
@@ -84,6 +90,11 @@ struct RGBTools {
     static inline RGB getRGB(const long& x, const long& y, const ImageData& imageData) {
         const auto pos = y * imageData.width * 4 + x * 4;
         return RGB{imageData.data[pos], imageData.data[pos + 1], imageData.data[pos + 2]};
+    }
+
+    static inline Colour getGreyScale(const long& x, const long& y, const ImageData& imageData) {
+        const auto RGB = RGBTools::getRGB(x, y, imageData);
+        return 0.2989 * RGB.R + 0.5870 * RGB.G + 0.1140 * RGB.B;
     }
 };
 
@@ -318,12 +329,95 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     return trace;
 }
 
+void getGreyScale(const ImageData& input, ImageData& output) {
+    auto width = input.width;
+    auto height = input.height;
+    auto data = output.data;
+    for (int x = 1; x < width; ++x) for (int y = 1; y < height; ++y) data[x + (width * y)] = RGBTools::getGreyScale(x, y, input);
+}
+
+void applyScharrFilter(const ImageData& input, ImageData& output, const string direction) {
+    int kernel[3][3];
+    if (direction == "Y") {
+        int temp[3][3] = {
+            {-3, 0, 3},
+            {-10, 0, 10},
+            {-3, 0, 3}
+        };
+        copy(&temp[0][0], &temp[0][0] + 3*3, &kernel[0][0]);
+    } else {
+        int temp[3][3] = {
+            {-3, -10, -3},
+            {0, 0, 0},
+            {3, 10, 3}
+        };
+        copy(&temp[0][0], &temp[0][0] + 3*3, &kernel[0][0]);
+    }
+
+    auto width = input.width;
+    auto height = input.height;
+    auto maxWidth = width - 1;
+    auto maxHeight = height - 1;
+    auto data = output.data;
+    auto inputData = input.data;
+
+    int sum = 0;
+
+    for (int x = 1; x < maxWidth; ++x) {
+        for (int y = 1; y < maxHeight; ++y) {
+            sum = 0;
+            for (int k = -1; k <= 1; ++k) for (int l = -1; l <= 1; ++l) sum += input.getGreyscale(x + k, y + l) * kernel[k + 1][l + 1];
+            if (sum > 40) data[x + (width * y)] = 255;
+            else data[x + (width * y)] = 0;
+        }
+    }
+}
+
+set<int> detectLines(const ImageData& imageData, const string direction) {
+    set<int>&& lines{};
+    int length, otherDirection;
+    function<bool(int, int)> comparator;
+    if(direction == "X") { // vertical line, representing x axis
+        length = imageData.width;
+        otherDirection = imageData.height;
+        comparator = [&data = imageData] (const int x, const int y) { return data.getGreyscale(x, y) == 255; };
+    } else {
+        length = imageData.height;
+        otherDirection = imageData.width;
+        comparator = [&data = imageData] (const int y, const int x) { return data.getGreyscale(x, y) == 255; };
+    }
+    const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
+    const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
+    auto foundline = false;
+    for (int pos = 0; pos < length; ++pos) {
+        auto trueCount = 0;
+        for (auto j = upperBound; j >= lowerBound; --j) if (comparator(pos, j)) ++trueCount;
+        if (trueCount >= bound) {
+            foundline = true;
+        } else if (foundline) {
+            foundline = false;
+            lines.insert(pos);
+        }
+    }
+    return lines;
+}
+
 struct Image {
     const ImageData* imageData;
     TraceHistory traceHistory;
     const RGBTools backgroundColour;
+    set<int> vLines;
+    set<int> hLines;
 
-    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {}
+    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {
+        ImageData greyScale = ImageData{static_cast<Colour *>(malloc(imageData->width * imageData->height * sizeof(Colour))), imageData->width, imageData->height};
+        getGreyScale(*imageData, greyScale);
+        ImageData extraImage = ImageData{static_cast<Colour *>(malloc(imageData->width * imageData->height * sizeof(Colour))), imageData->width, imageData->height};
+        applyScharrFilter(greyScale, extraImage, "X");
+        vLines = detectLines(extraImage, "X");
+        applyScharrFilter(greyScale, extraImage, "Y");
+        hLines = detectLines(extraImage, "Y");
+    }
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
         return traceHistory.add(traceHistory.getLatest()->newTrace(*imageData, traceData))->getDefaultReturn();
@@ -377,42 +471,12 @@ struct Image {
     }
 
     [[nodiscard]] int snapLine(int pos, const int lineDir, const int moveDir) const {
-        int initialPos = pos;
-        vector<int>&& valid{};
-        int length, otherDirection;
-        function<bool(int, int)> comparator;
-        if(lineDir == 1) { // vertical line, representing x axis
-            length = imageData->width;
-            otherDirection = imageData->height;
-            comparator = [&col = backgroundColour, &data = imageData] (const int x, const int y) { return col.withinTolerance(RGBTools::getRGB(x, y, *data)); };
-        } else {
-            length = imageData->height;
-            otherDirection = imageData->width;
-            comparator = [&col = backgroundColour, &data = imageData] (const int y, const int x) { return col.withinTolerance(RGBTools::getRGB(x, y, *data)); };
-        }
-        const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
-        const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
-        {
-            auto trueCount = bound;
-            while (trueCount >= bound && pos < length && pos >= 0) {
-                trueCount = 0;
-                for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
-                if (trueCount >= bound) pos += moveDir;
-                else break;
-            }
-        }
-        auto foundline = false;
-        for (; pos < length && pos >= 0; pos += moveDir) {
-            auto trueCount = 0;
-            for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
-            if (trueCount >= bound) {
-                valid.emplace_back(pos);
-                foundline = true;
-            } else if (foundline) break;
-        }
-        if (!valid.empty()) pos = reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size());
-        if (foundline) return pos;
-        return initialPos;
+        auto lines = (lineDir == 1) ? vLines : hLines;
+        pos += moveDir;
+        auto bound = lines.upper_bound(pos);
+        bound = (moveDir != 1 && bound != lines.begin()) ? prev(bound) : bound;
+        if (bound == lines.end()) return pos;
+        return *bound;
     }
 
     [[nodiscard]] RGB getPixelColour(const int x, const int y) const {
