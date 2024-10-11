@@ -16,7 +16,7 @@
                 cancel_button = document.createElement('button');
 
             center_div.setAttribute('usy-overlay', '');
-            center_div.classList.add('fullscreen');
+            center_div.classList.add('fullscreen', 'blur');
             main_div.classList.add('popupOuter');
             inner_div.classList.add('popupInner');
             buttons_div.classList.add('popupButtons');
@@ -40,12 +40,19 @@
                 clearPopups();
                 resolve(false);
             });
+            center_div.addEventListener('click', () => {
+                clearPopups();
+                resolve(false);
+            });
+            main_div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            });
 
             text_div.textContent = textContent;
 
             center_div.appendChild(main_div);
 
-            document.body.appendChild(createOverlay());
             document.body.appendChild(center_div);
         });
     }
@@ -54,16 +61,8 @@
         document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
     }
 
-    function createOverlay() {
-        const page_overlay = document.createElement('div');
-        page_overlay.setAttribute('usy-overlay', '');
-        page_overlay.classList.add('fullscreen', 'blur');
-        return page_overlay;
-    }
-
     window.Popups = {
         createPopup: createPopup,
         clearPopups: clearPopups,
-        createOverlay: createOverlay
     }
 })();

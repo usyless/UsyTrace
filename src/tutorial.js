@@ -59,7 +59,7 @@ Loaded images show in the image queue on the bottom, and can be removed by right
             buttons_div = document.createElement('div');
 
         center_div.setAttribute('usy-overlay', '');
-        center_div.classList.add('fullscreen');
+        center_div.classList.add('fullscreen', 'blur');
         main_div.classList.add('popupOuter', 'fixedSize');
         inner_div.classList.add('popupInner', 'fixedSize');
         buttons_div.classList.add('popupButtons');
@@ -121,9 +121,16 @@ Loaded images show in the image queue on the bottom, and can be removed by right
             mainText.innerHTML = data['body'];
         }
 
+        center_div.addEventListener('click', () => {
+                Popups.clearPopups();
+        });
+        main_div.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        });
+
         buttons_div.append(previousPage, nextPage);
 
-        document.body.appendChild(Popups.createOverlay());
         document.body.appendChild(center_div);
     }
 
