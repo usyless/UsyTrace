@@ -82,6 +82,10 @@ struct RGBTools {
         ++count;
     }
 
+    bool isDark() const {
+        return 0.2126 * rgb.R + 0.7152 * rgb.G + 0.0722 * rgb.B <= 128;
+    }
+
     [[nodiscard]] string getTraceColour() const {
         if (min(min(this->rgb.R, this->rgb.G), this->rgb.B) == this->rgb.R) return DEFAULT_COLOUR;
         return ALT_COLOUR;
@@ -373,7 +377,7 @@ void applyScharrFilter(const ImageData& input, ImageData& output, const string d
     }
 }
 
-set<int> detectLines(const ImageData& imageData, const string direction) {
+set<int> detectLines(const ImageData& imageData, const string direction, const bool darkMode) {
     set<int>&& lines{};
     int length, otherDirection;
     function<bool(int, int)> comparator;
@@ -389,14 +393,19 @@ set<int> detectLines(const ImageData& imageData, const string direction) {
     const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
     const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
     auto foundline = false;
+    vector<int>&& valid{};
     for (int pos = 0; pos < length; ++pos) {
         auto trueCount = 0;
         for (auto j = upperBound; j >= lowerBound; --j) if (comparator(pos, j)) ++trueCount;
         if (trueCount >= bound) {
+            if (darkMode) valid.emplace_back(pos);
             foundline = true;
         } else if (foundline) {
             foundline = false;
-            lines.insert(pos);
+            if (!darkMode) {
+                if (!valid.empty()) lines.insert(reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size()));
+                valid.clear();
+            } else lines.insert(pos - 1);
         }
     }
     return lines;
@@ -414,9 +423,9 @@ struct Image {
         getGreyScale(*imageData, greyScale);
         ImageData extraImage = ImageData{static_cast<Colour *>(malloc(imageData->width * imageData->height * sizeof(Colour))), imageData->width, imageData->height};
         applyScharrFilter(greyScale, extraImage, "X");
-        vLines = detectLines(extraImage, "X");
+        vLines = detectLines(extraImage, "X", backgroundColour.isDark());
         applyScharrFilter(greyScale, extraImage, "Y");
-        hLines = detectLines(extraImage, "Y");
+        hLines = detectLines(extraImage, "Y", backgroundColour.isDark());
     }
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
@@ -475,7 +484,7 @@ struct Image {
         pos += moveDir;
         auto bound = lines.upper_bound(pos);
         bound = (moveDir != 1 && bound != lines.begin()) ? prev(bound) : bound;
-        if (bound == lines.end()) return pos;
+        if (bound == lines.end()) return pos -= moveDir;
         return *bound;
     }
 
