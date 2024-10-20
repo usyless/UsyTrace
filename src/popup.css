@@ -39,8 +39,8 @@
 .popupText {
     white-space: pre-wrap;
     word-break: break-word;
-    flex-shrink: 1;
-    max-height: 100%;
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 .popupText * {
