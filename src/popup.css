@@ -41,6 +41,7 @@
     word-break: break-word;
     overflow-y: scroll;
     overflow-x: hidden;
+    flex: 1;
 }
 
 .popupText * {

@@ -64,7 +64,6 @@ Loaded images show in the image queue on the bottom, and can be removed by right
         inner_div.classList.add('popupInner', 'fixedSize');
         buttons_div.classList.add('popupButtons');
         text_div.classList.add('popupText');
-        text_div.style.flex = '1';
 
         center_div.appendChild(main_div);
         main_div.appendChild(inner_div);
