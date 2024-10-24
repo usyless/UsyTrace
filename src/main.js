@@ -165,7 +165,7 @@ const worker = {
         processing_canvas.height = height;
         new_image.src = image.src;
         processing_context.drawImage(new_image, 0, 0);
-        const imageData = processing_context.getImageData(0, 0, new_image.naturalWidth, new_image.naturalHeight);
+        const imageData = processing_context.getImageData(0, 0, width, height);
         worker.worker.postMessage({
             src: image.src,
             type: 'setData',
@@ -378,6 +378,7 @@ const imageQueue = {
     },
     toggle: (e) => {
         const button = e.target, container = document.getElementById('imageQueueContainer'), imageContainer = document.getElementById('imageContainer');
+        imageContainer.addEventListener('transitionend', () => window.dispatchEvent(new Event('resize')), {once: true});
         if (button.textContent === button.dataset.active) {
             button.textContent = button.dataset.default;
             container.removeAttribute('style');
@@ -444,9 +445,10 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 { // magnifying glass stuff
     image.addEventListener('pointermove', (e) => {
         e.preventDefault();
-        const parentRect = image.parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
-        glass.style.left = `${m.x - parentRect.left}px`;
-        glass.style.top = `${m.y - parentRect.top}px`;
+        const parentElement = image.parentElement,
+            parentRect = parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
+        glass.style.left = `${Math.min(m.x - parentRect.left, parentElement.clientWidth - glass.clientWidth)}px`;
+        glass.style.top = `${Math.min(m.y - parentRect.top, parentElement.clientHeight - glass.clientHeight)}px`;
         glass.img.style.left = `${(m.xRel * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
         glass.img.style.top = `${(m.yRel * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
         worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
