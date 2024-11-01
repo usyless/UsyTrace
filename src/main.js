@@ -125,7 +125,7 @@ const preferences = {
 
 const worker = {
     worker: (() => {
-        let worker = new Worker("./worker.js");
+        const worker = new Worker("./worker.js");
         worker.onmessage = (e) => {
             const data = e.data, imgData = imageMap.get(data.src);
 

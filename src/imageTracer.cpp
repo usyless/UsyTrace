@@ -446,11 +446,6 @@ struct ImageQueue {
 
 #define EXTERN extern "C"
 
-// Image Control
-EXTERN EMSCRIPTEN_KEEPALIVE void* create_buffer(const int width, const int height) {
-    return malloc(width * height * 4 * sizeof(Colour));
-}
-
 EXTERN EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const int width, const int height) {
     imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height}));
 }
@@ -504,4 +499,9 @@ EXTERN EMSCRIPTEN_KEEPALIVE int snap(const char* id, const int pos, const int li
 EXTERN EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const int x, const int y) {
     const auto* s = new string(imageQueue.get(id).getPixelColour(x, y).toString());
     return s->data();
+}
+
+// Memory Stuff
+EXTERN EMSCRIPTEN_KEEPALIVE void delete_return_string(char* ptr) {
+    delete[] ptr;
 }
