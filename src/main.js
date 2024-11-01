@@ -170,8 +170,6 @@ const worker = {
             src: image.src,
             type: 'setData',
             data: imageData.data,
-            width: imageData.width,
-            height: imageData.height
         }, [imageData.data.buffer]);
     },
     clearTrace: () => {

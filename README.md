@@ -58,4 +58,4 @@
 - Set max memory with -sMAXIMUM_MEMORY=size in bytes (2gb by default, >2gb has performance penalty afaik)
 - To use c++20 features: -std=c++20
 
-`emcc imageTracer.cpp -O3 -s EXPORTED_FUNCTIONS='["_addImage", "_removeImage", "_trace", "_undo", "_clear", "_point", "_autoTrace", "_exportTrace", "_snap", "_getPixelColour", "_delete_return_string", "_free", "_malloc"]' -s STANDALONE_WASM -sINITIAL_HEAP=104857600 --no-entry -o standalone.wasm`
+`emcc imageTracer.cpp -O3 -s EXPORTED_FUNCTIONS='["_addImage", "_removeImage", "_trace", "_undo", "_clear", "_point", "_autoTrace", "_exportTrace", "_snap", "_getPixelColour", "_delete_return_string", "_free", "_malloc"]' -sSTANDALONE_WASM -sINITIAL_HEAP=104857600 --no-entry -o standalone.wasm`

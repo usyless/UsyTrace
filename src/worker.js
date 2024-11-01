@@ -3,23 +3,24 @@ let typeMap;
 (async () => {
     const importObject = {
         env: {
-            memory: new WebAssembly.Memory({initial: 4000, maximum: 15625})
+            memory: new WebAssembly.Memory({initial: 1602, maximum: 15625})
         }
     }
     const wasmResult = await WebAssembly.instantiateStreaming(await fetch('./standalone.wasm'), importObject);
     const instance = wasmResult.instance;
     const exports = instance.exports;
+    exports._initialize(); // emscripten thing (?)
+    const memory = new Uint8Array(exports.memory.buffer);
 
     const passStringToWasm = (str) => { // must free after
         const lengthBytes = new Uint8Array(str.length + 1);
         for (let i = 0; i < str.length; ++i) lengthBytes[i] = str.charCodeAt(i);
         const bufferPointer = exports.malloc(lengthBytes.length);
-        new Uint8Array(exports.memory.buffer).set(lengthBytes, bufferPointer);
+        memory.set(lengthBytes, bufferPointer);
         return bufferPointer;
     }
 
      const readStringFromMemory = (ptr) => {
-         const memory = new Uint8Array(exports.memory.buffer);
          let str = '';
          let byte = memory[ptr];
          const originalPtr = ptr;
@@ -31,72 +32,42 @@ let typeMap;
          return str;
      }
 
+     const callFunction = (name, src, ...args) => {
+         const p = passStringToWasm(src), r = exports[name](p, ...args);
+         exports.free(p);
+         return r;
+     }
+
      typeMap = {
-         removeImage: (data) => {
-             const s = passStringToWasm(data.src);
-             exports.removeImage(s);
-             exports.free(s);
-         },
+         removeImage: (data) => callFunction('removeImage', data.src),
          setData: (data) => {
-             const p = exports.malloc(data.width * data.height * 4);
-             new Uint8Array(exports.memory.buffer).set(data.data, p);
-             const sp = passStringToWasm(data.src);
-             exports.addImage(sp, p, parseInt(data.width), parseInt(data.height));
-             exports.free(sp);
+             const p = exports.malloc(parseInt(data.data.length));
+             memory.set(data.data, p);
+             callFunction('addImage', data.src, p, parseInt(data.width), parseInt(data.height));
          },
 
-         clearTrace: (data) => {
-             const p = passStringToWasm(data.src);
-             exports.clear(p);
-             exports.free(p);
-         },
-         undoTrace: (data) => {
-             const p = passStringToWasm(data.src);
-             const r = readStringFromMemory(exports.undo(p));
-             exports.free(p);
-             return defaultTraceResponse(data, r);
-         },
+         clearTrace: (data) => callFunction('clear', data.src),
+         undoTrace: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('undo', data.src))),
 
          exportTrace: (data) => {
-             const p = passStringToWasm(data.src);
-             data.export = readStringFromMemory(exports.exportTrace(p, data.delim === "tab" ? 1 : 0,
+             data.export = readStringFromMemory(callFunction('exportTrace', data.src, data.delim === "tab" ? 1 : 0,
                  parseFloat(data.lowFR), parseFloat(data.highFR), parseFloat(data.SPL.top), parseFloat(data.SPL.topPixel),
                  parseFloat(data.SPL.bottom), parseFloat(data.SPL.bottomPixel), parseFloat(data.FR.top),
                  parseFloat(data.FR.topPixel), parseFloat(data.FR.bottom), parseFloat(data.FR.bottomPixel)));
-             exports.free(p);
             return data;
          },
 
-         addPoint: (data) => {
-             const p = passStringToWasm(data.src);
-             const r = readStringFromMemory(exports.point(p, parseInt(data.x), parseInt(data.y)));
-             exports.free(p);
-             return defaultTraceResponse(data, r);
-         },
-         autoTrace: (data) => {
-             const p = passStringToWasm(data.src);
-             const r = readStringFromMemory(exports.autoTrace(p, 0, 0, parseInt(data.colourTolerance)));
-             exports.free(p);
-             return defaultTraceResponse(data, r);
-         },
-         trace: (data) => {
-             const p = passStringToWasm(data.src);
-             const r = readStringFromMemory(exports.trace(p, parseInt(data.x), parseInt(data.y), 0, 0, parseInt(data.colourTolerance)));
-             exports.free(p);
-             return defaultTraceResponse(data, r);
-         },
+         addPoint: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('point', data.src, parseInt(data.x), parseInt(data.y)))),
+         autoTrace: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('autoTrace', data.src, 0, 0, parseInt(data.colourTolerance)))),
+         trace: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('trace', data.src, parseInt(data.x), parseInt(data.y), 0, 0, parseInt(data.colourTolerance)))),
 
          snapLine: (data) => {
-             const p = passStringToWasm(data.src);
-             data.line.position = exports.snap(p, parseInt(data.line.position), data.line.direction === "x" ? 1 : 0, parseInt(data.direction));
-             exports.free(p);
+             data.line.position = callFunction('snap', data.src, parseInt(data.line.position), data.line.direction === "x" ? 1 : 0, parseInt(data.direction));
              return data;
          },
 
          getPixelColour: (data) => {
-             const p = passStringToWasm(data.src);
-             data.pixelColour = readStringFromMemory(exports.getPixelColour(p, parseInt(data.x), parseInt(data.y)));
-             exports.free(p);
+             data.pixelColour = readStringFromMemory(callFunction('getPixelColour', data.src, parseInt(data.x), parseInt(data.y)));
              return data;
          }
      }
