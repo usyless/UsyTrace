@@ -3,7 +3,7 @@ let typeMap;
 (async () => {
     const importObject = {
         env: {
-            memory: new WebAssembly.Memory({initial: 1602, maximum: 15625})
+            memory: new WebAssembly.Memory({initial: 1600, maximum: 32768}) // max memory 2GB, initial 100MB
         }
     }
     const wasmResult = await WebAssembly.instantiateStreaming(await fetch('./standalone.wasm'), importObject);
