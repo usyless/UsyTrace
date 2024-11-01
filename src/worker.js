@@ -58,8 +58,8 @@ let typeMap;
          },
 
          addPoint: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('point', data.src, parseInt(data.x), parseInt(data.y)))),
-         autoTrace: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('autoTrace', data.src, 0, 0, parseInt(data.colourTolerance)))),
-         trace: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('trace', data.src, parseInt(data.x), parseInt(data.y), 0, 0, parseInt(data.colourTolerance)))),
+         autoTrace: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('autoTrace', data.src, parseInt(data.colourTolerance)))),
+         trace: (data) => defaultTraceResponse(data, readStringFromMemory(callFunction('trace', data.src, parseInt(data.x), parseInt(data.y), parseInt(data.colourTolerance)))),
 
          snapLine: (data) => {
              data.line.position = callFunction('snap', data.src, parseInt(data.line.position), data.line.direction === "x" ? 1 : 0, parseInt(data.direction));

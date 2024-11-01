@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 #include "emscripten.h"
+#include <string.h>
 
 using namespace std;
 
@@ -88,11 +89,10 @@ struct RGBTools {
 };
 
 struct TraceData {
-    int x = 0, y = 0, maxLineHeightOffset = 0, maxJumpOffset = 0, colourTolerance = 0;
+    int x = 0, y = 0, colourTolerance = 0;
 
     TraceData(const int x, const int y) : x(x), y(y) {}
-    TraceData(const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) : maxLineHeightOffset(maxLineHeightOffset), maxJumpOffset(maxJumpOffset), colourTolerance(colourTolerance) {}
-    TraceData(const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) : x(x), y(y), maxLineHeightOffset(maxLineHeightOffset), maxJumpOffset(maxJumpOffset), colourTolerance(colourTolerance) {}
+    TraceData(const int x, const int y, const int colourTolerance) : x(x), y(y), colourTolerance(colourTolerance) {}
 };
 
 struct ExportData {
@@ -202,8 +202,8 @@ struct Trace {
     }
 
     [[nodiscard]] Trace* newTrace(const ImageData& imageData, const TraceData& traceData, const bool traceLeft=false) const {
-        const auto maxLineHeight = max(0, imageData.height / 20 + traceData.maxLineHeightOffset);
-        const auto maxJump = max(0, imageData.width / 50 + traceData.maxJumpOffset);
+        const auto maxLineHeight = imageData.height / 20;
+        const auto maxJump = imageData.width / 50;
         auto baselineColour = RGBTools(RGBTools::getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
         auto newTrace = map(trace);
         newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
@@ -444,6 +444,12 @@ struct ImageQueue {
     }
 } imageQueue;
 
+inline const char* stringReturn(string str) {
+    char* buffer = new char[str.size() + 1];
+    strcpy(buffer, str.c_str());
+    return buffer;
+}
+
 #define EXTERN extern "C"
 
 EXTERN EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const int width, const int height) {
@@ -455,14 +461,12 @@ EXTERN EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
 }
 
 // Tracing
-EXTERN EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
-    const auto* s = new string(imageQueue.get(id).trace(TraceData{x, y, maxLineHeightOffset, maxJumpOffset, colourTolerance}));
-    return s->data();
+EXTERN EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int colourTolerance) {
+    return stringReturn(imageQueue.get(id).trace(TraceData{x, y, colourTolerance}));
 }
 
 EXTERN EMSCRIPTEN_KEEPALIVE const char* undo(const char* id) {
-    const auto* s = new string(imageQueue.get(id).undo());
-    return s->data();
+    return stringReturn(imageQueue.get(id).undo());
 }
 
 EXTERN EMSCRIPTEN_KEEPALIVE void clear(const char* id) {
@@ -470,13 +474,11 @@ EXTERN EMSCRIPTEN_KEEPALIVE void clear(const char* id) {
 }
 
 EXTERN EMSCRIPTEN_KEEPALIVE const char* point(const char* id, const int x, const int y) {
-    const auto* s = new string(imageQueue.get(id).point(TraceData{x, y}));
-    return s->data();
+    return stringReturn(imageQueue.get(id).point(TraceData{x, y}));
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
-    const auto* s = new string(imageQueue.get(id).autoTrace(TraceData{maxLineHeightOffset, maxJumpOffset, colourTolerance}));
-    return s->data();
+EXTERN EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int colourTolerance) {
+    return stringReturn(imageQueue.get(id).autoTrace(TraceData{0, 0, colourTolerance}));
 }
 
 // Exporting
@@ -484,10 +486,9 @@ EXTERN EMSCRIPTEN_KEEPALIVE const char* exportTrace(const char* id, const int PP
     const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
     const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
     const double FRBottomPixel) {
-    const auto* s = new string(imageQueue.get(id).exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
+    return stringReturn(imageQueue.get(id).exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
         SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
         FRBottomPixel}));
-    return s->data();
 }
 
 // Lines
@@ -497,8 +498,7 @@ EXTERN EMSCRIPTEN_KEEPALIVE int snap(const char* id, const int pos, const int li
 
 // Image Data
 EXTERN EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const int x, const int y) {
-    const auto* s = new string(imageQueue.get(id).getPixelColour(x, y).toString());
-    return s->data();
+    return stringReturn(imageQueue.get(id).getPixelColour(x, y).toString());
 }
 
 // Memory Stuff
