@@ -9,7 +9,7 @@ let typeMap;
     const wasmResult = await WebAssembly.instantiateStreaming(await fetch('./standalone.wasm'), importObject);
     const instance = wasmResult.instance;
     const exports = instance.exports;
-    exports._initialize(); // emscripten thing (?)
+    exports._initialize(); // Emscripten required thing i think
     const memory = new Uint8Array(exports.memory.buffer);
 
     const passStringToWasm = (str) => { // must free after
@@ -41,7 +41,7 @@ let typeMap;
      typeMap = {
          removeImage: (data) => callFunction('removeImage', data.src),
          setData: (data) => {
-             const p = exports.malloc(parseInt(data.data.length));
+             const p = exports.malloc(data.data.length);
              memory.set(data.data, p);
              callFunction('addImage', data.src, p, parseInt(data.width), parseInt(data.height));
          },
