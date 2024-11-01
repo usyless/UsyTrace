@@ -46,16 +46,10 @@
 
 # Compiling Instructions
 1. Download and install [emscripten](https://emscripten.org/)
-2. Paste glue code file (a.out.js) into the top of the worker file (worker.js) after compiling
- ### Testing
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT='worker' -sINITIAL_HEAP=314572800 -sFILESYSTEM=0`
 ### Release
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS='["cwrap"]' -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker' -sFILESYSTEM=0`
+`emcc imageTracer.cpp -O3 -sEXPORTED_FUNCTIONS="['_addImage', '_removeImage', '_trace', '_undo', '_clear', '_point', '_autoTrace', '_exportTrace', '_snap', '_getPixelColour', '_delete_return_string', '_free', '_malloc']" -sSTANDALONE_WASM -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -sFILESYSTEM=0 --no-entry -o standalone.wasm`
 
 ### Info/Extras
-- Default heap size set to 300mb
+- Default heap size set to 100mb
 - Set stack size with -sSTACK_SIZE=size in bytes
-- Set max memory with -sMAXIMUM_MEMORY=size in bytes (2gb by default, >2gb has performance penalty afaik)
 - To use c++20 features: -std=c++20
-
-`emcc imageTracer.cpp -O3 -s EXPORTED_FUNCTIONS='["_addImage", "_removeImage", "_trace", "_undo", "_clear", "_point", "_autoTrace", "_exportTrace", "_snap", "_getPixelColour", "_delete_return_string", "_free", "_malloc"]' -sSTANDALONE_WASM -sINITIAL_HEAP=104857600 --no-entry -o standalone.wasm`

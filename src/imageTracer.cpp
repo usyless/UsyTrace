@@ -450,58 +450,58 @@ inline const char* stringReturn(string str) {
     return buffer;
 }
 
-#define EXTERN extern "C"
+extern "C" {
+    EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const int width, const int height) {
+        imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height}));
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const int width, const int height) {
-    imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height}));
-}
+    EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
+        imageQueue.remove(id);
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
-    imageQueue.remove(id);
-}
+    // Tracing
+    EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int colourTolerance) {
+        return stringReturn(imageQueue.get(id).trace(TraceData{x, y, colourTolerance}));
+    }
 
-// Tracing
-EXTERN EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int colourTolerance) {
-    return stringReturn(imageQueue.get(id).trace(TraceData{x, y, colourTolerance}));
-}
+    EMSCRIPTEN_KEEPALIVE const char* undo(const char* id) {
+        return stringReturn(imageQueue.get(id).undo());
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE const char* undo(const char* id) {
-    return stringReturn(imageQueue.get(id).undo());
-}
+    EMSCRIPTEN_KEEPALIVE void clear(const char* id) {
+        imageQueue.get(id).clear();
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void clear(const char* id) {
-    imageQueue.get(id).clear();
-}
+    EMSCRIPTEN_KEEPALIVE const char* point(const char* id, const int x, const int y) {
+        return stringReturn(imageQueue.get(id).point(TraceData{x, y}));
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE const char* point(const char* id, const int x, const int y) {
-    return stringReturn(imageQueue.get(id).point(TraceData{x, y}));
-}
+    EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int colourTolerance) {
+        return stringReturn(imageQueue.get(id).autoTrace(TraceData{0, 0, colourTolerance}));
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int colourTolerance) {
-    return stringReturn(imageQueue.get(id).autoTrace(TraceData{0, 0, colourTolerance}));
-}
+    // Exporting
+    EMSCRIPTEN_KEEPALIVE const char* exportTrace(const char* id, const int PPO, const int delim, const double lowFRExport,
+        const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
+        const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
+        const double FRBottomPixel) {
+        return stringReturn(imageQueue.get(id).exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
+            SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
+            FRBottomPixel}));
+    }
 
-// Exporting
-EXTERN EMSCRIPTEN_KEEPALIVE const char* exportTrace(const char* id, const int PPO, const int delim, const double lowFRExport,
-    const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
-    const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
-    const double FRBottomPixel) {
-    return stringReturn(imageQueue.get(id).exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
-        SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
-        FRBottomPixel}));
-}
+    // Lines
+    EMSCRIPTEN_KEEPALIVE int snap(const char* id, const int pos, const int lineDir, const int moveDir) {
+        return imageQueue.get(id).snapLine(pos, lineDir, moveDir);
+    }
 
-// Lines
-EXTERN EMSCRIPTEN_KEEPALIVE int snap(const char* id, const int pos, const int lineDir, const int moveDir) {
-    return imageQueue.get(id).snapLine(pos, lineDir, moveDir);
-}
+    // Image Data
+    EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const int x, const int y) {
+        return stringReturn(imageQueue.get(id).getPixelColour(x, y).toString());
+    }
 
-// Image Data
-EXTERN EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const int x, const int y) {
-    return stringReturn(imageQueue.get(id).getPixelColour(x, y).toString());
-}
-
-// Memory Stuff
-EXTERN EMSCRIPTEN_KEEPALIVE void delete_return_string(char* ptr) {
-    delete[] ptr;
+    // Memory Stuff
+    EMSCRIPTEN_KEEPALIVE void delete_return_string(char* ptr) {
+        delete[] ptr;
+    }
 }
