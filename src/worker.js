@@ -12,11 +12,15 @@ let typeMap;
     exports._initialize(); // Emscripten required thing i think
     const memory = new Uint8Array(exports.memory.buffer);
 
+    const srcMap = new Map();
+
     const passStringToWasm = (str) => { // must free after
+        if (srcMap.has(str)) return srcMap.get(str);
         const lengthBytes = new Uint8Array(str.length + 1);
         for (let i = 0; i < str.length; ++i) lengthBytes[i] = str.charCodeAt(i);
         const bufferPointer = exports.malloc(lengthBytes.length);
         memory.set(lengthBytes, bufferPointer);
+        srcMap.set(str, bufferPointer);
         return bufferPointer;
     }
 
@@ -34,12 +38,15 @@ let typeMap;
 
      const callFunction = (name, src, ...args) => {
          const p = passStringToWasm(src), r = exports[name](p, ...args);
-         exports.free(p);
          return r;
      }
 
      typeMap = {
-         removeImage: (data) => callFunction('removeImage', data.src),
+         removeImage: (data) => {
+             callFunction('removeImage', data.src);
+             exports.free(srcMap.get(data.src));
+             srcMap.delete(data.src);
+         },
          setData: (data) => {
              const p = exports.malloc(data.data.length);
              memory.set(data.data, p);
