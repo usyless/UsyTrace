@@ -36,10 +36,7 @@ let typeMap;
          return str;
      }
 
-     const callFunction = (name, src, ...args) => {
-         const p = passStringToWasm(src), r = exports[name](p, ...args);
-         return r;
-     }
+     const callFunction = (name, src, ...args) => exports[name](passStringToWasm(src), ...args);
 
      typeMap = {
          removeImage: (data) => {
