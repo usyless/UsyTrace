@@ -3,7 +3,7 @@ let typeMap;
 (async () => {
     const importObject = {
         env: {
-            memory: new WebAssembly.Memory({initial: 1600, maximum: 32768}) // max memory 2GB, initial 100MB
+            memory: new WebAssembly.Memory({initial: 8000, maximum: 8000})
         }
     }
     const wasmResult = await WebAssembly.instantiateStreaming(await fetch('./standalone.wasm'), importObject);
@@ -16,10 +16,10 @@ let typeMap;
 
     const passStringToWasm = (str) => { // must free after
         if (srcMap.has(str)) return srcMap.get(str);
-        const lengthBytes = new Uint8Array(str.length + 1);
-        for (let i = 0; i < str.length; ++i) lengthBytes[i] = str.charCodeAt(i);
-        const bufferPointer = exports.malloc(lengthBytes.length);
+        const lengthBytes = (new TextEncoder()).encode(str);
+        const bufferPointer = exports.malloc(lengthBytes.length + 1);
         memory.set(lengthBytes, bufferPointer);
+        memory[bufferPointer + lengthBytes.length] = 0;
         srcMap.set(str, bufferPointer);
         return bufferPointer;
     }

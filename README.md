@@ -47,9 +47,9 @@
 # Compiling Instructions
 1. Download and install [emscripten](https://emscripten.org/)
 ### Release
-`emcc imageTracer.cpp -O3 -sEXPORTED_FUNCTIONS="['_addImage', '_removeImage', '_trace', '_undo', '_clear', '_point', '_autoTrace', '_exportTrace', '_snap', '_getPixelColour', '_delete_return_string', '_free', '_malloc']" -sSTANDALONE_WASM -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -sFILESYSTEM=0 --no-entry -o standalone.wasm`
+`emcc imageTracer.cpp -O3 -sEXPORTED_FUNCTIONS=_addImage,_removeImage,_trace,_undo,_clear,_point,_autoTrace,_exportTrace,_snap,_getPixelColour,_delete_return_string,_free,_malloc -sSTANDALONE_WASM -sINITIAL_HEAP=524288000 -sASSERTIONS=0 -fno-exceptions -sFILESYSTEM=0 --no-entry -o standalone.wasm`
 
 ### Info/Extras
-- Default heap size set to 100mb
+- Default heap size set to 500Mb
 - Set stack size with -sSTACK_SIZE=size in bytes
 - To use c++20 features: -std=c++20
