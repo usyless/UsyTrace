@@ -486,26 +486,23 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
     let holdInterval, line, snap = preferences.snapToLines();
     document.getElementById('snapToLines').addEventListener('change', () => snap = preferences.snapToLines());
 
-    document.querySelectorAll(".moveButtons button").forEach((btn) => {
-        btn.addEventListener('pointerdown', (e) => {
+    document.getElementById('buttonSection').addEventListener('pointerdown', (e) => {
+        const t = e.target, p = t.parentNode;
+        if (!holdInterval && p.classList.contains('moveButtons')) {
             e.preventDefault();
-            line = lines.lines[e.target.parentNode.dataset.for];
+            line = lines.lines[p.dataset.for];
             if (!snap) {
                 holdInterval = setInterval(() => {
-                    lines.setPosition(line, lines.getPosition(line) + parseInt(e.target.dataset.direction) * sizeRatio);
+                    lines.setPosition(line, lines.getPosition(line) + parseInt(t.dataset.direction) * sizeRatio);
                 }, 10);
-            }
-        });
+            } else worker.snapLine(lines.lines[p.dataset.for], parseInt(t.dataset.direction));
+        }
+    });
 
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            if (snap) worker.snapLine(lines.lines[e.target.parentNode.dataset.for], parseInt(e.target.dataset.direction));
-        });
-
-        multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], btn, (e) => {
-            e.preventDefault();
-            clearInterval(holdInterval);
-        });
+    multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], document.getElementById('buttonSection'), (e) => {
+        e.preventDefault();
+        clearInterval(holdInterval);
+        holdInterval = null;
     });
 }
 
@@ -563,13 +560,10 @@ image.addEventListener('load', () => {
 });
 
 { // keybindings
-    const holdMap = {
-        'shift': false,
-        'control': false
-    }
-    const callbackMap = {
+    const pointerDown = new PointerEvent('pointerdown', {bubbles: true}), pointerUp = new PointerEvent('pointerup', {bubbles: true});
+    const keydownMap = {
         'escape': Popups.clearPopups,
-        'z': () => holdMap['control'] && document.getElementById('undo').click(),
+        'z': (e) => e.ctrlKey && document.getElementById('undo').click(),
         'a': () => document.getElementById('autoPath').click(),
         't': () => document.getElementById('selectPath').click(),
         'p': () => document.getElementById('selectPoint').click(),
@@ -577,22 +571,30 @@ image.addEventListener('load', () => {
         'enter': () => document.getElementById('fileInputButton').click(),
         'delete': () => document.getElementById('removeImage').click(),
         'backspace': () => document.getElementById('clearPath').click(),
-        'arrowup': () => document.querySelector(`'[data-for="y${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="-1"]`).click(),
-        'arrowdown': () => document.querySelector(`'[data-for="y${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="1"]`).click(),
-        'arrowleft': () => document.querySelector(`'[data-for="x${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="-1"]`).click(),
-        'arrowright': () => document.querySelector(`'[data-for="x${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="1"]`).click(),
+        'arrowup': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
+        'arrowdown': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
+        'arrowleft': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
+        'arrowright': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
+    };
+    const keyupMap = {
+        'arrowup': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
+        'arrowdown': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
+        'arrowleft': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
+        'arrowright': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
     };
     document.addEventListener('keydown', (e) => {
-        const k = e.key.toLowerCase();
-        holdMap[k] = true;
-        const cb = callbackMap[k];
+        const cb = keydownMap[e.key.toLowerCase()];
         if (cb) {
             e.preventDefault();
-            cb();
+            cb(e);
         }
     });
     document.addEventListener('keyup', (e) => {
-       holdMap[e.key.toLowerCase()] = false;
+        const cb = keyupMap[e.key.toLowerCase()];
+        if (cb) {
+            e.preventDefault();
+            cb(e);
+        }
     });
 }
 
