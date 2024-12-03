@@ -8,29 +8,33 @@
 
     const TUTORIAL_PAGES = [{
         header: 'Welcome to UsyTrace',
-        body: `Here you can trace frequency responses from images.`
+        body: `<h2>Here you can trace frequency responses from images</h2>
+
+All you need to know, as well as keybindings are on the next few pages`
     }, {
         header: 'Tracing',
-        body: `<h3>Auto Trace</h3>
+        body: `<h3>Auto Trace (a)</h3>
 Tries to automatically select a line in the image, may fail, applied automatically upon image import
         
-<h3>Select Path</h3>
+<h3>Select Path (t)</h3>
 Traces to the right of the point you click on the image, can complete a trace by starting from the left side of the frequency response and clicking to the right if it misses a part
 
-<h3>Add Point</h3>
+<h3>Add Point (p)</h3>
 Add a single point to the trace manually, useful for situations where Select Path or Auto Trace Fails
 
-<h3>Undo</h3>
+<h3>Undo (Ctrl + z)</h3>
 Goes back to the previous trace step, saves add point, tracing, and clearing history
 
-<h3>Clear Path</h3>
+<h3>Clear Path (Backspace)</h3>
 Clears the current trace on screen, can go back using Undo`
     }, {
         header: 'Exporting',
         body: `Align <b>High</b> and <b>Low</b> lines with given values in their respective axis, then input the respective values into <b>Higher SPL</b>, <b>Lower SPL</b>, <b>Higher Frequency</b> and <b>Lower Frequency</b>.
 
+The lines can be moved with the arrow keys, defaulting to the <b>High</b> line for each axis, but can control the <b>Low</b> line by holding <b>Shift</b>
+
 <h3>Trace Settings</h3>     
-Adjust the <b>Minimum Exported Frequency</b>, <b>Maximum Exported Frequency</b>, <b>Points Per Octave of the exported data</b>, and <b>the delimination of the exported data</b>
+Adjust the <b>Minimum Exported Frequency</b>, <b>Maximum Exported Frequency</b>, <b>Points Per Octave of the exported data</b>, and <b>the delimitation of the exported data</b>
 
 Then <b>Export Trace</b> will give you the result`
     }, {
@@ -44,7 +48,7 @@ Raise if line is not being detected, Lower if line is jagged or detecting multip
         header: 'Miscellaneous',
         body: `You can <b>drop</b>, or <b>choose any amount of images</b> you like into the site, other than with pasting, as that only supports one image at a time.
         
-Loaded images show in the image queue on the bottom, and can be removed by right-clicking them (long hold on mobile) or pressing remove`
+Loaded images show in the image queue on the bottom, and can be removed by right-clicking them (long hold on mobile), pressing <b>Remove</b> or pressing the <b>Delete</b> key on your keyboard`
     }];
     let CURRENT_PAGE = 0;
 

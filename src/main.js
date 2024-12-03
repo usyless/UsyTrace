@@ -125,7 +125,7 @@ const preferences = {
 
 const worker = {
     worker: (() => {
-        let worker = new Worker("./worker.js");
+        const worker = new Worker("./worker.js");
         worker.onmessage = (e) => {
             const data = e.data, imgData = imageMap.get(data.src);
 
@@ -151,8 +151,9 @@ const worker = {
         }
         return worker;
     })(),
+    postMessage: (data) => image.src.startsWith('blob:') && worker.worker.postMessage(data),
     removeImage: (src) => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'removeImage',
             src: src
         });
@@ -166,7 +167,7 @@ const worker = {
         new_image.src = image.src;
         processing_context.drawImage(new_image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
-        worker.worker.postMessage({
+        worker.postMessage({
             src: image.src,
             type: 'setData',
             data: imageData.data,
@@ -175,13 +176,13 @@ const worker = {
         }, [imageData.data.buffer]);
     },
     clearTrace: () => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'clearTrace',
             src: image.src,
         });
     },
     undoTrace: () => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'undoTrace',
             src: image.src,
         });
@@ -216,10 +217,10 @@ const worker = {
             }
         }
         if (hasNullOrEmpty(data)) Popups.createPopup("Please fill in all required values to export (SPL and FR values)");
-        else worker.worker.postMessage(data);
+        else worker.postMessage(data);
     },
     addPoint: (x, y) => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'addPoint',
             src: image.src,
             x: x,
@@ -227,14 +228,14 @@ const worker = {
         });
     },
     autoTrace: () => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'autoTrace',
             src: image.src,
             colourTolerance: preferences.colourTolerance(),
         });
     },
     trace: (x, y) => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'trace',
             src: image.src,
             x: x,
@@ -243,7 +244,7 @@ const worker = {
         });
     },
     snapLine: (line, direction) => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'snapLine',
             src: image.src,
             line: {
@@ -255,7 +256,7 @@ const worker = {
         });
     },
     getPixelColour: (x, y) => {
-        worker.worker.postMessage({
+        worker.postMessage({
             type: 'getPixelColour',
             src: image.src,
             x: x,
@@ -390,7 +391,7 @@ const imageQueue = {
         }
     }
 }
-document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]').dispatchEvent(new Event('contextmenu')));
+document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]')?.dispatchEvent(new Event('contextmenu')));
 document.getElementById('toggleImageQueue').addEventListener('click', imageQueue.toggle);
 
 // Initialise the page
@@ -560,6 +561,40 @@ image.addEventListener('load', () => {
     lines.updateLineWidth();
     image.startPointerEvents();
 });
+
+{ // keybindings
+    const holdMap = {
+        'shift': false,
+        'control': false
+    }
+    const callbackMap = {
+        'escape': Popups.clearPopups,
+        'z': () => holdMap['control'] && document.getElementById('undo').click(),
+        'a': () => document.getElementById('autoPath').click(),
+        't': () => document.getElementById('selectPath').click(),
+        'p': () => document.getElementById('selectPoint').click(),
+        'h': () => document.getElementById('toggleImageQueue').click(),
+        'enter': () => document.getElementById('fileInputButton').click(),
+        'delete': () => document.getElementById('removeImage').click(),
+        'backspace': () => document.getElementById('clearPath').click(),
+        'arrowup': () => document.querySelector(`'[data-for="y${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="-1"]`).click(),
+        'arrowdown': () => document.querySelector(`'[data-for="y${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="1"]`).click(),
+        'arrowleft': () => document.querySelector(`'[data-for="x${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="-1"]`).click(),
+        'arrowright': () => document.querySelector(`'[data-for="x${holdMap['shift'] ? 'Low' : 'High'}"] > [data-direction="1"]`).click(),
+    };
+    document.addEventListener('keydown', (e) => {
+        const k = e.key.toLowerCase();
+        holdMap[k] = true;
+        const cb = callbackMap[k];
+        if (cb) {
+            e.preventDefault();
+            cb();
+        }
+    });
+    document.addEventListener('keyup', (e) => {
+       holdMap[e.key.toLowerCase()] = false;
+    });
+}
 
 // Helper Functions
 function multiEventListener(events, target, callback) {
