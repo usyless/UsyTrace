@@ -31,18 +31,18 @@
             <b>Update Available, click here to update.</b>
         </button>
         <input type='file' id='fileInput' class="hidden" multiple="multiple" accept="image/*"/>
-        <button class="standardButton sidebarSection" id="fileInputButton">
+        <button class="standardButton sidebarSection" id="fileInputButton" title="Pick image(s) to trace (Enter)">
             <b>Choose Images</b>
         </button>
         <div class="sidebarSection">
-            <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image" data-disabled>Auto Trace</button>
-            <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace" data-disabled>Select Path</button>
-            <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" title="Click to add a point to the trace, will stack on top of previous trace" data-disabled>Add Point</button>
-            <button id="undo" class="standardButton" title="Undo the previous action done to the trace" data-disabled>Undo</button>
-            <button id="clearPath" class="standardButton" title="Clears the current trace, can be undone" data-disabled>Clear Path</button>
+            <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled>Auto Trace</button>
+            <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled>Select Path</button>
+            <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" title="Click to add a point to the trace, will stack on top of previous trace (p)" data-disabled>Add Point</button>
+            <button id="undo" class="standardButton" title="Undo the previous action done to the trace (Ctrl + z)" data-disabled>Undo</button>
+            <button id="clearPath" class="standardButton" title="Clears the current trace, can be undone (Backspace)" data-disabled>Clear Path</button>
             <button id="export" class="standardButton" title="Exports the current trace, make sure to have all SPL and FR values filled in" data-disabled>Export Trace</button>
         </div>
-        <div class="sidebarSection">
+        <div class="sidebarSection" id="buttonSection">
             <label for="SPLHigher" title="Y value of the upper horizontal line">Higher SPL (dB)</label>
             <input type="number" id="SPLHigher" title="Y value of the upper horizontal line"/>
             <div class="moveButtons" data-for="yHigh">
@@ -149,8 +149,8 @@
         </div>
         <div id="imageQueueContainer">
             <div id="imageQueueBar">
-                <button id="toggleImageQueue" class="standardButton altButton" data-default="Hide" data-active="Show">Hide</button>
-                <button id="removeImage" class="standardButton altButton">Remove</button>
+                <button id="toggleImageQueue" class="standardButton altButton" data-default="Hide" data-active="Show" title="Toggle the image queue bar (h)">Hide</button>
+                <button id="removeImage" class="standardButton altButton" title="Delete the currently selected image (Delete)">Remove</button>
             </div>
             <div id="imageQueueOuter">
                 <div id="imageQueueInner"></div>

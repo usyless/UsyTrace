@@ -629,7 +629,7 @@ function minVal(e) {
     if (e.value < e.min) e.value = e.min;
 }
 
-console.log('Welcome to the console!')
+console.groupCollapsed('Hi! Welcome to UsyTrace, expend this for some info on the inner workings');
 console.log('If you want to mess with the javascript in this site, objects of note are:');
 console.log('graphs', graphs);
 console.log('lines', lines);
@@ -640,3 +640,4 @@ console.log('preferences', preferences);
 console.log('buttons', buttons);
 console.log(`I won't explain what they do, but it should be pretty self explanatory`);
 console.log('If you happen to want to report a bug or add a new feature then you can always contact me with the details on the site!');
+console.groupEnd();
