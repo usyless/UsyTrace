@@ -15,7 +15,8 @@
 - Click "Clear Path" to make sure any auto traced line does not mess with your new trace
 - Click "Select Path", then click on your line to trace
 - If you find that it hasn't selected the whole line, you can click on the region it has not selected to try to select more (Adjust settings as a last resort)
-- Made a mistake? Use the "Undo" button
+- Made a mistake or cleared the trace? Use the "Undo" button
+- Undone too much? Use the "Redo" button
 - Use "Add Point" to add points manually to the trace
 
 ### Mobile Specifics
@@ -26,13 +27,6 @@
 - Adjust the maximum tolerance for colours that the tracer takes into account when tracing the line
 - Increase this if the tracer isn't selecting the whole line
 - Decrease this if the trace is jittery
-### Max Line Thickness Offset
-- Adjust the offset of the maximum thickness of the line being traced in pixels
-- Decrease this if your trace is jittery
-### Largest Contiguous jump Offset
-- The offset for the largest distance in pixels that the tracer will allow as a contiguous line
-- Increase this to trace lines that have breaks in them, such as target lines
-- Decrease this if the tracer is tracing stuff to the left and right of the line
 
 ## Export Settings
 ### Points Per Octave
@@ -48,12 +42,12 @@
 1. Download and install [emscripten](https://emscripten.org/)
 2. Paste glue code file (a.out.js) into the top of the worker file (worker.js) after compiling
  ### Testing
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT='worker' -sINITIAL_HEAP=314572800 -sFILESYSTEM=0`
+`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT='worker' -sINITIAL_HEAP=104857600 -sFILESYSTEM=0`
 ### Release
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=314572800 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker' -sFILESYSTEM=0`
+`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT='worker' -sFILESYSTEM=0`
 
 ### Info/Extras
-- Default heap size set to 300mb
+- Default heap size set to 100mb
 - Set stack size with -sSTACK_SIZE=size in bytes
 - Set max memory with -sMAXIMUM_MEMORY=size in bytes (2gb by default, >2gb has performance penalty afaik)
 - To use c++20 features: -std=c++20
