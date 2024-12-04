@@ -38,7 +38,10 @@
             <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled>Auto Trace</button>
             <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled>Select Path</button>
             <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" title="Click to add a point to the trace, will stack on top of previous trace (p)" data-disabled>Add Point</button>
-            <button id="undo" class="standardButton" title="Undo the previous action done to the trace (Ctrl + z)" data-disabled>Undo</button>
+            <div>
+                <button id="undo" class="standardButton" title="Undo the previous action done to the trace (Ctrl + z)" data-disabled>Undo</button>
+                <button id="redo" class="standardButton" title="Redo the previous actionm done to the trace (Ctrl + Shift + z)" data-disabled>Redo</button>
+            </div>
             <button id="clearPath" class="standardButton" title="Clears the current trace, can be undone (Backspace)" data-disabled>Clear Path</button>
             <button id="export" class="standardButton" title="Exports the current trace, make sure to have all SPL and FR values filled in" data-disabled>Export Trace</button>
         </div>
@@ -159,7 +162,7 @@
     </div>
 </div>
 
-<script src="updater.js"></script>
+<!--<script src="updater.js"></script>-->
 <script src="popups.js"></script>
 <script src="tutorial.js"></script>
 <script src="main.js"></script>

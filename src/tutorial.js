@@ -1,7 +1,7 @@
 (() => {
     'use strict';
 
-    const TUTORIAL_VERSION = 1;
+    const TUTORIAL_VERSION = 2;
     const USER_TUTORIAL_VERSION = (() => {
         try {return parseInt(window.localStorage.getItem('USER_TUTORIAL_VERSION') ?? 0);} catch {return 0;}
     })();
@@ -24,6 +24,9 @@ Add a single point to the trace manually, useful for situations where Select Pat
 
 <h3>Undo (Ctrl + z)</h3>
 Goes back to the previous trace step, saves add point, tracing, and clearing history
+
+<h3>Redo (Ctrl + Shift + z)</h3>
+Goes back to recently undone trace steps
 
 <h3>Clear Path (Backspace)</h3>
 Clears the current trace on screen, can go back using Undo`

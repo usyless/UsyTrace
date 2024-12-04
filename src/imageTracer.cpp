@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 #include <emscripten.h>
+#include <string.h>
 
 using namespace std;
 
@@ -231,34 +232,53 @@ struct Trace {
 
 struct TraceHistory {
     stack<Trace*> history;
+    stack<Trace*> future;
+    size_t pos = 0;
 
     TraceHistory() {
         history.push(new Trace{});
-    }
-
-    Trace* add(Trace* trace) {
-        if(getLatest()->size() == 0) undo();
-        history.push(trace);
-        return trace;
     }
 
     [[nodiscard]] Trace* getLatest() const {
         return history.top();
     }
 
+    void clearFuture() {
+        while (!future.empty()) {
+            delete future.top();
+            future.pop();
+        }
+    }
+
+    Trace* add(Trace* trace) {
+        if(history.top()->size() == 0) undo();
+        clearFuture();
+        history.push(trace);
+        return trace;
+    }
+
     Trace* undo() {
         if (history.size() > 1) {
-            delete getLatest();
+            future.push(history.top());
             history.pop();
         }
-        return getLatest();
+        return history.top();
+    }
+
+    Trace* redo() {
+        if (!future.empty()) {
+            history.push(future.top());
+            future.pop();
+        }
+        return history.top();
     }
 
     ~TraceHistory() {
         while(!history.empty()) {
-            delete getLatest();
+            delete history.top();
             history.pop();
         }
+        clearFuture();
     }
 };
 
@@ -335,6 +355,10 @@ struct Image {
 
     [[nodiscard]] string undo() {
         return traceHistory.undo()->getDefaultReturn();
+    }
+
+    [[nodiscard]] string redo() {
+        return traceHistory.redo()->getDefaultReturn();
     }
 
     [[nodiscard]] string autoTrace(const TraceData&& traceData) {
@@ -444,64 +468,68 @@ struct ImageQueue {
     }
 } imageQueue;
 
-#define EXTERN extern "C"
-
-// Image Control
-EXTERN EMSCRIPTEN_KEEPALIVE void* create_buffer(const int width, const int height) {
-    return malloc(width * height * 4 * sizeof(Colour));
+inline const char* stringReturn(string str) {
+    char* buffer = new char[str.size() + 1];
+    strcpy(buffer, str.c_str());
+    return buffer;
 }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const int width, const int height) {
-    imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height}));
-}
+extern "C" {
+    // Image Control
+    EMSCRIPTEN_KEEPALIVE void* create_buffer(const int width, const int height) {
+        return malloc(width * height * 4 * sizeof(Colour));
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
-    imageQueue.remove(id);
-}
+    EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const int width, const int height) {
+        imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height}));
+    }
 
-// Tracing
-EXTERN EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
-    const auto* s = new string(imageQueue.get(id).trace(TraceData{x, y, maxLineHeightOffset, maxJumpOffset, colourTolerance}));
-    return s->data();
-}
+    EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
+        imageQueue.remove(id);
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE const char* undo(const char* id) {
-    const auto* s = new string(imageQueue.get(id).undo());
-    return s->data();
-}
+    // Tracing
+    EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
+        return stringReturn(imageQueue.get(id).trace(TraceData{x, y, maxLineHeightOffset, maxJumpOffset, colourTolerance}));
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE void clear(const char* id) {
-    imageQueue.get(id).clear();
-}
+    EMSCRIPTEN_KEEPALIVE const char* undo(const char* id) {
+        return stringReturn(imageQueue.get(id).undo());
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE const char* point(const char* id, const int x, const int y) {
-    const auto* s = new string(imageQueue.get(id).point(TraceData{x, y}));
-    return s->data();
-}
+    EMSCRIPTEN_KEEPALIVE const char* redo(const char* id) {
+        return stringReturn(imageQueue.get(id).redo());
+    }
 
-EXTERN EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
-    const auto* s = new string(imageQueue.get(id).autoTrace(TraceData{maxLineHeightOffset, maxJumpOffset, colourTolerance}));
-    return s->data();
-}
+    EMSCRIPTEN_KEEPALIVE void clear(const char* id) {
+        imageQueue.get(id).clear();
+    }
 
-// Exporting
-EXTERN EMSCRIPTEN_KEEPALIVE const char* exportTrace(const char* id, const int PPO, const int delim, const double lowFRExport,
-    const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
-    const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
-    const double FRBottomPixel) {
-    const auto* s = new string(imageQueue.get(id).exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
-        SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
-        FRBottomPixel}));
-    return s->data();
-}
+    EMSCRIPTEN_KEEPALIVE const char* point(const char* id, const int x, const int y) {
+        return stringReturn(imageQueue.get(id).point(TraceData{x, y}));
+    }
 
-// Lines
-EXTERN EMSCRIPTEN_KEEPALIVE int snap(const char* id, const int pos, const int lineDir, const int moveDir) {
-    return imageQueue.get(id).snapLine(pos, lineDir, moveDir);
-}
+    EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
+        return stringReturn(imageQueue.get(id).autoTrace(TraceData{maxLineHeightOffset, maxJumpOffset, colourTolerance}));
+    }
 
-// Image Data
-EXTERN EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const int x, const int y) {
-    const auto* s = new string(imageQueue.get(id).getPixelColour(x, y).toString());
-    return s->data();
+    // Exporting
+    EMSCRIPTEN_KEEPALIVE const char* exportTrace(const char* id, const int PPO, const int delim, const double lowFRExport,
+        const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
+        const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
+        const double FRBottomPixel) {
+        return stringReturn(imageQueue.get(id).exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
+            SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
+            FRBottomPixel}));
+    }
+
+    // Lines
+    EMSCRIPTEN_KEEPALIVE int snap(const char* id, const int pos, const int lineDir, const int moveDir) {
+        return imageQueue.get(id).snapLine(pos, lineDir, moveDir);
+    }
+
+    // Image Data
+    EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const int x, const int y) {
+        return stringReturn(imageQueue.get(id).getPixelColour(x, y).toString());
+    }
 }

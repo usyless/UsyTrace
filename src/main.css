@@ -32,8 +32,10 @@ body {
     border-radius: var(--radius);
 }
 
-::-webkit-scrollbar-thumb:hover {
-    background: var(--quaternary);
+@media (hover: hover) {
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--quaternary);
+    }
 }
 
 #main {
@@ -106,7 +108,7 @@ input[type="number"]:hover, select:hover {
     border-color: var(--quaternary);
 }
 
-input[type="number"]:focus, select:focus {
+input[type="number"]:focus-visible, select:focus-visible {
     outline: none;
     border-color: var(--quaternary);
 }

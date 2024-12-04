@@ -23,9 +23,10 @@ button.altButton {
     border-radius: 0;
     padding: var(--spacing-smaller) var(--spacing-larger);
 }
-
-button.altButton:hover {
-    background-color: var(--disabled);
+@media (hover: hover) {
+    button.altButton:hover {
+        background-color: var(--disabled);
+    }
 }
 
 button.altButton:active {
@@ -42,8 +43,10 @@ button.altButton:active {
     padding: var(--spacing-larger);
 }
 
-.standardButton:hover {
-    background-color: var(--tertiary);
+@media (hover: hover) {
+    .standardButton:hover {
+        background-color: var(--tertiary);
+    }
 }
 
 .standardButton:active {
@@ -55,8 +58,10 @@ button.altButton:active {
     color: var(--disabled);
 }
 
-.standardButton:disabled:hover {
-    background-color: var(--primary);
+@media (hover: hover) {
+    .standardButton:disabled:hover {
+        background-color: var(--primary);
+    }
 }
 
 .hidden, .hidden * {
