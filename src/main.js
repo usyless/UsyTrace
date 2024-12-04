@@ -591,14 +591,14 @@ image.addEventListener('load', () => {
     };
     document.addEventListener('keydown', (e) => {
         const cb = keydownMap[e.key.toLowerCase()];
-        if (cb) {
+        if (!e.target.closest('input') && cb) {
             e.preventDefault();
             cb(e);
         }
     });
     document.addEventListener('keyup', (e) => {
         const cb = keyupMap[e.key.toLowerCase()];
-        if (cb) {
+        if (!e.target.closest('input') && cb) {
             e.preventDefault();
             cb(e);
         }
