@@ -51,3 +51,4 @@
 - Set stack size with -sSTACK_SIZE=size in bytes
 - Set max memory with -sMAXIMUM_MEMORY=size in bytes (2gb by default, >2gb has performance penalty afaik)
 - To use c++20 features: -std=c++20
+- Pass -msimd128 to auto add SIMD, seems to make no noticeable performance difference for now
