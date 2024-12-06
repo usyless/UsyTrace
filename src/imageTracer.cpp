@@ -19,7 +19,6 @@ using namespace std;
 typedef uint8_t Colour;
 
 static inline string DEFAULT_COLOUR = "#ff0000";
-static inline string ALT_COLOUR = "#00ff7b";
 
 struct ImageData {
     Colour* data;
@@ -62,7 +61,7 @@ struct RGB {
 struct RGBTools {
     RGB rgb;
     const long tolerance;
-    int count = 1;
+    size_t count = 0;
 
     RGBTools(const RGB rgb, const long tolerance) : rgb(rgb), tolerance(tolerance) {}
 
@@ -75,11 +74,6 @@ struct RGBTools {
         this->rgb.G += static_cast<Colour>((sqrt((pow(this->rgb.G, 2) + pow(rgb.G, 2)) / 2) - this->rgb.G) / count);
         this->rgb.B += static_cast<Colour>((sqrt((pow(this->rgb.B, 2) + pow(rgb.B, 2)) / 2) - this->rgb.B) / count);
         ++count;
-    }
-
-    [[nodiscard]] string getTraceColour() const {
-        if (min(min(this->rgb.R, this->rgb.G), this->rgb.B) == this->rgb.R) return DEFAULT_COLOUR;
-        return ALT_COLOUR;
     }
 
     static inline RGB getRGB(const long& x, const long& y, const ImageData& imageData) {
@@ -161,10 +155,9 @@ void traceFor(int startX, int startY, const int step, map<int, int>& trace, cons
 
 struct Trace {
     const map<int, int> trace;
-    const string colour;
 
-    Trace() : trace(std::move(map<int, int>{})), colour(DEFAULT_COLOUR) {}
-    Trace(const map<int, int>& trace, string colour) : trace(trace), colour(std::move(colour)) {}
+    Trace() : trace(std::move(map<int, int>{})) {}
+    Trace(const map<int, int>& trace) : trace(trace) {}
 
     [[nodiscard]] vector<pair<int, int>> clean() const {
         vector<pair<int, int>>&& simplifiedTrace{};
@@ -212,17 +205,17 @@ struct Trace {
         if (traceLeft) traceFor(traceData.x - 1, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
         traceFor(traceData.x, traceData.y, 1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
 
-        return new Trace{newTrace, baselineColour.getTraceColour()};
+        return new Trace{newTrace};
     }
 
     [[nodiscard]] Trace* addPoint(const TraceData& traceData) const {
         auto newTrace = map(trace);
         newTrace[traceData.x] = traceData.y;
-        return new Trace{newTrace, colour};
+        return new Trace{newTrace};
     }
 
     [[nodiscard]] string getDefaultReturn() const {
-        return colour + "|" + toSVG();
+        return DEFAULT_COLOUR + "|" + toSVG();
     }
 
     [[nodiscard]] size_t size() const {
