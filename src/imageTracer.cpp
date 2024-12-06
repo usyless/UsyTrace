@@ -190,7 +190,7 @@ struct Trace {
             auto iter = res.begin();
             const auto& end = res.end();
             svg += "M" + to_string(iter->first) + " " + to_string(iter->second);
-            for (++iter; iter != end; ++iter) svg += " L" + to_string(iter->first) + " " + to_string(iter->second);
+            for (++iter; iter != end; ++iter) svg += " " + to_string(iter->first) + " " + to_string(iter->second);
         }
         return svg;
     }
