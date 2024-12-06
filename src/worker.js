@@ -20,14 +20,14 @@ const typeMap = {
     getPixelColour: getPixelColour
 }, api = {
     create_buffer: Module.cwrap("create_buffer", "number", ["number", "number"]),
-    trace: Module.cwrap("trace", "string", ["string", "number", "number", "number", "number", "number"]),
+    trace: Module.cwrap("trace", "string", ["string", "number", "number", "number"]),
     addImage: Module.cwrap("addImage", "", ["string", "number", "number", "number"]),
     removeImage: Module.cwrap("removeImage", "", ["string"]),
     point: Module.cwrap("point", "string", ["string", "number", "number"]),
     undo: Module.cwrap("undo", "string", ["string"]),
     redo: Module.cwrap("redo", "string", ["string"]),
     clear: Module.cwrap("clear", "", ["string"]),
-    auto: Module.cwrap("autoTrace", "string", ["string", "number", "number", "number"]),
+    auto: Module.cwrap("autoTrace", "string", ["string", "number"]),
     exportTrace: Module.cwrap("exportTrace", "string", ["string", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]),
     snap: Module.cwrap("snap", "number", ["string", "number", "number", "number"]),
     getPixelColour: Module.cwrap("getPixelColour", "string", ["string", "number", "number"])
@@ -55,8 +55,7 @@ function removeImage(data) {
 
 // Tracing
 function trace(data) {
-    return defaultTraceResponse(data, api.trace(data.src, parseInt(data.x), parseInt(data.y),
-        0, 0, parseInt(data.colourTolerance))); // Zeros replacing line jump and thickness
+    return defaultTraceResponse(data, api.trace(data.src, parseInt(data.x), parseInt(data.y), parseInt(data.colourTolerance)));
 }
 
 function point(data) {
@@ -64,7 +63,7 @@ function point(data) {
 }
 
 function auto(data) {
-    return defaultTraceResponse(data, api.auto(data.src, 0, 0, parseInt(data.colourTolerance)));
+    return defaultTraceResponse(data, api.auto(data.src, parseInt(data.colourTolerance)));
 }
 
 function undo(data) {

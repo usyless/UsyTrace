@@ -89,11 +89,11 @@ struct RGBTools {
 };
 
 struct TraceData {
-    int x = 0, y = 0, maxLineHeightOffset = 0, maxJumpOffset = 0, colourTolerance = 0;
+    int x = 0, y = 0, colourTolerance = 0;
 
     TraceData(const int x, const int y) : x(x), y(y) {}
-    TraceData(const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) : maxLineHeightOffset(maxLineHeightOffset), maxJumpOffset(maxJumpOffset), colourTolerance(colourTolerance) {}
-    TraceData(const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) : x(x), y(y), maxLineHeightOffset(maxLineHeightOffset), maxJumpOffset(maxJumpOffset), colourTolerance(colourTolerance) {}
+    TraceData(const int colourTolerance) : colourTolerance(colourTolerance) {}
+    TraceData(const int x, const int y, const int colourTolerance) : x(x), y(y), colourTolerance(colourTolerance) {}
 };
 
 struct ExportData {
@@ -203,8 +203,8 @@ struct Trace {
     }
 
     [[nodiscard]] Trace* newTrace(const ImageData& imageData, const TraceData& traceData, const bool traceLeft=false) const {
-        const auto maxLineHeight = max(0, imageData.height / 20 + traceData.maxLineHeightOffset);
-        const auto maxJump = max(0, imageData.width / 50 + traceData.maxJumpOffset);
+        const auto maxLineHeight = max(0, imageData.height / 20);
+        const auto maxJump = max(0, imageData.width / 50);
         auto baselineColour = RGBTools(RGBTools::getRGB(traceData.x, traceData.y, imageData), traceData.colourTolerance);
         auto newTrace = map(trace);
         newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
@@ -489,8 +489,8 @@ extern "C" {
     }
 
     // Tracing
-    EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
-        return stringReturn(imageQueue.get(id).trace(TraceData{x, y, maxLineHeightOffset, maxJumpOffset, colourTolerance}));
+    EMSCRIPTEN_KEEPALIVE const char* trace(const char* id, const int x, const int y, const int colourTolerance) {
+        return stringReturn(imageQueue.get(id).trace(TraceData{x, y, colourTolerance}));
     }
 
     EMSCRIPTEN_KEEPALIVE const char* undo(const char* id) {
@@ -509,8 +509,8 @@ extern "C" {
         return stringReturn(imageQueue.get(id).point(TraceData{x, y}));
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int maxLineHeightOffset, const int maxJumpOffset, const int colourTolerance) {
-        return stringReturn(imageQueue.get(id).autoTrace(TraceData{maxLineHeightOffset, maxJumpOffset, colourTolerance}));
+    EMSCRIPTEN_KEEPALIVE const char* autoTrace(const char* id, const int colourTolerance) {
+        return stringReturn(imageQueue.get(id).autoTrace(TraceData{colourTolerance}));
     }
 
     // Exporting
