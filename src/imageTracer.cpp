@@ -13,6 +13,7 @@
 #include <vector>
 #include <emscripten.h>
 #include <string.h>
+#include <set>
 
 using namespace std;
 
@@ -331,12 +332,49 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     return trace;
 }
 
+set<int> detectLines(const ImageData& imageData, const string&& direction, const RGBTools& backgroundColour) {
+    set<int>&& lines{};
+    int length, otherDirection;
+    function<bool(int, int)> comparator;
+    if(direction == "X") { // vertical line, representing x axis
+        length = imageData.width;
+        otherDirection = imageData.height;
+        comparator = [&col = backgroundColour, &data = imageData] (const int x, const int y) { return col.withinTolerance(RGBTools::getRGB(x, y, data)); };
+    } else {
+        length = imageData.height;
+        otherDirection = imageData.width;
+        comparator = [&col = backgroundColour, &data = imageData] (const int y, const int x) { return col.withinTolerance(RGBTools::getRGB(x, y, data)); };
+    }
+    const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
+    const auto bound = upperBound - static_cast<int>(0.9 * (upperBound - lowerBound));
+    
+    vector<int>&& valid{};
+    for (int pos = 0; pos < length; ++pos) {
+        auto failedCount = 0;
+        for (auto j = lowerBound; j <= upperBound; ++j) {
+            if (failedCount > bound) break;
+            else if (comparator(pos, j)) ++failedCount;
+        }
+        if (failedCount <= bound) valid.emplace_back(pos);
+        else if (!valid.empty()) {
+            lines.insert(reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size()));
+            valid.clear();
+        }
+    }
+    return lines;
+}
+
 struct Image {
     const ImageData* imageData;
     TraceHistory traceHistory;
     const RGBTools backgroundColour;
+    set<int> vLines;
+    set<int> hLines;
 
-    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {}
+    explicit Image(const ImageData* imageData) : imageData(imageData), backgroundColour(RGBTools{getBackgroundColour(*imageData), 10}) {
+        vLines = detectLines(*imageData, "X", backgroundColour);
+        hLines = detectLines(*imageData, "Y", backgroundColour);
+    }
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
         return traceHistory.add(traceHistory.getLatest()->newTrace(*imageData, traceData))->getDefaultReturn();
@@ -394,42 +432,12 @@ struct Image {
     }
 
     [[nodiscard]] int snapLine(int pos, const int lineDir, const int moveDir) const {
-        int initialPos = pos;
-        vector<int>&& valid{};
-        int length, otherDirection;
-        function<bool(int, int)> comparator;
-        if(lineDir == 1) { // vertical line, representing x axis
-            length = imageData->width;
-            otherDirection = imageData->height;
-            comparator = [&col = backgroundColour, &data = imageData] (const int x, const int y) { return col.withinTolerance(RGBTools::getRGB(x, y, *data)); };
-        } else {
-            length = imageData->height;
-            otherDirection = imageData->width;
-            comparator = [&col = backgroundColour, &data = imageData] (const int y, const int x) { return col.withinTolerance(RGBTools::getRGB(x, y, *data)); };
-        }
-        const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
-        const auto bound = static_cast<int>(0.9 * (upperBound - lowerBound));
-        {
-            auto trueCount = bound;
-            while (trueCount >= bound && pos < length && pos >= 0) {
-                trueCount = 0;
-                for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
-                if (trueCount >= bound) pos += moveDir;
-                else break;
-            }
-        }
-        auto foundline = false;
-        for (; pos < length && pos >= 0; pos += moveDir) {
-            auto trueCount = 0;
-            for (auto j = upperBound; j >= lowerBound; --j) if (!comparator(pos, j)) ++trueCount;
-            if (trueCount >= bound) {
-                valid.emplace_back(pos);
-                foundline = true;
-            } else if (foundline) break;
-        }
-        if (!valid.empty()) pos = reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size());
-        if (foundline) return pos;
-        return initialPos;
+        auto lines = (lineDir == 1) ? vLines : hLines;
+        pos += moveDir;
+        auto bound = lines.upper_bound(pos);
+        bound = (moveDir != 1 && bound != lines.begin()) ? prev(bound) : bound;
+        if (bound == lines.end()) return pos -= moveDir;
+        return *bound;
     }
 
     [[nodiscard]] RGB getPixelColour(const int x, const int y) const {
