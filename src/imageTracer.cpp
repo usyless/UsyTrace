@@ -55,13 +55,21 @@ struct RGB {
 
 struct ImageData {
     Colour* data;
-    const uint32_t width, height;
+    const uint32_t width, height, channels;
 
-    ImageData(Colour* data, const uint32_t width, const uint32_t height) : data(data), width(width), height(height) {}
+    ImageData(Colour* data, const uint32_t width, const uint32_t height, const uint32_t channels) : data(data), width(width), height(height), channels(channels) {}
 
     inline RGB getRGB(const uint32_t x, const uint32_t y) const {
-        const auto pos = (y * width + x) * 3;
+        const auto pos = (y * width + x) * channels;
         return RGB{data[pos], data[pos + 1], data[pos + 2]};
+    }
+
+    inline Colour getR(const uint32_t x, const uint32_t y) const {
+        return data[(y * width + x) * channels];
+    }
+
+    inline size_t getMaxPos() const {
+        return static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels);
     }
 
     ~ImageData() {
@@ -280,14 +288,12 @@ struct TraceHistory {
     }
 };
 
-RGB getBackgroundColour(const ImageData& imageData) {
+RGB getBackgroundColour(const ImageData* imageData) {
     map<RGB, uint32_t>&& colours{};
-    const auto mY = imageData.height;
-    const auto mX = imageData.width;
-    const long xJump = max<uint32_t>(1, mX / 100);
-    const long yJump = max<uint32_t>(1, mY / 100);
+    const auto mY = imageData->height, mX = imageData->width;
+    const long xJump = max<uint32_t>(1, mX / 100), yJump = max<uint32_t>(1, mY / 100);
 
-    for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[imageData.getRGB(x, y)];
+    for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[imageData->getRGB(x, y)];
     return max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
 }
 
@@ -378,7 +384,7 @@ void applyFilter(const ImageData* original, ImageData* output, const double mult
             int sumR = 0, sumG = 0, sumB = 0;
             size_t origX = x * 4;
 
-            for (int k = -yChange; k <= yChange; ++k) {
+            for (int k = -yChange; k <= yChange; ++k) { // if only going to be using 3x3 kernels, change back to harcoded 1
                 size_t yPos = origY + (k * maxWidthOrig);
                 auto kn = kernel[k + yChange];
                 for (int l = -xChange; l <= xChange; ++l) {
@@ -398,6 +404,12 @@ void applyFilter(const ImageData* original, ImageData* output, const double mult
     }
 }
 
+void invertImage(ImageData* data) {
+    const auto maxSize = data->getMaxPos();
+    const auto d = data->data;
+    for (size_t pos = 0; pos < maxSize; ++pos) d[pos] = 255 - d[pos];
+}
+
 set<uint32_t> detectLines(const ImageData* imageData, const string&& direction, const uint32_t tolerance) {
     set<uint32_t>&& lines{};
     uint32_t length, otherDirection;
@@ -405,13 +417,13 @@ set<uint32_t> detectLines(const ImageData* imageData, const string&& direction, 
     if(direction == "X") { // vertical line, representing x axis
         length = imageData->width;
         otherDirection = imageData->height;
-        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t x, const uint32_t y) { return data->getRGB(x, y).R < tolerance; };
+        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t x, const uint32_t y) { return data->getR(x, y) < tolerance; };
     } else {
         length = imageData->height;
         otherDirection = imageData->width;
-        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t y, const uint32_t x) { return data->getRGB(x, y).R < tolerance; };
+        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t y, const uint32_t x) { return data->getR(x, y) < tolerance; };
     }
-    const auto upperBound = static_cast<uint32_t>(otherDirection * 0.8), lowerBound = static_cast<uint32_t>(otherDirection * 0.2);
+    const auto upperBound = static_cast<uint32_t>(otherDirection * 0.7), lowerBound = static_cast<uint32_t>(otherDirection * 0.3);
     const auto bound = (upperBound - lowerBound) - static_cast<uint32_t>(0.9 * (upperBound - lowerBound));
     
     vector<uint32_t>&& valid{};
@@ -434,8 +446,10 @@ struct Image {
     set<uint32_t> vLines;
     set<uint32_t> hLines;
 
-    Image(const ImageData* imageData) {
-        auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height};
+    Image(ImageData* imageData) {
+        auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height, 3};
+        const auto darkMode = getBackgroundColour(imageData).sum() / 3 < 127;
+        if (darkMode) invertImage(imageData);
         applyFilter(imageData, filteredData, 2, vector<vector<int>>{
             {-1, -2, -1},
             { 0,  0,  0},
@@ -450,13 +464,14 @@ struct Image {
         });
         vLines = detectLines(filteredData, "X", 50);
 
+        if (darkMode) invertImage(imageData);
         applyFilter(imageData, filteredData, 0.1, vector<vector<int>>{
             {1, 1, 1},
             {1, 2, 1},
             {1, 1, 1}
         });
         this->imageData = filteredData;
-        this->backgroundColour = RGBTools{getBackgroundColour(*filteredData), 10};
+        this->backgroundColour = RGBTools{getBackgroundColour(filteredData), 10};
     }
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
@@ -565,7 +580,8 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const uint32_t width, const uint32_t height) {
-        imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height}));
+        // Images come in with 4 channels (RGBA)
+        imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height, 4}));
     }
 
     EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
