@@ -436,14 +436,14 @@ struct Image {
 
     Image(const ImageData* imageData) {
         auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height};
-        applyFilter(imageData, filteredData, 4, vector<vector<int>>{
+        applyFilter(imageData, filteredData, 2, vector<vector<int>>{
             {-1, -2, -1},
             { 0,  0,  0},
             { 1,  2,  1}
         });
         hLines = detectLines(filteredData, "Y", 50);
 
-        applyFilter(imageData, filteredData, 4, vector<vector<int>>{
+        applyFilter(imageData, filteredData, 2, vector<vector<int>>{
             {-1,  0,  1},
             {-2,  0,  2},
             {-1,  0,  1}
