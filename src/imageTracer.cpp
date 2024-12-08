@@ -340,16 +340,16 @@ void applyFilter(const ImageData& original, ImageData& output) {
     // smoothing filter
     const int kernel[3][3] = {
         {1, 1, 1},
-        {1, 1, 1},
+        {1, 2, 1},
         {1, 1, 1}
     };
-    const auto divisor = 9;
+    const auto divisor = 10;
     const auto widthBound = original.width - 1, heightBound = original.height - 1;
     const auto maxWidthOrig = original.width * 4, maxWidthOut = output.width * 3;
     const auto data = original.data;
     auto outputData = output.data;
     for (int y = 1; y < heightBound; ++y) {
-        int origY = y * maxWidthOrig, outY = (y - 1) * maxWidthOut;
+        int origY = y * maxWidthOrig, outY = y * maxWidthOut;
         for (int x = 1; x < widthBound; ++x) {
             int sumR = 0, sumG = 0, sumB = 0, origX = x * 4;
 
@@ -364,7 +364,7 @@ void applyFilter(const ImageData& original, ImageData& output) {
                 }
             }
 
-            int pos = outY + ((x - 1) * 3);
+            int pos = outY + (x * 3);
             outputData[pos] = static_cast<Colour>(sumR / divisor);
             outputData[pos + 1] = static_cast<Colour>(sumG / divisor);
             outputData[pos + 2] = static_cast<Colour>(sumB / divisor);
@@ -409,7 +409,7 @@ struct Image {
     set<int> hLines;
 
     Image(const ImageData* imageData) {
-        auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width - 1) * (imageData->height - 1) * 3 * sizeof(Colour))), imageData->width - 1, imageData->height - 1};
+        auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height};
         applyFilter(*imageData, *filteredData);
         delete imageData;
         this->imageData = filteredData;
