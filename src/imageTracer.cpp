@@ -45,7 +45,7 @@ struct RGB {
     }
 
     uint32_t sum() const {
-        return R + G + B;
+        return static_cast<uint32_t>(R) + static_cast<uint32_t>(G) + static_cast<uint32_t>(B);
     }
 
     [[nodiscard]] string toString() const {
@@ -391,25 +391,25 @@ void applyFilter(const ImageData* original, ImageData* output, const double mult
             }
 
             size_t pos = outY + (x * 3);
-            outputData[pos] = static_cast<Colour>(sumR * multiplier);
-            outputData[pos + 1] = static_cast<Colour>(sumG * multiplier);
-            outputData[pos + 2] = static_cast<Colour>(sumB * multiplier);
+            outputData[pos] = static_cast<Colour>(max<uint32_t>(0, min<uint32_t>(sumR * multiplier, 255)));
+            outputData[pos + 1] = static_cast<Colour>(max<uint32_t>(0, min<uint32_t>(sumG * multiplier, 255)));
+            outputData[pos + 2] = static_cast<Colour>(max<uint32_t>(0, min<uint32_t>(sumB * multiplier, 255)));
         }
     }
 }
 
-set<uint32_t> detectLines(const ImageData& imageData, const string&& direction, const RGBTools& backgroundColour) {
+set<uint32_t> detectLines(const ImageData* imageData, const string&& direction, const uint32_t tolerance) {
     set<uint32_t>&& lines{};
     uint32_t length, otherDirection;
     function<bool(uint32_t, uint32_t)> comparator;
     if(direction == "X") { // vertical line, representing x axis
-        length = imageData.width;
-        otherDirection = imageData.height;
-        comparator = [&col = backgroundColour, &data = imageData] (const uint32_t x, const uint32_t y) { return col.withinTolerance(data.getRGB(x, y)); };
+        length = imageData->width;
+        otherDirection = imageData->height;
+        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t x, const uint32_t y) { return data->getRGB(x, y).R < tolerance; };
     } else {
-        length = imageData.height;
-        otherDirection = imageData.width;
-        comparator = [&col = backgroundColour, &data = imageData] (const uint32_t y, const uint32_t x) { return col.withinTolerance(data.getRGB(x, y)); };
+        length = imageData->height;
+        otherDirection = imageData->width;
+        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t y, const uint32_t x) { return data->getRGB(x, y).R < tolerance; };
     }
     const auto upperBound = static_cast<uint32_t>(otherDirection * 0.8), lowerBound = static_cast<uint32_t>(otherDirection * 0.2);
     const auto bound = (upperBound - lowerBound) - static_cast<uint32_t>(0.9 * (upperBound - lowerBound));
@@ -436,16 +436,27 @@ struct Image {
 
     Image(const ImageData* imageData) {
         auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height};
+        applyFilter(imageData, filteredData, 4, vector<vector<int>>{
+            {-1, -2, -1},
+            { 0,  0,  0},
+            { 1,  2,  1}
+        });
+        hLines = detectLines(filteredData, "Y", 50);
+
+        applyFilter(imageData, filteredData, 4, vector<vector<int>>{
+            {-1,  0,  1},
+            {-2,  0,  2},
+            {-1,  0,  1}
+        });
+        vLines = detectLines(filteredData, "X", 50);
+
         applyFilter(imageData, filteredData, 0.1, vector<vector<int>>{
             {1, 1, 1},
             {1, 2, 1},
             {1, 1, 1}
         });
-        delete imageData;
         this->imageData = filteredData;
         this->backgroundColour = RGBTools{getBackgroundColour(*filteredData), 10};
-        vLines = detectLines(*filteredData, "X", backgroundColour);
-        hLines = detectLines(*filteredData, "Y", backgroundColour);
     }
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
