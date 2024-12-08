@@ -344,10 +344,38 @@ void applyFilter(const ImageData& original, ImageData& output) {
         {1, 1, 1}
     };
     const auto divisor = 10;
-    const auto widthBound = original.width - 1, heightBound = original.height - 1;
-    const auto maxWidthOrig = original.width * 4, maxWidthOut = output.width * 3;
+    const auto width = original.width, height = original.height;
+    const auto widthBound = width - 1, heightBound = height - 1;
+    const auto maxWidthOrig = width * 4, maxWidthOut = width * 3;
     const auto data = original.data;
     auto outputData = output.data;
+    // Copy top and bottom rows
+    for (int x = 0; x < width; ++x) {
+        int orx = x * 4, oux = x * 3;
+        outputData[oux] = data[orx];
+        outputData[oux + 1] = data[orx + 1];
+        outputData[oux + 2] = data[orx + 2];
+
+        orx += (height - 1) * maxWidthOrig;
+        oux += (height - 1) * maxWidthOut;
+        outputData[oux] = data[orx];
+        outputData[oux + 1] = data[orx + 1];
+        outputData[oux + 2] = data[orx + 2];
+    }
+    // Copy left and right columns
+    for (int y = 0; y < height; ++y) {
+        int ory = y * maxWidthOrig, ouy = y * maxWidthOut;
+        outputData[ouy] = data[ory];
+        outputData[ouy + 1] = data[ory + 1];
+        outputData[ouy + 2] = data[ory + 2];
+
+        ory += maxWidthOrig - 4;
+        ouy += maxWidthOut - 3;
+        outputData[ouy] = data[ory];
+        outputData[ouy + 1] = data[ory + 1];
+        outputData[ouy + 2] = data[ory + 2];
+    }
+    // Apply kernel
     for (int y = 1; y < heightBound; ++y) {
         int origY = y * maxWidthOrig, outY = y * maxWidthOut;
         for (int x = 1; x < widthBound; ++x) {
