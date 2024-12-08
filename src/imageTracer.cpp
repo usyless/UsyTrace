@@ -131,20 +131,21 @@ struct ExportString {
     }
 };
 
-inline void checkPixel(const int x, const int y, const RGBTools& baselineColour, vector<int>& yValues, const ImageData& imageData) {
-    if (const auto yVal = max(0, min(imageData.height - 1, y)); baselineColour.withinTolerance(imageData.getRGB(x, yVal))) yValues.push_back(yVal);
+inline void checkPixel(const int x, const int y, const RGBTools& baselineColour, vector<int>& yValues, const ImageData& imageData, const int maxHeight) {
+    if (const auto yVal = max(0, min(maxHeight, y)); baselineColour.withinTolerance(imageData.getRGB(x, yVal))) yValues.push_back(yVal);
 }
 
 void traceFor(int startX, int startY, const int step, map<int, int>& trace, const ImageData& imageData, const int maxLineHeight, const int maxJump, RGBTools& colour) {
     vector<int>&& yValues{};
     int currJump = 0;
+    const int maxHeight = imageData.height - 1;
     for (const auto width = imageData.width; startX >= 0 && startX < width; startX += step) {
         yValues.clear();
         const auto max = maxLineHeight + currJump * 2;
-        checkPixel(startX, startY, colour, yValues, imageData);
+        checkPixel(startX, startY, colour, yValues, imageData, maxHeight);
         for (auto z = 1; z <= max; ++z) {
-            checkPixel(startX, startY + z, colour, yValues, imageData);
-            checkPixel(startX, startY - z, colour, yValues, imageData);
+            checkPixel(startX, startY + z, colour, yValues, imageData, maxHeight);
+            checkPixel(startX, startY - z, colour, yValues, imageData, maxHeight);
         }
         if (!yValues.empty()) {
             currJump = 0;
