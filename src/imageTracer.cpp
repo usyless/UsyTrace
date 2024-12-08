@@ -340,10 +340,10 @@ void applyFilter(const ImageData& original, ImageData& output) {
     // smoothing filter
     const int kernel[3][3] = {
         {1, 1, 1},
-        {1, 2, 1},
+        {1, 1, 1},
         {1, 1, 1}
     };
-    const auto divisor = 10;
+    const auto divisor = 9;
     const auto widthBound = original.width - 1, heightBound = original.height - 1;
     const auto maxWidthOrig = original.width * 4, maxWidthOut = output.width * 3;
     const auto data = original.data;
@@ -386,18 +386,15 @@ set<int> detectLines(const ImageData& imageData, const string&& direction, const
         comparator = [&col = backgroundColour, &data = imageData] (const int y, const int x) { return col.withinTolerance(data.getRGB(x, y)); };
     }
     const auto upperBound = static_cast<int>(otherDirection * 0.8), lowerBound = static_cast<int>(otherDirection * 0.2);
-    const auto bound = upperBound - static_cast<int>(0.9 * (upperBound - lowerBound));
+    const auto bound = (upperBound - lowerBound) - static_cast<int>(0.9 * (upperBound - lowerBound));
     
     vector<int>&& valid{};
     for (int pos = 0; pos < length; ++pos) {
         auto failedCount = 0;
-        for (auto j = lowerBound; j <= upperBound; ++j) {
-            if (failedCount > bound) break;
-            else if (comparator(pos, j)) ++failedCount;
-        }
+        for (auto j = lowerBound; j <= upperBound; ++j) if (comparator(pos, j) && ++failedCount > bound) break;
         if (failedCount <= bound) valid.emplace_back(pos);
         else if (!valid.empty()) {
-            lines.insert(reduce(valid.begin(), valid.end()) / static_cast<int>(valid.size()));
+            lines.insert(reduce(valid.begin(), valid.end()) / valid.size());
             valid.clear();
         }
     }
