@@ -336,19 +336,15 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     return trace;
 }
 
-void applyFilter(const ImageData& original, ImageData& output) {
+void applyFilter(const ImageData* original, ImageData* output, const double multiplier, const vector<vector<int>>&& kernel) {
     // smoothing filter
-    const uint32_t kernel[3][3] = {
-        {1, 1, 1},
-        {1, 2, 1},
-        {1, 1, 1}
-    };
-    const uint32_t divisor = 10;
-    const auto width = original.width, height = original.height;
+    const auto yChange = static_cast<int>(kernel.size() / 2), xChange = static_cast<int>(kernel[0].size() / 2);
+    const auto width = original->width, height = original->height;
     const auto widthBound = width - 1, heightBound = height - 1;
     const auto maxWidthOrig = width * 4, maxWidthOut = width * 3;
-    const auto data = original.data;
-    auto outputData = output.data;
+    const auto data = original->data;
+    auto outputData = output->data;
+    // CAN ONLY TAKE 3x3 KERNELS FOR NOW DUE TO THIS
     // Copy top and bottom rows
     for (size_t x = 0; x < width; ++x) {
         size_t orx = x * 4, oux = x * 3;
@@ -376,16 +372,18 @@ void applyFilter(const ImageData& original, ImageData& output) {
         outputData[ouy + 2] = data[ory + 2];
     }
     // Apply kernel
-    for (size_t y = 1; y < heightBound; ++y) {
+    for (size_t y = yChange; y < heightBound; ++y) {
         size_t origY = y * maxWidthOrig, outY = y * maxWidthOut;
-        for (size_t x = 1; x < widthBound; ++x) {
-            size_t sumR = 0, sumG = 0, sumB = 0, origX = x * 4;
+        for (size_t x = xChange; x < widthBound; ++x) {
+            int sumR = 0, sumG = 0, sumB = 0;
+            size_t origX = x * 4;
 
-            for (int k = -1; k <= 1; ++k) {
+            for (int k = -yChange; k <= yChange; ++k) {
                 size_t yPos = origY + (k * maxWidthOrig);
-                auto kn = kernel[k + 1];
-                for (int l = -1; l <= 1; ++l) {
-                    size_t pos = yPos + origX + (l * 4), knn = kn[l + 1];
+                auto kn = kernel[k + yChange];
+                for (int l = -xChange; l <= xChange; ++l) {
+                    size_t pos = yPos + origX + (l * 4);
+                    auto knn = kn[l + xChange];
                     sumR += data[pos] * knn;
                     sumG += data[pos + 1] * knn;
                     sumB += data[pos + 2] * knn;
@@ -393,9 +391,9 @@ void applyFilter(const ImageData& original, ImageData& output) {
             }
 
             size_t pos = outY + (x * 3);
-            outputData[pos] = static_cast<Colour>(sumR / divisor);
-            outputData[pos + 1] = static_cast<Colour>(sumG / divisor);
-            outputData[pos + 2] = static_cast<Colour>(sumB / divisor);
+            outputData[pos] = static_cast<Colour>(sumR * multiplier);
+            outputData[pos + 1] = static_cast<Colour>(sumG * multiplier);
+            outputData[pos + 2] = static_cast<Colour>(sumB * multiplier);
         }
     }
 }
@@ -438,7 +436,11 @@ struct Image {
 
     Image(const ImageData* imageData) {
         auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height};
-        applyFilter(*imageData, *filteredData);
+        applyFilter(imageData, filteredData, 0.1, vector<vector<int>>{
+            {1, 1, 1},
+            {1, 2, 1},
+            {1, 1, 1}
+        });
         delete imageData;
         this->imageData = filteredData;
         this->backgroundColour = RGBTools{getBackgroundColour(*filteredData), 10};
