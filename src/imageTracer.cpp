@@ -17,7 +17,7 @@
 
 using namespace std;
 
-typedef uint8_t Colour;
+using Colour = uint8_t;
 
 static inline string DEFAULT_COLOUR = "#ff0000";
 
@@ -59,7 +59,7 @@ struct ImageData {
     ImageData(Colour* data, const int width, const int height) : data(data), width(width), height(height) {}
 
     inline RGB getRGB(const int x, const int y) const {
-        const auto pos = y * width * 3 + x * 3;
+        const auto pos = (y * width + x) * 3;
         return RGB{data[pos], data[pos + 1], data[pos + 2]};
     }
 
@@ -285,7 +285,7 @@ RGB getBackgroundColour(const ImageData& imageData) {
     const auto mY = imageData.height;
     const auto mX = imageData.width;
     const long xJump = max(1, mX / 100);
-    const long yJump = max (1, mY / 100);
+    const long yJump = max(1, mY / 100);
 
     for (auto y = 0; y < mY; y += yJump) for (auto x = 0; x < mX; x += xJump) ++colours[imageData.getRGB(x, y)];
     return max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, int>& a, const std::pair<RGB, int>& b){ return a.second < b.second; } )->first;
