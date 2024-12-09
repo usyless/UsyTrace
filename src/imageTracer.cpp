@@ -171,7 +171,7 @@ struct Trace {
     const frTrace trace;
 
     Trace() : trace(std::move(frTrace{})) {}
-    Trace(const map<uint32_t, uint32_t>& trace) : trace(trace) {}
+    Trace(const frTrace& trace) : trace(trace) {}
 
     [[nodiscard]] vector<pair<uint32_t, uint32_t>> clean() const {
         vector<pair<uint32_t, uint32_t>>&& simplifiedTrace{};
