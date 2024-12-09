@@ -351,6 +351,7 @@ void applyFilter(const ImageData* original, ImageData* output, const double mult
     const auto data = original->data;
     auto outputData = output->data;
     // CAN ONLY TAKE 3x3 KERNELS FOR NOW DUE TO THIS
+    // also cant just copy memory as input is 4 channels, output is 3
     // Copy top and bottom rows
     for (size_t x = 0; x < width; ++x) {
         size_t orx = x * 4, oux = x * 3;
@@ -385,10 +386,10 @@ void applyFilter(const ImageData* original, ImageData* output, const double mult
             size_t origX = x * 4;
 
             for (int k = -yChange; k <= yChange; ++k) { // if only going to be using 3x3 kernels, change back to harcoded 1
-                size_t yPos = origY + (k * maxWidthOrig);
+                size_t yPos = origY + (k * maxWidthOrig) + origX;
                 auto kn = kernel[k + yChange];
                 for (int l = -xChange; l <= xChange; ++l) {
-                    size_t pos = yPos + origX + (l * 4);
+                    size_t pos = yPos + (l * 4);
                     auto knn = kn[l + xChange];
                     sumR += data[pos] * knn;
                     sumG += data[pos + 1] * knn;
