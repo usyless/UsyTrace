@@ -154,6 +154,12 @@ const worker = {
         return worker;
     })(),
     postMessage: (data) => image.src.startsWith('blob:') && worker.worker.postMessage(data),
+    setCurrent: () => {
+        worker.postMessage({
+            type: 'setCurrent',
+            src: image.src
+        });
+    },
     removeImage: (src) => {
         worker.postMessage({
             type: 'removeImage',
@@ -552,6 +558,7 @@ image.addEventListener('load', () => {
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
         worker.addImage(width, height);
+        worker.setCurrent();
         lines.setPosition(lines.lines.xHigh, width);
         lines.setPosition(lines.lines.xLow, 0);
         lines.setPosition(lines.lines.yHigh, 0);
@@ -565,6 +572,7 @@ image.addEventListener('load', () => {
         worker.autoTrace();
         imageData.initial = false;
     } else {
+        worker.setCurrent();
         image.loadLines();
         worker.getCurrentPath();
     }
