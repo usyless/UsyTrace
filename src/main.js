@@ -123,16 +123,21 @@ const preferences = {
     highFRExport: () => document.getElementById('highFRExport').value || defaults.highFRExport,
 }
 
+const indefinitePopup = (message) => {
+    Popups.createPopup(message).then(_ => indefinitePopup(message)).catch(_ => indefinitePopup(message));
+}
+
 const worker = {
     worker: (() => {
         const worker = new Worker("./worker.js");
         worker.onmessage = (e) => {
             const data = e.data, imgData = imageMap.get(data.src);
+            const type = data.type;
 
             if (data.svg) imgData.path = data.svg;
             if (data.colour) imgData.colour = data.colour;
 
-            if (data.type === 'exportTrace') {
+            if (type === 'exportTrace') {
                 const a = document.createElement("a"),
                     url = URL.createObjectURL(new Blob([data.export], {type: "text/plain;charset=utf-8"}));
                 a.href = url;
@@ -143,9 +148,10 @@ const worker = {
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
                 }, 0);
-            } else if (data.src === image.src) {
-                if (data.type === 'getPixelColour') glass.setColour(data.pixelColour);
-                else if (data.type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
+            } else if (type === 'error') indefinitePopup(data.message);
+            else if (data.src === image.src) {
+                if (type === 'getPixelColour') glass.setColour(data.pixelColour);
+                else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
                 else graphs.setTracePath(data.svg, data.colour);
             }
         }

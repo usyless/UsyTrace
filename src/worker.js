@@ -36,7 +36,8 @@ const typeMap = {
 // onMessage handling
 onmessage = (e) => {
     const d = e.data;
-    const r = typeMap[d.type](d);
+    let r;
+    try {r = typeMap[d.type](d);} catch {r = {type: 'error', message: 'Out of memory, please refresh the site. (You must have loaded a LOT of images at once)'}};
     if (r) {
         postMessage(r);
     }
