@@ -20,8 +20,6 @@ using namespace std;
 using Colour = uint8_t;
 using frTrace = map<uint32_t, uint32_t>;
 
-static inline string DEFAULT_COLOUR = "#ff0000";
-
 struct RGB {
     Colour R, G, B;
 
@@ -226,10 +224,6 @@ struct Trace {
         auto newTrace = map(trace);
         newTrace[traceData.x] = traceData.y;
         return new Trace{newTrace};
-    }
-
-    [[nodiscard]] string getDefaultReturn() const {
-        return DEFAULT_COLOUR + "|" + toSVG();
     }
 
     [[nodiscard]] size_t size() const {
@@ -483,19 +477,19 @@ struct Image {
     }
 
     [[nodiscard]] string trace(const TraceData&& traceData) {
-        return traceHistory.add(traceHistory.getLatest()->newTrace(*imageData, traceData))->getDefaultReturn();
+        return traceHistory.add(traceHistory.getLatest()->newTrace(*imageData, traceData))->toSVG();
     }
 
     [[nodiscard]] string point(const TraceData&& traceData) {
-        return traceHistory.add(traceHistory.getLatest()->addPoint(traceData))->getDefaultReturn();
+        return traceHistory.add(traceHistory.getLatest()->addPoint(traceData))->toSVG();
     }
 
     [[nodiscard]] string undo() {
-        return traceHistory.undo()->getDefaultReturn();
+        return traceHistory.undo()->toSVG();
     }
 
     [[nodiscard]] string redo() {
-        return traceHistory.redo()->getDefaultReturn();
+        return traceHistory.redo()->toSVG();
     }
 
     [[nodiscard]] string autoTrace(const TraceData&& traceData) {
@@ -508,7 +502,7 @@ struct Image {
             traceHistory.add(traceTwo);
             delete traceOne;
         }
-        return traceHistory.getLatest()->getDefaultReturn();
+        return traceHistory.getLatest()->toSVG();
     }
 
     [[nodiscard]] string exportTrace(const ExportData&& exportData) const {
@@ -548,6 +542,10 @@ struct Image {
 
     [[nodiscard]] inline RGB getPixelColour(const uint32_t x, const uint32_t y) const {
         return imageData->getRGB(x, y);
+    }
+
+    [[nodiscard]] inline string getPath() const {
+        return traceHistory.getLatest()->toSVG();
     }
 
     void clear() {
@@ -639,5 +637,9 @@ extern "C" {
     // Image Data
     EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const char* id, const uint32_t x, const uint32_t y) {
         return stringReturn(imageQueue.get(id).getPixelColour(x, y).toString());
+    }
+
+    EMSCRIPTEN_KEEPALIVE const char* getCurrentPath(const char* id) {
+        return stringReturn(imageQueue.get(id).getPath());
     }
 }

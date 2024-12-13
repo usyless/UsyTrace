@@ -131,11 +131,7 @@ const worker = {
     worker: (() => {
         const worker = new Worker("./worker.js");
         worker.onmessage = (e) => {
-            const data = e.data, imgData = imageMap.get(data.src);
-            const type = data.type;
-
-            if (data.svg) imgData.path = data.svg;
-            if (data.colour) imgData.colour = data.colour;
+            const data = e.data, type = data.type;
 
             if (type === 'exportTrace') {
                 const a = document.createElement("a"),
@@ -152,7 +148,7 @@ const worker = {
             else if (data.src === image.src) {
                 if (type === 'getPixelColour') glass.setColour(data.pixelColour);
                 else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
-                else graphs.setTracePath(data.svg, data.colour);
+                else graphs.setTracePath(data.svg);
             }
         }
         return worker;
@@ -274,6 +270,12 @@ const worker = {
             x: x,
             y: y
         });
+    },
+    getCurrentPath: () => {
+        worker.postMessage({
+            type: 'getCurrentPath',
+            src: image.src
+        });
     }
 }
 
@@ -285,21 +287,20 @@ const graphs = {
             e.setAttribute("viewBox", `0 0 ${width} ${height}`);
         });
     },
-    setTracePath: (d, colour) => {
+    setTracePath: (d) => {
         const trace = document.getElementById('trace'), path = trace.lastElementChild, path2 = trace.firstElementChild;
         path.setAttribute('d', d);
-        path.setAttribute('stroke', colour);
+        path.setAttribute('stroke', '#ff0000');
         path.setAttribute('stroke-width', lineWidth);
         path2.setAttribute('d', d);
         path2.setAttribute('stroke-width', lineWidth * 1.5);
     },
     clearTracePath: () => {
-        graphs.setTracePath('', '#ff0000', 0);
+        graphs.setTracePath('');
     },
     clearTracePathAndWorker: () => {
         graphs.clearTracePath();
         worker.clearTrace();
-        imageMap.get(image.src).path = '';
     },
 }
 
@@ -551,7 +552,6 @@ image.addEventListener('load', () => {
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
         worker.addImage(width, height);
-        imageData.path = '';
         lines.setPosition(lines.lines.xHigh, width);
         lines.setPosition(lines.lines.xLow, 0);
         lines.setPosition(lines.lines.yHigh, 0);
@@ -566,7 +566,7 @@ image.addEventListener('load', () => {
         imageData.initial = false;
     } else {
         image.loadLines();
-        graphs.setTracePath(imageData.path, imageData.colour);
+        worker.getCurrentPath();
     }
     lines.updateLineWidth();
     image.startPointerEvents();
