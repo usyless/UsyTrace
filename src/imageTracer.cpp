@@ -456,14 +456,14 @@ struct Image {
             { 0,  0,  0},
             { 1,  2,  1}
         });
-        hLines = detectLines(filteredData, "Y", 50);
+        hLines = detectLines(filteredData, "Y", 20);
 
         applyFilter(imageData, filteredData, 2, vector<vector<int>>{
             {-1,  0,  1},
             {-2,  0,  2},
             {-1,  0,  1}
         });
-        vLines = detectLines(filteredData, "X", 50);
+        vLines = detectLines(filteredData, "X", 20);
 
         if (darkMode) invertImage(imageData);
         applyFilter(imageData, filteredData, 0.1, vector<vector<int>>{
