@@ -342,11 +342,8 @@ Trace* getPotentialTrace(const ImageData& imageData, TraceData traceData, const 
     return trace;
 }
 
-void applyFilter(const ImageData* original, ImageData* output, const double multiplier, const vector<vector<int>>&& kernel) {
-    // smoothing filter
-    const auto yChange = static_cast<int>(kernel.size() / 2), xChange = static_cast<int>(kernel[0].size() / 2);
+void padOutputData(const ImageData* original, ImageData* output) {
     const auto width = original->width, height = original->height;
-    const auto widthBound = width - 1, heightBound = height - 1;
     const auto maxWidthOrig = width * 4, maxWidthOut = width * 3;
     const auto data = original->data;
     auto outputData = output->data;
@@ -378,19 +375,27 @@ void applyFilter(const ImageData* original, ImageData* output, const double mult
         outputData[ouy + 1] = data[ory + 1];
         outputData[ouy + 2] = data[ory + 2];
     }
-    // Apply kernel
-    for (size_t y = yChange; y < heightBound; ++y) {
+}
+
+void applyFilter(const ImageData* original, ImageData* output, const double multiplier, const vector<vector<int>>&& kernel) {
+    const auto widthBound = original->width - 1, heightBound = original->height - 1;
+    const auto maxWidthOrig = original->width * 4, maxWidthOut = original->width * 3;
+    const auto data = original->data;
+    auto outputData = output->data;
+
+    // Apply kernel, only supports 3x3 for now
+    for (size_t y = 1; y < heightBound; ++y) {
         size_t origY = y * maxWidthOrig, outY = y * maxWidthOut;
-        for (size_t x = xChange; x < widthBound; ++x) {
+        for (size_t x = 1; x < widthBound; ++x) {
             int sumR = 0, sumG = 0, sumB = 0;
             size_t origX = x * 4;
 
-            for (int k = -yChange; k <= yChange; ++k) { // if only going to be using 3x3 kernels, change back to harcoded 1
+            for (int k = -1; k <= 1; ++k) {
                 size_t yPos = origY + (k * maxWidthOrig) + origX;
-                auto kn = kernel[k + yChange];
-                for (int l = -xChange; l <= xChange; ++l) {
+                auto kn = kernel[k + 1];
+                for (int l = -1; l <= 1; ++l) {
                     size_t pos = yPos + (l * 4);
-                    auto knn = kn[l + xChange];
+                    auto knn = kn[l + 1];
                     sumR += data[pos] * knn;
                     sumG += data[pos + 1] * knn;
                     sumB += data[pos + 2] * knn;
@@ -449,6 +454,8 @@ struct Image {
 
     Image(ImageData* imageData) {
         auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height, 3};
+        padOutputData(imageData, filteredData);
+
         const auto darkMode = getBackgroundColour(imageData).sum() / 3 < 127;
         if (darkMode) invertImage(imageData);
         applyFilter(imageData, filteredData, 2, vector<vector<int>>{
