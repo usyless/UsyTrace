@@ -598,6 +598,7 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
+        if (currentImage == imageQueue.get(id)) currentImage = nullptr;
         imageQueue.remove(id);
     }
 
