@@ -237,6 +237,33 @@ struct Trace {
         return new Trace{newTrace};
     }
 
+    // Gaussian smoothing
+    Trace* smooth() {
+        frTrace newTrace{};
+        const int windowSize = 10;
+        const double multi = -0.5 / (7.0 * 7.0); // 7.0 is sigma
+        if (trace.size() > windowSize) {
+            int halfWindow = windowSize / 2;
+
+            const auto end = prev(trace.end(), halfWindow);
+            for (auto it = next(trace.begin(), halfWindow); it != end; ++it) {
+                double smoothed = 0.0;
+                double sumWeights = 0.0;
+
+                double currX = it->first;
+                for (int i = -halfWindow; i <= halfWindow; ++i) {
+                    const auto other = next(it, i);
+                    double distance = other->first - currX;
+                    double weight = exp(multi * (distance * distance));
+                    smoothed += other->second * weight;
+                    sumWeights += weight;
+                }
+                newTrace[it->first] = static_cast<uint32_t>(smoothed / sumWeights);
+            }
+        }
+        return new Trace{newTrace};
+    }
+
     Trace* eraseRegion(uint32_t begin, uint32_t end) {
         auto newTrace = map{trace};
         const auto& higher = newTrace.upper_bound(end);
@@ -596,6 +623,11 @@ struct Image {
         return traceHistory.getLatest()->toSVG();
     }
 
+    inline string smoothTrace() {
+        traceHistory.add(traceHistory.getLatest()->smooth());
+        return traceHistory.getLatest()->toSVG();
+    }
+
     ~Image() {
         delete imageData;
     }
@@ -677,6 +709,10 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE const char* eraseRegion(uint32_t begin, uint32_t end) {
         return stringReturn(currentImage->eraseRegion(begin, end));
+    }
+
+    EMSCRIPTEN_KEEPALIVE const char* smoothTrace() {
+        return stringReturn(currentImage->smoothTrace());
     }
 
     // Exporting

@@ -237,6 +237,7 @@ const worker = {
     undoTrace: () => worker.postMessage({type: 'undoTrace'}),
     redoTrace: () => worker.postMessage({type: 'redoTrace'}),
     eraseRegion: (begin, end) => worker.postMessage({type: 'eraseRegion', begin, end}),
+    smoothTrace: () => worker.postMessage({type: 'smoothTrace'}),
     exportTrace: () => {
         const hasNullOrEmpty = (obj) => {
             return Object.values(obj).some(value => {
@@ -312,6 +313,7 @@ document.getElementById('undo').addEventListener('click', worker.undoTrace);
 document.getElementById('redo').addEventListener('click', worker.redoTrace);
 document.getElementById('clearPath').addEventListener('click', worker.clearTrace);
 document.getElementById('export').addEventListener('click', worker.exportTrace);
+document.getElementById('smoothTrace').addEventListener('click', worker.smoothTrace);
 
 const imageMap = new Map();
 const fileInput = document.getElementById('fileInput');
