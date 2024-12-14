@@ -189,6 +189,7 @@ const worker = {
                     break;
                 }
                 case 'error': {
+                    overlay.removeOverlays();
                     indefinitePopup(data.message);
                     break;
                 }
