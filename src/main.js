@@ -197,6 +197,10 @@ const worker = {
                     buttons.toggleHistory(data);
                     break;
                 }
+                case 'setData': {
+                    console.timeEnd("Initialise image");
+                    break;
+                }
                 default: {
                     if (image.src === data.src) {
                         if (type === 'getPixelColour') glass.setColour(data.pixelColour);
@@ -226,10 +230,7 @@ const worker = {
         processing_context.drawImage(new_image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
         worker.postMessage({
-            type: 'setData',
-            data: imageData.data,
-            width: imageData.width,
-            height: imageData.height
+            type: 'setData', data: imageData.data, width: imageData.width, height: imageData.height
         }, [imageData.data.buffer]);
     },
     clearTrace: () => worker.postMessage({type: 'clearTrace'}),
@@ -527,6 +528,7 @@ image.addEventListener('load', () => {
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
         overlay.createOverlay();
+        console.time("Initialise image");
         worker.addImage(width, height); // implicitly sets as current
         lines.setPosition(lines.lines.xHigh, width);
         lines.setPosition(lines.lines.xLow, 0);
