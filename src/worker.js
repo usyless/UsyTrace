@@ -35,7 +35,7 @@ const typeMap = {
     auto: Module.cwrap("autoTrace", "string", ["number"]),
     exportTrace: Module.cwrap("exportTrace", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]),
     snap: Module.cwrap("snap", "number", ["number", "number", "number"]),
-    getPixelColour: Module.cwrap("getPixelColour", "string", ["number", "number"]),
+    getPixelColour: Module.cwrap("getPixelColour", "number", ["number", "number"]),
     getCurrentPath: Module.cwrap("getCurrentPath", "string")
 };
 
@@ -118,7 +118,8 @@ function snapLine(data) {
 
 // Image Data
 function getPixelColour(data) {
-    data.pixelColour = api.getPixelColour(parseInt(data.x), parseInt(data.y));
+    const value = api.getPixelColour(parseInt(data.x), parseInt(data.y));
+    data.pixelColour = `${value >> 16}, ${(value >> 8) & 255}, ${value & 255}`;
     return data;
 }
 

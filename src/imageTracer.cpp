@@ -49,6 +49,10 @@ struct RGB {
     [[nodiscard]] string toString() const {
         return to_string(R) + ", " + to_string(G) + ", " + to_string(B);
     }
+
+    [[nodiscard]] int toBin() const {
+        return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
+    }
 };
 
 struct ImageData {
@@ -659,8 +663,8 @@ extern "C" {
     }
 
     // Image Data
-    EMSCRIPTEN_KEEPALIVE const char* getPixelColour(const uint32_t x, const uint32_t y) {
-        return stringReturn(currentImage->getPixelColour(x, y).toString());
+    EMSCRIPTEN_KEEPALIVE int getPixelColour(const uint32_t x, const uint32_t y) {
+        return currentImage->getPixelColour(x, y).toBin();
     }
 
     EMSCRIPTEN_KEEPALIVE const char* getCurrentPath() {
