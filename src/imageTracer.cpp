@@ -228,7 +228,7 @@ struct Trace {
         const auto maxLineHeight = max<uint32_t>(0, imageData->height / 20);
         const auto maxJump = max<uint32_t>(0, imageData->width / 50);
         auto baselineColour = RGBTools(imageData->getRGB(traceData.x, traceData.y), traceData.colourTolerance);
-        auto newTrace = map(trace);
+        auto newTrace = map{trace};
         newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
 
         if (traceLeft) traceFor(traceData.x - 1, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
@@ -238,14 +238,14 @@ struct Trace {
     }
 
     Trace* eraseRegion(uint32_t begin, uint32_t end) {
-        auto newTrace = map(trace);
+        auto newTrace = map{trace};
         const auto& higher = newTrace.upper_bound(end);
         for (auto lower = newTrace.lower_bound(begin); lower != higher;) lower = newTrace.erase(lower);
         return new Trace{newTrace};
     }
 
     Trace* addPoint(const TraceData& traceData) const {
-        auto newTrace = map(trace);
+        auto newTrace = map{trace};
         newTrace[traceData.x] = traceData.y;
         return new Trace{newTrace};
     }
