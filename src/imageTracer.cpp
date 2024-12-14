@@ -673,5 +673,5 @@ extern "C" {
 }
 
 int main() {
-  EM_ASM( onLoad() );
+    EM_ASM( onLoad() );
 }
