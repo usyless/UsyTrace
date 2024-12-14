@@ -237,6 +237,13 @@ struct Trace {
         return new Trace{newTrace};
     }
 
+    Trace* eraseRegion(uint32_t begin, uint32_t end) {
+        auto newTrace = map(trace);
+        const auto& higher = newTrace.upper_bound(end);
+        for (auto lower = newTrace.lower_bound(begin); lower != higher;) lower = newTrace.erase(lower);
+        return new Trace{newTrace};
+    }
+
     Trace* addPoint(const TraceData& traceData) const {
         auto newTrace = map(trace);
         newTrace[traceData.x] = traceData.y;
@@ -584,6 +591,11 @@ struct Image {
         traceHistory.add(new Trace{});
     }
 
+    inline string eraseRegion(uint32_t begin, uint32_t end) {
+        traceHistory.add(traceHistory.getLatest()->eraseRegion(begin, end));
+        return traceHistory.getLatest()->toSVG();
+    }
+
     ~Image() {
         delete imageData;
     }
@@ -661,6 +673,10 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE const char* autoTrace(const uint32_t colourTolerance) {
         return stringReturn(currentImage->autoTrace(TraceData{colourTolerance}));
+    }
+
+    EMSCRIPTEN_KEEPALIVE const char* eraseRegion(uint32_t begin, uint32_t end) {
+        return stringReturn(currentImage->eraseRegion(begin, end));
     }
 
     // Exporting

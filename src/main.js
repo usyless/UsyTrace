@@ -236,6 +236,7 @@ const worker = {
     clearTrace: () => worker.postMessage({type: 'clearTrace'}),
     undoTrace: () => worker.postMessage({type: 'undoTrace'}),
     redoTrace: () => worker.postMessage({type: 'redoTrace'}),
+    eraseRegion: (begin, end) => worker.postMessage({type: 'eraseRegion', begin, end}),
     exportTrace: () => {
         const hasNullOrEmpty = (obj) => {
             return Object.values(obj).some(value => {
@@ -278,10 +279,10 @@ const worker = {
         worker.postMessage({
             type: 'snapLine',
             line: {name: line.id, position: lines.getPosition(line), direction: line.dataset.direction},
-            direction: direction
+            direction
         });
     },
-    getPixelColour: (x, y) => worker.postMessage({type: 'getPixelColour', x: x, y: y}),
+    getPixelColour: (x, y) => worker.postMessage({type: 'getPixelColour', x, y}),
     getCurrentPath: () => worker.postMessage({type: 'getCurrentPath'})
 }
 
