@@ -22,6 +22,9 @@ Traces to the right of the point you click on the image, can complete a trace by
 <h3>Add Point (p)</h3>
 Add a single point to the trace manually, useful for situations where Select Path or Auto Trace Fails
 
+<h3>Smooth Trace (s)</h3>
+Smooths out sudden bumps in the traced line, good for if the original image is bad and the traced line is inconsistent
+
 <h3>Undo (Ctrl + z)</h3>
 Goes back to the previous trace step, saves add point, tracing, and clearing history
 
