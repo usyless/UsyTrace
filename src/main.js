@@ -132,48 +132,91 @@ const indefinitePopup = (message) => {
     Popups.createPopup(message).then(_ => indefinitePopup(message)).catch(_ => indefinitePopup(message));
 }
 
+const buttons = {
+    resetButtons: () => {
+        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset.default;});
+        CURRENT_MODE = null;
+    },
+    enableButtons: () => {
+        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = false;});
+    },
+    disableButtons: () => {
+        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
+    },
+    toggleHistory: ({undo, redo}) => {
+        console.log(undo, redo);
+        document.getElementById('undo').disabled = !undo;
+        document.getElementById('redo').disabled = !redo;
+        console.log(document.getElementById('undo').disabled, document.getElementById('redo').disabled)
+    }
+}
+{ // Handling modes with buttons
+    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
+    const cb = (t) => {
+        const button = t.target, mode = button.dataset.mode, prevMode = {m: CURRENT_MODE}.m;
+        buttons.resetButtons();
+        if (prevMode === mode) {
+            CURRENT_MODE = null;
+            lines.showLines();
+        } else {
+            button.textContent = button.dataset.active;
+            CURRENT_MODE = mode;
+            lines.hideLines();
+        }
+    }
+
+    for (const button of MODE_BUTTON_IDS) {
+        document.getElementById(button).addEventListener('click', cb);
+    }
+}
+
 const worker = {
     worker: (() => {
-        const worker = new Worker("./worker.js");
-        worker.onmessage = (e) => {
+        const w = new Worker("./worker.js");
+        w.onmessage = (e) => {
             const data = e.data, type = data.type;
 
-            if (type === 'exportTrace') {
-                const a = document.createElement("a"),
-                    url = URL.createObjectURL(new Blob([data.export], {type: "text/plain;charset=utf-8"}));
-                a.href = url;
-                a.download = "trace.txt";
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 0);
-            } else if (type === 'error') indefinitePopup(data.message);
-            else if (data.src === image.src) {
-                if (type === 'getPixelColour') glass.setColour(data.pixelColour);
-                else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
-                else {
-                    graphs.setTracePath(data.svg);
-                    overlay.removeOverlays();
+            switch (data.type) {
+                case 'exportTrace': {
+                    const a = document.createElement("a"),
+                        url = URL.createObjectURL(new Blob([data.export], {type: "text/plain;charset=utf-8"}));
+                    a.href = url;
+                    a.download = "trace.txt";
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 0);
+                    break;
+                }
+                case 'error': {
+                    indefinitePopup(data.message);
+                    break;
+                }
+                case 'getHistoryStatus': {
+                    buttons.toggleHistory(data);
+                    break;
+                }
+                default: {
+                    if (image.src === data.src) {
+                        if (type === 'getPixelColour') glass.setColour(data.pixelColour);
+                        else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
+                        else {
+                            graphs.setTracePath(data.svg);
+                            overlay.removeOverlays();
+                            worker.getHistoryStatus();
+                        }
+                        break;
+                    }
                 }
             }
         }
-        return worker;
+        return w;
     })(),
-    postMessage: (data) => image.src.startsWith('blob:') && worker.worker.postMessage(data),
-    setCurrent: () => {
-        worker.postMessage({
-            type: 'setCurrent',
-            src: image.src
-        });
-    },
-    removeImage: (src) => {
-        worker.postMessage({
-            type: 'removeImage',
-            src: src
-        });
-    },
+    postMessage: (data) => image.src.startsWith('blob:') && worker.worker.postMessage({src: image.src, ...data}),
+    setCurrent: () => worker.postMessage({type: 'setCurrent'}),
+    removeImage: (src) => worker.postMessage({type: 'removeImage', src: src}),
     addImage: (width, height) => {
         let processing_canvas = document.createElement("canvas"),
             processing_context = processing_canvas.getContext('2d'),
@@ -184,31 +227,15 @@ const worker = {
         processing_context.drawImage(new_image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
         worker.postMessage({
-            src: image.src,
             type: 'setData',
             data: imageData.data,
             width: imageData.width,
             height: imageData.height
         }, [imageData.data.buffer]);
     },
-    clearTrace: () => {
-        worker.postMessage({
-            type: 'clearTrace',
-            src: image.src,
-        });
-    },
-    undoTrace: () => {
-        worker.postMessage({
-            type: 'undoTrace',
-            src: image.src,
-        });
-    },
-    redoTrace: () => {
-        worker.postMessage({
-            type: 'redoTrace',
-            src: image.src,
-        })
-    },
+    clearTrace: () => worker.postMessage({type: 'clearTrace'}),
+    undoTrace: () => worker.postMessage({type: 'undoTrace'}),
+    redoTrace: () => worker.postMessage({type: 'redoTrace'}),
     exportTrace: () => {
         const hasNullOrEmpty = (obj) => {
             return Object.values(obj).some(value => {
@@ -220,7 +247,6 @@ const worker = {
         };
         const data = {
             type: 'exportTrace',
-            src: image.src,
             PPO: preferences.PPO(),
             delim: preferences.delimitation(),
             lowFR: preferences.lowFRExport(),
@@ -241,56 +267,23 @@ const worker = {
         if (hasNullOrEmpty(data)) Popups.createPopup("Please fill in all required values to export (SPL and FR values)");
         else worker.postMessage(data);
     },
-    addPoint: (x, y) => {
-        worker.postMessage({
-            type: 'addPoint',
-            src: image.src,
-            x: x,
-            y: y
-        });
-    },
+    addPoint: (x, y) => worker.postMessage({type: 'addPoint', x: x, y: y}),
     autoTrace: () => {
-        worker.postMessage({
-            type: 'autoTrace',
-            src: image.src,
-            colourTolerance: preferences.colourTolerance(),
-        });
+        worker.postMessage({type: 'autoTrace', colourTolerance: preferences.colourTolerance()});
     },
     trace: (x, y) => {
-        worker.postMessage({
-            type: 'trace',
-            src: image.src,
-            x: x,
-            y: y,
-            colourTolerance: preferences.colourTolerance()
-        });
+        worker.postMessage({type: 'trace', x: x, y: y, colourTolerance: preferences.colourTolerance()});
     },
     snapLine: (line, direction) => {
         worker.postMessage({
             type: 'snapLine',
-            src: image.src,
-            line: {
-                name: line.id,
-                position: lines.getPosition(line),
-                direction: line.dataset.direction
-            },
+            line: {name: line.id, position: lines.getPosition(line), direction: line.dataset.direction},
             direction: direction
         });
     },
-    getPixelColour: (x, y) => {
-        worker.postMessage({
-            type: 'getPixelColour',
-            src: image.src,
-            x: x,
-            y: y
-        });
-    },
-    getCurrentPath: () => {
-        worker.postMessage({
-            type: 'getCurrentPath',
-            src: image.src
-        });
-    }
+    getPixelColour: (x, y) => worker.postMessage({type: 'getPixelColour', x: x, y: y}),
+    getCurrentPath: () => worker.postMessage({type: 'getCurrentPath'}),
+    getHistoryStatus: () => worker.postMessage({type: 'getHistoryStatus'})
 }
 
 const graphs = {
@@ -326,37 +319,7 @@ document.getElementById('export').addEventListener('click', worker.exportTrace);
 
 const imageMap = new Map();
 const fileInput = document.getElementById('fileInput');
-const buttons = {
-    resetButtons: () => {
-        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset.default;});
-        CURRENT_MODE = null;
-    },
-    enableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = false;});
-    },
-    disableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
-    }
-}
-{ // Handling modes with buttons
-    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
-    const cb = (t) => {
-        const button = t.target, mode = button.dataset.mode, prevMode = {m: CURRENT_MODE}.m;
-        buttons.resetButtons();
-        if (prevMode === mode) {
-            CURRENT_MODE = null;
-            lines.showLines();
-        } else {
-            button.textContent = button.dataset.active;
-            CURRENT_MODE = mode;
-            lines.hideLines();
-        }
-    }
 
-    for (const button of MODE_BUTTON_IDS) {
-        document.getElementById(button).addEventListener('click', cb);
-    }
-}
 const imageQueue = {
     elem: document.getElementById('imageQueueInner'),
     removeSelectedImage: () => {

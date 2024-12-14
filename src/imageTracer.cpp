@@ -273,6 +273,14 @@ struct TraceHistory {
         return history.top();
     }
 
+    inline bool redoAvailable() {
+        return !future.empty();
+    }
+
+    inline bool undoAvailable() {
+        return history.size() > 1;
+    }
+
     ~TraceHistory() {
         while(!history.empty()) {
             delete history.top();
@@ -492,6 +500,10 @@ struct Image {
         return traceHistory.redo()->toSVG();
     }
 
+    [[nodiscard]] inline string historyStatus() {
+        return "{\"undo\":" + string((traceHistory.undoAvailable()) ? "true" : "false") + ",\"redo\":" + string((traceHistory.redoAvailable()) ? "true" : "false") + "}"; 
+    }
+
     [[nodiscard]] string autoTrace(const TraceData&& traceData) {
         auto* traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         auto* traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour.rgb] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
@@ -600,6 +612,10 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
         if (currentImage == imageQueue.get(id)) currentImage = nullptr;
         imageQueue.remove(id);
+    }
+
+    EMSCRIPTEN_KEEPALIVE const char* historyStatus() {
+        return stringReturn(currentImage->historyStatus());
     }
 
     // Tracing
