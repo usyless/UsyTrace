@@ -174,7 +174,7 @@ const worker = {
         w.onmessage = (e) => {
             const data = e.data, type = data.type;
 
-            switch (data.type) {
+            switch (type) {
                 case 'exportTrace': {
                     const a = document.createElement("a"),
                         url = URL.createObjectURL(new Blob([data.export], {type: "text/plain;charset=utf-8"}));
