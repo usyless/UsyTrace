@@ -560,6 +560,7 @@ image.addEventListener('load', () => {
         'p': () => document.getElementById('selectPoint').click(),
         'h': () => document.getElementById('toggleImageQueue').click(),
         's': (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
+        'e': () => document.getElementById('eraseRegion').click(),
         'enter': () => document.getElementById('fileInputButton').click(),
         'delete': () => document.getElementById('removeImage').click(),
         'backspace': () => document.getElementById('clearPath').click(),
