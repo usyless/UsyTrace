@@ -203,7 +203,7 @@ const worker = {
                         else {
                             graphs.setTracePath(data.svg);
                             overlay.removeOverlays();
-                            worker.getHistoryStatus();
+                            worker.postMessage({type: 'getHistoryStatus'});
                         }
                         break;
                     }
@@ -280,8 +280,7 @@ const worker = {
         });
     },
     getPixelColour: (x, y) => worker.postMessage({type: 'getPixelColour', x: x, y: y}),
-    getCurrentPath: () => worker.postMessage({type: 'getCurrentPath'}),
-    getHistoryStatus: () => worker.postMessage({type: 'getHistoryStatus'})
+    getCurrentPath: () => worker.postMessage({type: 'getCurrentPath'})
 }
 
 const graphs = {
