@@ -500,8 +500,8 @@ struct Image {
         return traceHistory.redo()->toSVG();
     }
 
-    [[nodiscard]] inline string historyStatus() {
-        return "{\"undo\":" + string((traceHistory.undoAvailable()) ? "true" : "false") + ",\"redo\":" + string((traceHistory.redoAvailable()) ? "true" : "false") + "}"; 
+    [[nodiscard]] inline int historyStatus() {
+        return (traceHistory.undoAvailable() << 1) | traceHistory.redoAvailable();
     }
 
     [[nodiscard]] string autoTrace(const TraceData&& traceData) {
@@ -614,8 +614,8 @@ extern "C" {
         imageQueue.remove(id);
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* historyStatus() {
-        return stringReturn(currentImage->historyStatus());
+    EMSCRIPTEN_KEEPALIVE int historyStatus() {
+        return currentImage->historyStatus();
     }
 
     // Tracing

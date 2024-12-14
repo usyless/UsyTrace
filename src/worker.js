@@ -26,7 +26,7 @@ const typeMap = {
     setCurrent: Module.cwrap("setCurrent", "", ["string"]),
     addImage: Module.cwrap("addImage", "", ["string", "number", "number", "number"]),
     removeImage: Module.cwrap("removeImage", "", ["string"]),
-    historyStatus: Module.cwrap("historyStatus", "string"),
+    historyStatus: Module.cwrap("historyStatus", "number"),
     trace: Module.cwrap("trace", "string", ["number", "number", "number"]),
     point: Module.cwrap("point", "string", ["number", "number"]),
     undo: Module.cwrap("undo", "string"),
@@ -70,7 +70,10 @@ function removeImage(data) {
 }
 
 function getHistoryStatus(data) {
-    return {...data, ...JSON.parse(api.historyStatus())};
+    const value = api.historyStatus();
+    data.undo = Boolean((value & 2) >> 1);
+    data.redo = Boolean(value & 1);
+    return data;
 }
 
 // Tracing
