@@ -238,10 +238,9 @@ struct Trace {
     }
 
     // Gaussian smoothing
-    Trace* smooth() {
+    Trace* smooth(const int windowSize, const double sigma) {
         frTrace newTrace{};
-        const int windowSize = 10;
-        const double multi = -0.5 / (7.0 * 7.0); // 7.0 is sigma
+        const double multi = -0.5 / (sigma * sigma);
         if (trace.size() > windowSize) {
             int halfWindow = windowSize / 2;
 
@@ -624,7 +623,8 @@ struct Image {
     }
 
     inline string smoothTrace() {
-        traceHistory.add(traceHistory.getLatest()->smooth());
+        const int windowSize = max(static_cast<int>(imageData->width) / 100, 2);
+        traceHistory.add(traceHistory.getLatest()->smooth(windowSize, static_cast<double>(windowSize) / 2.0));
         return traceHistory.getLatest()->toSVG();
     }
 
