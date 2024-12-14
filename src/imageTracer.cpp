@@ -25,11 +25,11 @@ struct RGB {
 
     RGB(const Colour r, const Colour g, const Colour b) : R(r), G(g), B(b) {}
 
-    [[nodiscard]] static Colour biggestDifference(const RGB& rgb) {
+     static Colour biggestDifference(const RGB& rgb) {
         return max(max(rgb.R, rgb.G), rgb.B) - min(min(rgb.R, rgb.G), rgb.B);
     }
 
-    [[nodiscard]] double getDifference(const RGB& rgb) const {
+    double getDifference(const RGB& rgb) const {
         const auto rmean = (R + rgb.R) / 2;
         return sqrt(((512 + rmean) * static_cast<int>(pow(R - rgb.R, 2)) >> 8) + 4 * pow(G - rgb.G, 2) + ((767 - rmean) * static_cast<int>(pow(B - rgb.B, 2)) >> 8));
     }
@@ -46,11 +46,11 @@ struct RGB {
         return static_cast<uint32_t>(R) + static_cast<uint32_t>(G) + static_cast<uint32_t>(B);
     }
 
-    [[nodiscard]] string toString() const {
+    string toString() const {
         return to_string(R) + ", " + to_string(G) + ", " + to_string(B);
     }
 
-    [[nodiscard]] int toBin() const {
+     int toBin() const {
         return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
     }
 };
@@ -85,7 +85,7 @@ struct RGBTools {
 
     RGBTools(const RGB rgb, const uint32_t tolerance) : rgb(rgb), tolerance(tolerance) {}
 
-    [[nodiscard]] bool withinTolerance(const RGB& rgb) const {
+    bool withinTolerance(const RGB& rgb) const {
         return this->rgb.getDifference(rgb) <= tolerance;
     }
 
@@ -136,7 +136,7 @@ struct ExportString {
         data += "\n" + freq + delim + spl;
     }
 
-    [[nodiscard]] string getData() const {
+    string getData() const {
         return data;
     }
 };
@@ -175,7 +175,7 @@ struct Trace {
     Trace() : trace(std::move(frTrace{})) {}
     Trace(const frTrace& trace) : trace(trace) {}
 
-    [[nodiscard]] vector<pair<uint32_t, uint32_t>> clean() const {
+    vector<pair<uint32_t, uint32_t>> clean() const {
         vector<pair<uint32_t, uint32_t>>&& simplifiedTrace{};
         if (!trace.empty()) {
             if (trace.size() > 2) {
@@ -200,7 +200,7 @@ struct Trace {
         return simplifiedTrace;
     }
 
-    [[nodiscard]] string toSVG() const {
+    string toSVG() const {
         string svg;
         if (const auto& res = clean(); !res.empty()) {
             auto iter = res.begin();
@@ -211,7 +211,7 @@ struct Trace {
         return svg;
     }
 
-    [[nodiscard]] Trace* newTrace(const ImageData* imageData, const TraceData& traceData, const bool traceLeft=false) const {
+    Trace* newTrace(const ImageData* imageData, const TraceData& traceData, const bool traceLeft=false) const {
         const auto maxLineHeight = max<uint32_t>(0, imageData->height / 20);
         const auto maxJump = max<uint32_t>(0, imageData->width / 50);
         auto baselineColour = RGBTools(imageData->getRGB(traceData.x, traceData.y), traceData.colourTolerance);
@@ -224,13 +224,13 @@ struct Trace {
         return new Trace{newTrace};
     }
 
-    [[nodiscard]] Trace* addPoint(const TraceData& traceData) const {
+    Trace* addPoint(const TraceData& traceData) const {
         auto newTrace = map(trace);
         newTrace[traceData.x] = traceData.y;
         return new Trace{newTrace};
     }
 
-    [[nodiscard]] size_t size() const {
+    size_t size() const {
         return trace.size();
     }
 };
@@ -243,7 +243,7 @@ struct TraceHistory {
         history.push(new Trace{});
     }
 
-    [[nodiscard]] Trace* getLatest() const {
+    Trace* getLatest() const {
         return history.top();
     }
 
@@ -255,7 +255,10 @@ struct TraceHistory {
     }
 
     Trace* add(Trace* trace) {
-        if(history.top()->size() == 0) undo();
+        if (history.top()->size() == 0 && trace->size() == 0) {
+            delete trace;
+            return history.top();
+        }
         clearFuture();
         history.push(trace);
         return trace;
@@ -488,27 +491,27 @@ struct Image {
         this->backgroundColour = RGBTools{getBackgroundColour(filteredData), 10};
     }
 
-    [[nodiscard]] string trace(const TraceData&& traceData) {
+    inline string trace(const TraceData&& traceData) {
         return traceHistory.add(traceHistory.getLatest()->newTrace(imageData, traceData))->toSVG();
     }
 
-    [[nodiscard]] string point(const TraceData&& traceData) {
+    inline string point(const TraceData&& traceData) {
         return traceHistory.add(traceHistory.getLatest()->addPoint(traceData))->toSVG();
     }
 
-    [[nodiscard]] string undo() {
+    inline string undo() {
         return traceHistory.undo()->toSVG();
     }
 
-    [[nodiscard]] string redo() {
+    inline string redo() {
         return traceHistory.redo()->toSVG();
     }
 
-    [[nodiscard]] inline int historyStatus() {
+    inline int historyStatus() {
         return (traceHistory.undoAvailable() << 1) | traceHistory.redoAvailable();
     }
 
-    [[nodiscard]] string autoTrace(const TraceData&& traceData) {
+    string autoTrace(const TraceData&& traceData) {
         auto* traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         auto* traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour.rgb] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
         if (traceOne->size() > traceTwo->size()) {
@@ -521,7 +524,7 @@ struct Image {
         return traceHistory.getLatest()->toSVG();
     }
 
-    [[nodiscard]] string exportTrace(const ExportData&& exportData) const {
+    string exportTrace(const ExportData&& exportData) const {
         const auto FRBottomPixel = exportData.FRBottomPixel, FRRatio = exportData.FRRatio,
         logFRBottomValue = exportData.logFRBottomValue, SPLBottomPixel = exportData.SPLBottomPixel,
         SPLRatio = exportData.SPLRatio, SPLBottomValue = exportData.SPLBottomValue,
@@ -547,7 +550,7 @@ struct Image {
         return str.getData();
     }
 
-    [[nodiscard]] uint32_t snapLine(uint32_t pos, const int lineDir, const int moveDir) const {
+    uint32_t snapLine(uint32_t pos, const int lineDir, const int moveDir) const {
         auto lines = (lineDir == 1) ? vLines : hLines;
         pos += moveDir;
         auto bound = lines.upper_bound(pos);
@@ -556,15 +559,15 @@ struct Image {
         return *bound;
     }
 
-    [[nodiscard]] inline RGB getPixelColour(const uint32_t x, const uint32_t y) const {
+    inline RGB getPixelColour(const uint32_t x, const uint32_t y) const {
         return imageData->getRGB(x, y);
     }
 
-    [[nodiscard]] inline string getPath() const {
+    inline string getPath() const {
         return traceHistory.getLatest()->toSVG();
     }
 
-    void clear() {
+    void inline clear() {
         traceHistory.add(new Trace{});
     }
 
@@ -584,7 +587,7 @@ struct ImageQueue {
         images.erase(string{id});
     }
 
-    [[nodiscard]] Image* get(const char* id) const {
+    Image* get(const char* id) const {
         return images.at(string{id}).get();
     }
 } imageQueue;

@@ -303,17 +303,13 @@ const graphs = {
     },
     clearTracePath: () => {
         graphs.setTracePath('');
-    },
-    clearTracePathAndWorker: () => {
-        graphs.clearTracePath();
-        worker.clearTrace();
-    },
+    }
 }
 
 document.getElementById('autoPath').addEventListener('click', worker.autoTrace);
 document.getElementById('undo').addEventListener('click', worker.undoTrace);
 document.getElementById('redo').addEventListener('click', worker.redoTrace);
-document.getElementById('clearPath').addEventListener('click', graphs.clearTracePathAndWorker);
+document.getElementById('clearPath').addEventListener('click', worker.clearTrace);
 document.getElementById('export').addEventListener('click', worker.exportTrace);
 
 const imageMap = new Map();

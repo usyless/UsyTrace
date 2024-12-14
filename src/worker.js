@@ -111,8 +111,8 @@ function redo(data) {
     return defaultTraceResponse(data, api.redo());
 }
 
-function clear() {
-    api.clear();
+function clear(data) {
+    return defaultTraceResponse(data, api.clear(), '');
 }
 
 // Export
