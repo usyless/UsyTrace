@@ -205,8 +205,12 @@ struct Trace {
         if (const auto& res = clean(); !res.empty()) {
             auto iter = res.begin();
             const auto& end = res.end();
-            svg += "M" + to_string(iter->first) + " " + to_string(iter->second);
-            for (++iter; iter != end; ++iter) svg += " " + to_string(iter->first) + " " + to_string(iter->second);
+            if (res.size() == 1) {
+                svg += "M" + to_string(iter->first) + " " + to_string(iter->second) + "q2 0 2 2t-2 2-2-2 2-2";
+            } else {
+                svg += "M" + to_string(iter->first) + " " + to_string(iter->second);
+                for (++iter; iter != end; ++iter) svg += " " + to_string(iter->first) + " " + to_string(iter->second);
+            }
         }
         return svg;
     }
