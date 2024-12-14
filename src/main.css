@@ -39,7 +39,7 @@ body {
 }
 
 #waiting-overlay {
-    transition: 200ms 200ms;
+    transition: ease-in-out 300ms 200ms;
     display: flex;
 
     position: fixed;
@@ -67,7 +67,7 @@ body {
         opacity: 0;
         font-weight: bold;
         font-size: 3em;
-        transition: 200ms 200ms;
+        transition: ease-in-out 300ms 200ms;
     }
 }
 
