@@ -30,8 +30,11 @@ struct RGB {
     }
 
     double getDifference(const RGB& rgb) const {
-        const auto rmean = (R + rgb.R) / 2;
-        return sqrt(((512 + rmean) * static_cast<int>(pow(R - rgb.R, 2)) >> 8) + 4 * pow(G - rgb.G, 2) + ((767 - rmean) * static_cast<int>(pow(B - rgb.B, 2)) >> 8));
+        const auto rmean = (static_cast<int>(R) + static_cast<int>(rgb.R)) / 2;
+        const auto rdiff = static_cast<int>(R) - static_cast<int>(rgb.R);
+        const auto gdiff = static_cast<int>(G) - static_cast<int>(rgb.G);
+        const auto bdiff = static_cast<int>(B) - static_cast<int>(rgb.B);
+        return sqrt((512 + rmean) * ((rdiff * rdiff) >> 8) + 4 * (gdiff * gdiff) + (((767 - rmean) * (bdiff * bdiff)) >> 8));
     }
 
     bool operator==(const RGB& rgb) const {
@@ -90,9 +93,15 @@ struct RGBTools {
     }
 
     void addToAverage(const RGB& rgb) {
-        this->rgb.R += static_cast<Colour>((sqrt((pow(this->rgb.R, 2) + pow(rgb.R, 2)) / 2) - this->rgb.R) / count);
-        this->rgb.G += static_cast<Colour>((sqrt((pow(this->rgb.G, 2) + pow(rgb.G, 2)) / 2) - this->rgb.G) / count);
-        this->rgb.B += static_cast<Colour>((sqrt((pow(this->rgb.B, 2) + pow(rgb.B, 2)) / 2) - this->rgb.B) / count);
+        const auto r1 = static_cast<int>(this->rgb.R);
+        const auto r2 = static_cast<int>(rgb.R);
+        const auto g1 = static_cast<int>(this->rgb.G);
+        const auto g2 = static_cast<int>(rgb.G);
+        const auto b1 = static_cast<int>(this->rgb.B);
+        const auto b2 = static_cast<int>(rgb.B);
+        this->rgb.R += static_cast<Colour>((sqrt(((r1 * r1) + (r2 * r2)) / 2) - r1) / count);
+        this->rgb.G += static_cast<Colour>((sqrt(((g1 * g1) + (g2 * g2)) / 2) - g1) / count);
+        this->rgb.B += static_cast<Colour>((sqrt(((b1 * b1) + (b2 * b2)) / 2) - b1) / count);
         ++count;
     }
 };
