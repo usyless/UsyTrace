@@ -38,6 +38,11 @@ glass.updateImage = () => {
     glass.img.height = image.clientHeight * MAGNIFICATION;
 }
 
+const overlay = {
+    createOverlay: () => document.getElementById('waiting-overlay').classList.add('enabled'),
+    removeOverlays: () => document.getElementById('waiting-overlay').classList.remove('enabled')
+}
+
 const lines = {
     parent: document.getElementById('lines'),
     lines: {
@@ -148,7 +153,10 @@ const worker = {
             else if (data.src === image.src) {
                 if (type === 'getPixelColour') glass.setColour(data.pixelColour);
                 else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
-                else graphs.setTracePath(data.svg);
+                else {
+                    graphs.setTracePath(data.svg);
+                    overlay.removeOverlays();
+                }
             }
         }
         return worker;
@@ -557,8 +565,8 @@ image.addEventListener('load', () => {
 
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
-        worker.addImage(width, height);
-        worker.setCurrent();
+        overlay.createOverlay();
+        worker.addImage(width, height); // implicitly sets as current
         lines.setPosition(lines.lines.xHigh, width);
         lines.setPosition(lines.lines.xLow, 0);
         lines.setPosition(lines.lines.yHigh, 0);
