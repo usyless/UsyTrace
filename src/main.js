@@ -144,10 +144,8 @@ const buttons = {
         document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
     },
     toggleHistory: ({undo, redo}) => {
-        console.log(undo, redo);
         document.getElementById('undo').disabled = !undo;
         document.getElementById('redo').disabled = !redo;
-        console.log(document.getElementById('undo').disabled, document.getElementById('redo').disabled)
     }
 }
 { // Handling modes with buttons
