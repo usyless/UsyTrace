@@ -184,6 +184,7 @@ input[type="number"]:focus-visible, select:focus-visible {
     position: absolute;
     max-height: 100%;
     max-width: 100%;
+    touch-action: none;
 }
 
 #uploadedImage {
