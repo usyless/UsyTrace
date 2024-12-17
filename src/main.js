@@ -675,7 +675,7 @@ function initAll() {
     lines.hideLines();
     erasing.hide();
     graphs.clearTracePath();
-    image.src = ''
+    image.src = '';
 }
 
 function updateSizes() {
