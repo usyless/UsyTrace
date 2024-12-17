@@ -38,14 +38,18 @@
             <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled>Auto Trace</button>
             <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled>Select Path</button>
             <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" title="Click to add a point to the trace, will stack on top of previous trace (p)" data-disabled>Add Point</button>
+            <br>
+            <button id="smoothTrace" class="standardButton" title="Apply smoothing to the current trace (s)" data-disabled>Smooth Trace</button>
+            <br>
             <div>
                 <button id="undo" class="standardButton" title="Undo the previous action done to the trace (Ctrl + z)" data-disabled>Undo</button>
                 <button id="redo" class="standardButton" title="Redo the previous actionm done to the trace (Ctrl + Shift + z)" data-disabled>Redo</button>
             </div>
+            <button id="eraseRegion" class="standardButton" data-default="Erase Region" data-active="Stop Erasing" data-mode="erase" title="Erases the selected region on the trace, drag a box to select (e)" data-disabled>Erase Region</button>
             <button id="clearPath" class="standardButton" title="Clears the current trace, can be undone (Backspace)" data-disabled>Clear Path</button>
-            <button id="export" class="standardButton" title="Exports the current trace, make sure to have all SPL and FR values filled in" data-disabled>Export Trace</button>
         </div>
         <div class="sidebarSection" id="buttonSection">
+            <button id="export" class="standardButton" title="Exports the current trace, make sure to have all SPL and FR values filled in" data-disabled>Export Trace</button>
             <label for="SPLHigher" title="Y value of the upper horizontal line">Higher SPL (dB)</label>
             <input type="number" id="SPLHigher" title="Y value of the upper horizontal line"/>
             <div class="moveButtons" data-for="yHigh">
@@ -78,9 +82,6 @@
             <div>
                 <label for="snapToLines">Buttons snap to axis</label>
                 <input id="snapToLines" type="checkbox" checked>
-            </div>
-            <div>
-                Input the chosen values with the bars on the image into the fields above
             </div>
         </div>
         <div class="sidebarSection">
@@ -132,7 +133,7 @@
                 <div id="glass" class="hidden magnify removePointerEvents">
                     <img src="" alt="">
                 </div>
-                <img id='uploadedImage' src='' alt='' class="canvasSizing removePointerEvents"/>
+                <img id='uploadedImage' src='' alt='' class="canvasSizing"/>
                 <svg id="trace" class="canvasSizing removePointerEvents">
                     <path stroke="#000000" fill="transparent" d=""></path>
                     <path stroke="#ff0000" fill="transparent" d=""></path>
@@ -147,6 +148,9 @@
                     <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yLow" data-other="yHigh"></line>
                     <text x="0" y="0" text-anchor="middle">Low</text>
                 </svg>
+                <svg id="erasing" class="canvasSizing hidden removePointerEvents">
+                    <rect x="0" y="0" width="0" height="100%" fill="red" opacity="0.3"></rect>
+                </svg>
                 <h1 id="defaultMainText">Please Load Images (Or drop any images onto the page, or paste with Ctrl+V)</h1>
             </div>
         </div>
@@ -160,8 +164,10 @@
             </div>
         </div>
     </div>
+
 </div>
 
+<div id="waiting-overlay"></div>
 <script src="updater.js"></script>
 <script src="popups.js"></script>
 <script src="tutorial.js"></script>

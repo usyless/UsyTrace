@@ -25,7 +25,7 @@ function resetToDefault() {
 }
 
 // Global Variables
-let sizeRatio, width, height, lineWidth, CURRENT_MODE = null;
+let sizeRatio, width, height, lineWidth, CURRENT_MODE = null, MODE_RESET_CB = null;
 
 const glass = document.getElementById('glass');
 glass.img = glass.querySelector('img');
@@ -36,6 +36,11 @@ glass.updateImage = () => {
     glass.img.src = image.src;
     glass.img.width = image.clientWidth * MAGNIFICATION;
     glass.img.height = image.clientHeight * MAGNIFICATION;
+}
+
+const overlay = {
+    createOverlay: () => document.getElementById('waiting-overlay').classList.add('enabled'),
+    removeOverlays: () => document.getElementById('waiting-overlay').classList.remove('enabled')
 }
 
 const lines = {
@@ -81,6 +86,38 @@ const lines = {
 }
 lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
 
+const erasing = {
+    show: () => {
+        erasing.elem.classList.remove('hidden');
+        erasing.svg.setAttributeNS(null, 'width', '0');
+    },
+    hide: () => {
+        document.getElementById('erasing').classList.add('hidden');
+    },
+    begin: (x) => {
+        erasing.x = Number(x);
+        erasing.svg.setAttributeNS(null, 'x', x);
+    },
+    move: (x) => {
+        x = Number(x);
+        if (x < erasing.x) {
+            erasing.svg.setAttributeNS(null, 'width', `${erasing.x - x}px`);
+            erasing.begin(x);
+        } else {
+            erasing.svg.setAttributeNS(null, 'width', `${x - erasing.x}px`);
+        }
+    },
+    finish: (x) => {
+        worker.eraseRegion(erasing.x, Number(x));
+        erasing.svg.setAttributeNS(null, 'width', '0');
+    },
+    init: () => {
+        erasing.elem = document.getElementById('erasing');
+        erasing.svg = erasing.elem.firstElementChild;
+    }
+}
+erasing.init();
+
 const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
     const r = image.getBoundingClientRect(), x = e.clientX, y = e.clientY;
@@ -104,8 +141,6 @@ image.loadLines = () => {
     lines.initialise();
     lines.showLines();
 }
-image.stopPointerEvents = () => image.classList.add('removePointerEvents');
-image.startPointerEvents = () => image.classList.remove('removePointerEvents');
 
 const preferences = {
     SPLHigher: () => document.getElementById('SPLHigher').value,
@@ -123,41 +158,115 @@ const preferences = {
     highFRExport: () => document.getElementById('highFRExport').value || defaults.highFRExport,
 }
 
+const indefinitePopup = (message) => {
+    Popups.createPopup(message).then(_ => indefinitePopup(message)).catch(_ => indefinitePopup(message));
+}
+
+const buttons = {
+    resetButtons: () => {
+        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset.default;});
+        CURRENT_MODE = null;
+        MODE_RESET_CB?.();
+    },
+    enableButtons: () => {
+        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = false;});
+    },
+    disableButtons: () => {
+        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
+    },
+    toggleHistory: ({undo, redo}) => {
+        document.getElementById('undo').disabled = !undo;
+        document.getElementById('redo').disabled = !redo;
+    }
+}
+{ // Handling modes with buttons
+    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint', 'eraseRegion'];
+    const ENABLE_CALLBACK = {
+        'path': lines.hideLines,
+        'point': lines.hideLines,
+        'erase': () => {
+            lines.hideLines();
+            erasing.show();
+        }
+    }
+    const DISABLE_CALLBACK = {
+        'path': lines.showLines,
+        'point': lines.showLines,
+        'erase': () => {
+            erasing.hide();
+            lines.showLines();
+        }
+    }
+    const cb = (e) => {
+        const button = e.target, mode = button.dataset.mode, previousMode = JSON.parse(JSON.stringify(CURRENT_MODE));
+        buttons.resetButtons();
+        if (previousMode === mode) {
+            MODE_RESET_CB?.();
+            CURRENT_MODE = null;
+        } else {
+            button.textContent = button.dataset.active;
+            MODE_RESET_CB?.();
+            MODE_RESET_CB = DISABLE_CALLBACK[mode];
+            CURRENT_MODE = mode;
+            ENABLE_CALLBACK[mode]();
+        }
+    }
+
+    for (const button of MODE_BUTTON_IDS) document.getElementById(button).addEventListener('click', cb);
+}
+
 const worker = {
     worker: (() => {
-        const worker = new Worker("./worker.js");
-        worker.onmessage = (e) => {
-            const data = e.data, imgData = imageMap.get(data.src);
+        const w = new Worker("./worker.js");
+        w.onmessage = (e) => {
+            const data = e.data, type = data.type;
 
-            if (data.svg) imgData.path = data.svg;
-            if (data.colour) imgData.colour = data.colour;
-
-            if (data.type === 'exportTrace') {
-                const a = document.createElement("a"),
-                    url = URL.createObjectURL(new Blob([data.export], {type: "text/plain;charset=utf-8"}));
-                a.href = url;
-                a.download = "trace.txt";
-                document.body.appendChild(a);
-                a.click();
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 0);
-            } else if (data.src === image.src) {
-                if (data.type === 'getPixelColour') glass.setColour(data.pixelColour);
-                else if (data.type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
-                else graphs.setTracePath(data.svg, data.colour);
+            switch (type) {
+                case 'exportTrace': {
+                    const a = document.createElement("a"),
+                        url = URL.createObjectURL(new Blob([data.export], {type: "text/plain;charset=utf-8"}));
+                    a.href = url;
+                    a.download = "trace.txt";
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    }, 0);
+                    break;
+                }
+                case 'error': {
+                    overlay.removeOverlays();
+                    indefinitePopup(data.message);
+                    break;
+                }
+                case 'getHistoryStatus': {
+                    buttons.toggleHistory(data);
+                    break;
+                }
+                case 'setData': {
+                    console.timeEnd("Initialise image");
+                    break;
+                }
+                default: {
+                    if (image.src === data.src) {
+                        if (type === 'getPixelColour') glass.setColour(data.pixelColour);
+                        else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
+                        else {
+                            graphs.setTracePath(data.svg);
+                            overlay.removeOverlays();
+                            worker.postMessage({type: 'getHistoryStatus'});
+                        }
+                        break;
+                    }
+                }
             }
         }
-        return worker;
+        return w;
     })(),
-    postMessage: (data) => image.src.startsWith('blob:') && worker.worker.postMessage(data),
-    removeImage: (src) => {
-        worker.postMessage({
-            type: 'removeImage',
-            src: src
-        });
-    },
+    postMessage: (data) => image.src.startsWith('blob:') && worker.worker.postMessage({src: image.src, ...data}),
+    setCurrent: () => worker.postMessage({type: 'setCurrent'}),
+    removeImage: (src) => worker.postMessage({type: 'removeImage', src: src}),
     addImage: (width, height) => {
         let processing_canvas = document.createElement("canvas"),
             processing_context = processing_canvas.getContext('2d'),
@@ -168,31 +277,14 @@ const worker = {
         processing_context.drawImage(new_image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
         worker.postMessage({
-            src: image.src,
-            type: 'setData',
-            data: imageData.data,
-            width: imageData.width,
-            height: imageData.height
+            type: 'setData', data: imageData.data, width: imageData.width, height: imageData.height
         }, [imageData.data.buffer]);
     },
-    clearTrace: () => {
-        worker.postMessage({
-            type: 'clearTrace',
-            src: image.src,
-        });
-    },
-    undoTrace: () => {
-        worker.postMessage({
-            type: 'undoTrace',
-            src: image.src,
-        });
-    },
-    redoTrace: () => {
-        worker.postMessage({
-            type: 'redoTrace',
-            src: image.src,
-        })
-    },
+    clearTrace: () => worker.postMessage({type: 'clearTrace'}),
+    undoTrace: () => worker.postMessage({type: 'undoTrace'}),
+    redoTrace: () => worker.postMessage({type: 'redoTrace'}),
+    eraseRegion: (begin, end) => worker.postMessage({type: 'eraseRegion', begin, end}),
+    smoothTrace: () => worker.postMessage({type: 'smoothTrace'}),
     exportTrace: () => {
         const hasNullOrEmpty = (obj) => {
             return Object.values(obj).some(value => {
@@ -204,7 +296,6 @@ const worker = {
         };
         const data = {
             type: 'exportTrace',
-            src: image.src,
             PPO: preferences.PPO(),
             delim: preferences.delimitation(),
             lowFR: preferences.lowFRExport(),
@@ -225,50 +316,22 @@ const worker = {
         if (hasNullOrEmpty(data)) Popups.createPopup("Please fill in all required values to export (SPL and FR values)");
         else worker.postMessage(data);
     },
-    addPoint: (x, y) => {
-        worker.postMessage({
-            type: 'addPoint',
-            src: image.src,
-            x: x,
-            y: y
-        });
-    },
+    addPoint: (x, y) => worker.postMessage({type: 'addPoint', x: x, y: y}),
     autoTrace: () => {
-        worker.postMessage({
-            type: 'autoTrace',
-            src: image.src,
-            colourTolerance: preferences.colourTolerance(),
-        });
+        worker.postMessage({type: 'autoTrace', colourTolerance: preferences.colourTolerance()});
     },
     trace: (x, y) => {
-        worker.postMessage({
-            type: 'trace',
-            src: image.src,
-            x: x,
-            y: y,
-            colourTolerance: preferences.colourTolerance()
-        });
+        worker.postMessage({type: 'trace', x: x, y: y, colourTolerance: preferences.colourTolerance()});
     },
     snapLine: (line, direction) => {
         worker.postMessage({
             type: 'snapLine',
-            src: image.src,
-            line: {
-                name: line.id,
-                position: lines.getPosition(line),
-                direction: line.dataset.direction
-            },
-            direction: direction
+            line: {name: line.id, position: lines.getPosition(line), direction: line.dataset.direction},
+            direction
         });
     },
-    getPixelColour: (x, y) => {
-        worker.postMessage({
-            type: 'getPixelColour',
-            src: image.src,
-            x: x,
-            y: y
-        });
-    }
+    getPixelColour: (x, y) => worker.postMessage({type: 'getPixelColour', x, y}),
+    getCurrentPath: () => worker.postMessage({type: 'getCurrentPath'})
 }
 
 const graphs = {
@@ -279,63 +342,29 @@ const graphs = {
             e.setAttribute("viewBox", `0 0 ${width} ${height}`);
         });
     },
-    setTracePath: (d, colour) => {
+    setTracePath: (d) => {
         const trace = document.getElementById('trace'), path = trace.lastElementChild, path2 = trace.firstElementChild;
         path.setAttribute('d', d);
-        path.setAttribute('stroke', colour);
+        path.setAttribute('stroke', '#ff0000');
         path.setAttribute('stroke-width', lineWidth);
         path2.setAttribute('d', d);
         path2.setAttribute('stroke-width', lineWidth * 1.5);
     },
     clearTracePath: () => {
-        graphs.setTracePath('', '#ff0000', 0);
-    },
-    clearTracePathAndWorker: () => {
-        graphs.clearTracePath();
-        worker.clearTrace();
-        imageMap.get(image.src).path = '';
-    },
+        graphs.setTracePath('');
+    }
 }
 
 document.getElementById('autoPath').addEventListener('click', worker.autoTrace);
 document.getElementById('undo').addEventListener('click', worker.undoTrace);
 document.getElementById('redo').addEventListener('click', worker.redoTrace);
-document.getElementById('clearPath').addEventListener('click', graphs.clearTracePathAndWorker);
+document.getElementById('clearPath').addEventListener('click', worker.clearTrace);
 document.getElementById('export').addEventListener('click', worker.exportTrace);
+document.getElementById('smoothTrace').addEventListener('click', worker.smoothTrace);
 
 const imageMap = new Map();
 const fileInput = document.getElementById('fileInput');
-const buttons = {
-    resetButtons: () => {
-        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset.default;});
-        CURRENT_MODE = null;
-    },
-    enableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = false;});
-    },
-    disableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
-    }
-}
-{ // Handling modes with buttons
-    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
-    const cb = (t) => {
-        const button = t.target, mode = button.dataset.mode, prevMode = {m: CURRENT_MODE}.m;
-        buttons.resetButtons();
-        if (prevMode === mode) {
-            CURRENT_MODE = null;
-            lines.showLines();
-        } else {
-            button.textContent = button.dataset.active;
-            CURRENT_MODE = mode;
-            lines.hideLines();
-        }
-    }
 
-    for (const button of MODE_BUTTON_IDS) {
-        document.getElementById(button).addEventListener('click', cb);
-    }
-}
 const imageQueue = {
     elem: document.getElementById('imageQueueInner'),
     removeSelectedImage: () => {
@@ -361,7 +390,6 @@ const imageQueue = {
             e.preventDefault();
             e.stopPropagation();
             image.saveLines();
-            image.stopPointerEvents();
             image.src = src;
             imageQueue.removeSelectedImage();
             img.classList.add('selectedImage');
@@ -452,15 +480,17 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 
 { // magnifying glass stuff
     image.addEventListener('pointermove', (e) => {
-        e.preventDefault();
-        const parentElement = image.parentElement,
-            parentRect = parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
-        glass.style.left = `${Math.min(m.x - parentRect.left, parentElement.clientWidth - glass.clientWidth)}px`;
-        glass.style.top = `${Math.min(m.y - parentRect.top, parentElement.clientHeight - glass.clientHeight)}px`;
-        glass.img.style.left = `${(m.xRel * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
-        glass.img.style.top = `${(m.yRel * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
-        worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
-        glass.classList.remove('hidden');
+        if (CURRENT_MODE !== 'erase') {
+            e.preventDefault();
+            const parentElement = image.parentElement,
+                parentRect = parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
+            glass.style.left = `${Math.min(m.x - parentRect.left, parentElement.clientWidth - glass.clientWidth)}px`;
+            glass.style.top = `${Math.min(m.y - parentRect.top, parentElement.clientHeight - glass.clientHeight)}px`;
+            glass.img.style.left = `${(m.xRel * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
+            glass.img.style.top = `${(m.yRel * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
+            worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
+            glass.classList.remove('hidden');
+        }
     });
     multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], image, () => glass.classList.add('hidden'));
 }
@@ -527,9 +557,32 @@ window.addEventListener('resize', () => {
     image.addEventListener('click', (e) => {
         if (CURRENT_MODE != null) {
             const m = image.getMouseCoords(e);
-            callbacks[CURRENT_MODE](m.xRel * sizeRatio, m.yRel * sizeRatio);
+            callbacks[CURRENT_MODE]?.(m.xRel * sizeRatio, m.yRel * sizeRatio);
         }
     });
+    let holding = false;
+    image.addEventListener('pointerdown', (e) => {
+        if (CURRENT_MODE === 'erase') {
+            e.preventDefault();
+            holding = true;
+            erasing.begin(image.getMouseCoords(e).xRel * sizeRatio);
+        }
+    });
+    image.addEventListener('pointermove', (e) => {
+        if (holding && CURRENT_MODE === 'erase') {
+            e.preventDefault();
+            erasing.move(image.getMouseCoords(e).xRel * sizeRatio);
+        }
+    });
+    const eraseStop = (e) => {
+        if (holding && CURRENT_MODE === 'erase') {
+            e.preventDefault();
+            holding = false;
+            erasing.finish(image.getMouseCoords(e).xRel * sizeRatio);
+        }
+    }
+    image.addEventListener('pointerup', eraseStop);
+    image.addEventListener('pointerleave', eraseStop);
 }
 
 // where everything starts
@@ -538,14 +591,16 @@ image.addEventListener('load', () => {
     buttons.enableButtons();
     buttons.resetButtons();
     updateSizes();
+    erasing.hide();
     graphs.updateSize();
     graphs.clearTracePath();
     glass.updateImage();
 
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
-        worker.addImage(width, height);
-        imageData.path = '';
+        overlay.createOverlay();
+        console.time("Initialise image");
+        worker.addImage(width, height); // implicitly sets as current
         lines.setPosition(lines.lines.xHigh, width);
         lines.setPosition(lines.lines.xLow, 0);
         lines.setPosition(lines.lines.yHigh, 0);
@@ -559,11 +614,11 @@ image.addEventListener('load', () => {
         worker.autoTrace();
         imageData.initial = false;
     } else {
+        worker.setCurrent();
         image.loadLines();
-        graphs.setTracePath(imageData.path, imageData.colour);
+        worker.getCurrentPath();
     }
     lines.updateLineWidth();
-    image.startPointerEvents();
 });
 
 { // keybindings
@@ -575,6 +630,8 @@ image.addEventListener('load', () => {
         't': () => document.getElementById('selectPath').click(),
         'p': () => document.getElementById('selectPoint').click(),
         'h': () => document.getElementById('toggleImageQueue').click(),
+        's': (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
+        'e': () => document.getElementById('eraseRegion').click(),
         'enter': () => document.getElementById('fileInputButton').click(),
         'delete': () => document.getElementById('removeImage').click(),
         'backspace': () => document.getElementById('clearPath').click(),
@@ -614,10 +671,11 @@ function multiEventListener(events, target, callback) {
 function initAll() {
     document.getElementById('defaultMainText').classList.remove('hidden');
     buttons.disableButtons();
-    lines.hideLines();
-    graphs.clearTracePath();
     buttons.resetButtons();
-    image.src = ''
+    lines.hideLines();
+    erasing.hide();
+    graphs.clearTracePath();
+    image.src = '';
 }
 
 function updateSizes() {
