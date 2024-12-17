@@ -25,7 +25,7 @@ function resetToDefault() {
 }
 
 // Global Variables
-let sizeRatio, width, height, lineWidth, CURRENT_MODE = null;
+let sizeRatio, width, height, lineWidth, CURRENT_MODE = null, MODE_RESET_CB = null;
 
 const glass = document.getElementById('glass');
 glass.img = glass.querySelector('img');
@@ -86,6 +86,38 @@ const lines = {
 }
 lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
 
+const erasing = {
+    show: () => {
+        erasing.elem.classList.remove('hidden');
+        erasing.svg.setAttributeNS(null, 'width', '0');
+    },
+    hide: () => {
+        document.getElementById('erasing').classList.add('hidden');
+    },
+    begin: (x) => {
+        erasing.x = Number(x);
+        erasing.svg.setAttributeNS(null, 'x', x);
+    },
+    move: (x) => {
+        x = Number(x);
+        if (x < erasing.x) {
+            erasing.svg.setAttributeNS(null, 'width', `${erasing.x - x}px`);
+            erasing.begin(x);
+        } else {
+            erasing.svg.setAttributeNS(null, 'width', `${x - erasing.x}px`);
+        }
+    },
+    finish: (x) => {
+        worker.eraseRegion(erasing.x, Number(x));
+        erasing.svg.setAttributeNS(null, 'width', '0');
+    },
+    init: () => {
+        erasing.elem = document.getElementById('erasing');
+        erasing.svg = erasing.elem.firstElementChild;
+    }
+}
+erasing.init();
+
 const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
     const r = image.getBoundingClientRect(), x = e.clientX, y = e.clientY;
@@ -109,8 +141,6 @@ image.loadLines = () => {
     lines.initialise();
     lines.showLines();
 }
-image.stopPointerEvents = () => image.classList.add('removePointerEvents');
-image.startPointerEvents = () => image.classList.remove('removePointerEvents');
 
 const preferences = {
     SPLHigher: () => document.getElementById('SPLHigher').value,
@@ -136,6 +166,7 @@ const buttons = {
     resetButtons: () => {
         document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset.default;});
         CURRENT_MODE = null;
+        MODE_RESET_CB?.();
     },
     enableButtons: () => {
         document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = false;});
@@ -149,23 +180,39 @@ const buttons = {
     }
 }
 { // Handling modes with buttons
-    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint'];
-    const cb = (t) => {
-        const button = t.target, mode = button.dataset.mode, prevMode = {m: CURRENT_MODE}.m;
-        buttons.resetButtons();
-        if (prevMode === mode) {
-            CURRENT_MODE = null;
+    const MODE_BUTTON_IDS = ['selectPath', 'selectPoint', 'eraseRegion'];
+    const ENABLE_CALLBACK = {
+        'path': lines.hideLines,
+        'point': lines.hideLines,
+        'erase': () => {
+            lines.hideLines();
+            erasing.show();
+        }
+    }
+    const DISABLE_CALLBACK = {
+        'path': lines.showLines,
+        'point': lines.showLines,
+        'erase': () => {
+            erasing.hide();
             lines.showLines();
+        }
+    }
+    const cb = (e) => {
+        const button = e.target, mode = button.dataset.mode, previousMode = JSON.parse(JSON.stringify(CURRENT_MODE));
+        buttons.resetButtons();
+        if (previousMode === mode) {
+            MODE_RESET_CB?.();
+            CURRENT_MODE = null;
         } else {
             button.textContent = button.dataset.active;
+            MODE_RESET_CB?.();
+            MODE_RESET_CB = DISABLE_CALLBACK[mode];
             CURRENT_MODE = mode;
-            lines.hideLines();
+            ENABLE_CALLBACK[mode]();
         }
     }
 
-    for (const button of MODE_BUTTON_IDS) {
-        document.getElementById(button).addEventListener('click', cb);
-    }
+    for (const button of MODE_BUTTON_IDS) document.getElementById(button).addEventListener('click', cb);
 }
 
 const worker = {
@@ -343,7 +390,6 @@ const imageQueue = {
             e.preventDefault();
             e.stopPropagation();
             image.saveLines();
-            image.stopPointerEvents();
             image.src = src;
             imageQueue.removeSelectedImage();
             img.classList.add('selectedImage');
@@ -434,15 +480,17 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 
 { // magnifying glass stuff
     image.addEventListener('pointermove', (e) => {
-        e.preventDefault();
-        const parentElement = image.parentElement,
-            parentRect = parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
-        glass.style.left = `${Math.min(m.x - parentRect.left, parentElement.clientWidth - glass.clientWidth)}px`;
-        glass.style.top = `${Math.min(m.y - parentRect.top, parentElement.clientHeight - glass.clientHeight)}px`;
-        glass.img.style.left = `${(m.xRel * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
-        glass.img.style.top = `${(m.yRel * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
-        worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
-        glass.classList.remove('hidden');
+        if (CURRENT_MODE !== 'erase') {
+            e.preventDefault();
+            const parentElement = image.parentElement,
+                parentRect = parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
+            glass.style.left = `${Math.min(m.x - parentRect.left, parentElement.clientWidth - glass.clientWidth)}px`;
+            glass.style.top = `${Math.min(m.y - parentRect.top, parentElement.clientHeight - glass.clientHeight)}px`;
+            glass.img.style.left = `${(m.xRel * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
+            glass.img.style.top = `${(m.yRel * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
+            worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
+            glass.classList.remove('hidden');
+        }
     });
     multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], image, () => glass.classList.add('hidden'));
 }
@@ -509,9 +557,32 @@ window.addEventListener('resize', () => {
     image.addEventListener('click', (e) => {
         if (CURRENT_MODE != null) {
             const m = image.getMouseCoords(e);
-            callbacks[CURRENT_MODE](m.xRel * sizeRatio, m.yRel * sizeRatio);
+            callbacks[CURRENT_MODE]?.(m.xRel * sizeRatio, m.yRel * sizeRatio);
         }
     });
+    let holding = false;
+    image.addEventListener('pointerdown', (e) => {
+        if (CURRENT_MODE === 'erase') {
+            e.preventDefault();
+            holding = true;
+            erasing.begin(image.getMouseCoords(e).xRel * sizeRatio);
+        }
+    });
+    image.addEventListener('pointermove', (e) => {
+        if (holding && CURRENT_MODE === 'erase') {
+            e.preventDefault();
+            erasing.move(image.getMouseCoords(e).xRel * sizeRatio);
+        }
+    });
+    const eraseStop = (e) => {
+        if (holding && CURRENT_MODE === 'erase') {
+            e.preventDefault();
+            holding = false;
+            erasing.finish(image.getMouseCoords(e).xRel * sizeRatio);
+        }
+    }
+    image.addEventListener('pointerup', eraseStop);
+    image.addEventListener('pointerleave', eraseStop);
 }
 
 // where everything starts
@@ -520,6 +591,7 @@ image.addEventListener('load', () => {
     buttons.enableButtons();
     buttons.resetButtons();
     updateSizes();
+    erasing.hide();
     graphs.updateSize();
     graphs.clearTracePath();
     glass.updateImage();
@@ -547,7 +619,6 @@ image.addEventListener('load', () => {
         worker.getCurrentPath();
     }
     lines.updateLineWidth();
-    image.startPointerEvents();
 });
 
 { // keybindings
@@ -600,9 +671,10 @@ function multiEventListener(events, target, callback) {
 function initAll() {
     document.getElementById('defaultMainText').classList.remove('hidden');
     buttons.disableButtons();
-    lines.hideLines();
-    graphs.clearTracePath();
     buttons.resetButtons();
+    lines.hideLines();
+    erasing.hide();
+    graphs.clearTracePath();
     image.src = ''
 }
 
