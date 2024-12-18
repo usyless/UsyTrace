@@ -38,9 +38,9 @@ echo.
 if "%DEBUG_MODE%"=="true" (
     echo Making debug version
     echo.
-    call emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT=worker -sINITIAL_HEAP=104857600 -sFILESYSTEM=0
+    call emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -sENVIRONMENT=worker -fno-rtti -flto -sINITIAL_HEAP=104857600 -sFILESYSTEM=0
 ) else (
-    call emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -sENVIRONMENT=worker -sFILESYSTEM=0
+    call emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -fno-rtti -flto -sENVIRONMENT=worker -sFILESYSTEM=0
 )
 
 :: exit from src directory
