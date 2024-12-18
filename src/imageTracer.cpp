@@ -25,7 +25,7 @@ struct RGB {
 
     RGB(const Colour r, const Colour g, const Colour b) : R(r), G(g), B(b) {}
 
-     static Colour biggestDifference(const RGB& rgb) {
+    static Colour biggestDifference(const RGB& rgb) {
         return max(max(rgb.R, rgb.G), rgb.B) - min(min(rgb.R, rgb.G), rgb.B);
     }
 
@@ -53,7 +53,7 @@ struct RGB {
         return to_string(R) + ", " + to_string(G) + ", " + to_string(B);
     }
 
-     int toBin() const {
+    int toBin() const {
         return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
     }
 };
