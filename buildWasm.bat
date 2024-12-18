@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+set EMSDK_QUIET=1
+
 :: Set environment variables from build_config
 if exist "build_config.txt" (
     echo Setting up environment from build_config
