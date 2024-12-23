@@ -137,8 +137,10 @@ input[type="number"], select {
     transition: 0.1s;
 }
 
-input[type="number"]:hover, select:hover {
-    border-color: var(--quaternary);
+@media (hover: hover) {
+    input[type="number"]:hover, select:hover {
+        border-color: var(--quaternary);
+    }
 }
 
 input[type="number"]:focus-visible, select:focus-visible {
@@ -165,10 +167,10 @@ input[type="number"]:focus-visible, select:focus-visible {
     padding: var(--spacing-largest);
     margin-bottom: var(--image-queue-height);
     transition: 0.3s;
-}
 
-#imageContainer.expand {
-    margin-bottom: var(--image-queue-bar-height);
+    &:has(+ * button[active]) {
+        margin-bottom: var(--image-queue-bar-height);
+    }
 }
 
 #imageContainerInner {
@@ -202,6 +204,10 @@ input[type="number"]:focus-visible, select:focus-visible {
     transition: 0.3s !important;
     position: absolute;
     bottom: 0;
+
+    &:has(button[active]) {
+        margin-bottom: calc(-1 * (var(--image-queue-height) - var(--image-queue-bar-height)));
+    }
 }
 
 #imageQueueBar {

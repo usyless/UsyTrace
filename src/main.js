@@ -336,11 +336,11 @@ const worker = {
 
 const graphs = {
     updateSize: () => {
-        document.querySelectorAll('svg').forEach((e) => {
+        for (const e of document.querySelectorAll('svg')) {
             e.setAttribute("width", width);
             e.setAttribute("height", height);
             e.setAttribute("viewBox", `0 0 ${width} ${height}`);
-        });
+        }
     },
     setTracePath: (d) => {
         const trace = document.getElementById('trace'), path = trace.lastElementChild, path2 = trace.firstElementChild;
@@ -413,16 +413,14 @@ const imageQueue = {
         return img;
     },
     toggle: (e) => {
-        const button = e.target, container = document.getElementById('imageQueueContainer'), imageContainer = document.getElementById('imageContainer');
-        imageContainer.addEventListener('transitionend', () => window.dispatchEvent(new Event('resize')), {once: true});
+        const button = e.target;
+        document.getElementById('imageContainer').addEventListener('transitionend', () => window.dispatchEvent(new Event('resize')), {once: true});
         if (button.textContent === button.dataset.active) {
             button.textContent = button.dataset.default;
-            container.removeAttribute('style');
-            imageContainer.classList.remove('expand');
+            button.removeAttribute('active');
         } else {
             button.textContent = button.dataset.active;
-            container.style.marginBottom = '-150px';
-            imageContainer.classList.add('expand');
+            button.setAttribute('active', '');
         }
     }
 }
