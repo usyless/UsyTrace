@@ -1,6 +1,6 @@
 # UsyTrace: Online Frequency Response Tracer
 
-- https://usyless.github.io/trace
+- https://usyless.uk/trace
 - All Processing is done on device and no analytics are performed. 
 - #### Feel free to contribute or suggest changes
 - #### Found a bug? Report it to @usy_ on Discord!
