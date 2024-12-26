@@ -533,6 +533,9 @@ struct Image {
             {1, 2, 1},
             {1, 1, 1}
         });
+
+        delete imageData;
+
         this->imageData = filteredData;
         this->backgroundColour = RGBTools{getBackgroundColour(filteredData), 10};
     }

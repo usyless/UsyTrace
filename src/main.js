@@ -373,6 +373,7 @@ const imageQueue = {
     deleteImage: (img) => {
         imageMap.delete(img.src);
         worker.removeImage(img.src);
+        URL.revokeObjectURL(img.src);
         img.remove();
     },
     scrollToSelected: () => {
