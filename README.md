@@ -40,7 +40,7 @@
 
 # Compiling Instructions
 1. Download and install [emscripten](https://emscripten.org/)
-2. Paste glue code file (a.out.js) into the top of the worker file (worker.js) after compiling
+2. Compile with build.bat, or using the commands below.
  ### Testing
 `emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -fno-rtti -flto -sENVIRONMENT=worker -sINITIAL_HEAP=104857600 -sFILESYSTEM=0`
 ### Release

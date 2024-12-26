@@ -17,6 +17,7 @@ contentToCache = [
     'tutorial.js',
 
     'a.out.wasm',
+    'a.out.js',
     'usytrace.webmanifest'
 ]
 
