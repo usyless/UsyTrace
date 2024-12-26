@@ -79,7 +79,7 @@ function addImage(data) {
     const p = api.create_buffer(data.width, data.height);
     Module.HEAPU8.set(data.data, p);
     api.addImage(data.src, p, parseInt(data.width), parseInt(data.height));
-    return data;
+    return {src: data.src, type: data.type};
 }
 
 function removeImage(data) {
