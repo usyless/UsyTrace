@@ -1,0 +1,52 @@
+name: Build and push latest main to pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout main repo
+      uses: actions/checkout@v2
+      with:
+        path: usytrace
+
+    - name: Set up Emscripten and build
+      run: |
+        git clone https://github.com/emscripten-core/emsdk.git
+        cd emsdk
+        git pull
+        ./emsdk install latest
+        ./emsdk activate latest
+        source ./emsdk_env.sh
+        cd ../usytrace/src
+        emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -fno-rtti -flto -sENVIRONMENT=worker -sFILESYSTEM=0
+
+    - name: Checkout github pages repo
+      uses: actions/checkout@v2
+      with:
+        repository: usyless/usyless.github.io
+        token: ${{ secrets.GITHUB_TOKEN }}
+        path: usyless.github.io
+
+    - name: Move built files to pages repo
+      run: |
+        rm -rf usyless.github.io/trace
+        cp -r usytrace/src usyless.github.io/trace
+        rm usyless.github.io/trace/imageTracer.cpp
+    
+    - name: Commit and push
+      working-directory: usyless.github.io
+      run: |
+        git config --unset-all http.https://github.com/.extraheader
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git add trace
+        git commit -m 'Update trace from usytrace'
+        git push origin main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
