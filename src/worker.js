@@ -1,4 +1,4 @@
-self.importScripts('/a.out.js');
+self.importScripts('./a.out.js');
 
 const typeMap = {
     setCurrent: setCurrent,
