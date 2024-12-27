@@ -11,9 +11,11 @@ jobs:
 
     steps:
     - name: Checkout main repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         path: usytrace
+        ref: main
+        persist-credentials: false
 
     - name: Set up Emscripten and build
       run: |
@@ -27,11 +29,13 @@ jobs:
         emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -fno-rtti -flto -sENVIRONMENT=worker -sFILESYSTEM=0
 
     - name: Checkout github pages repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         repository: usyless/usyless.github.io
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.BOT_TOKEN }}
         path: usyless.github.io
+        ref: main
+        persist-credentials: true
 
     - name: Move built files to pages repo
       run: |
@@ -42,11 +46,8 @@ jobs:
     - name: Commit and push
       working-directory: usyless.github.io
       run: |
-        git config --unset-all http.https://github.com/.extraheader
-        git config --global user.name 'github-actions'
+        git config --global user.name 'usy [github actions]'
         git config --global user.email 'github-actions@github.com'
         git add trace
         git commit -m 'Update trace from usytrace'
-        git push origin main
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        git push
