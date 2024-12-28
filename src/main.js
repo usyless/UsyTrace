@@ -95,20 +95,23 @@ const erasing = {
         document.getElementById('erasing').classList.add('hidden');
     },
     begin: (x) => {
-        erasing.x = Number(x);
+        erasing.show();
+        erasing.x = Math.max(Math.min(Number(x), width), 0);
         erasing.svg.setAttributeNS(null, 'x', x);
     },
     move: (x) => {
         x = Number(x);
         if (x < erasing.x) {
             erasing.svg.setAttributeNS(null, 'width', `${erasing.x - x}px`);
-            erasing.begin(x);
+            erasing.svg.setAttributeNS(null, 'x', x);
         } else {
             erasing.svg.setAttributeNS(null, 'width', `${x - erasing.x}px`);
+            erasing.svg.setAttributeNS(null, 'x', erasing.x);
         }
     },
     finish: (x) => {
-        worker.eraseRegion(erasing.x, Number(x));
+        x = Math.max(Math.min(Number(x), width), 0);
+        worker.eraseRegion(...(erasing.x < x) ? [erasing.x, x] : [x, erasing.x]);
         erasing.svg.setAttributeNS(null, 'width', '0');
     },
     init: () => {
@@ -565,6 +568,7 @@ window.addEventListener('resize', () => {
             e.preventDefault();
             holding = true;
             erasing.begin(image.getMouseCoords(e).xRel * sizeRatio);
+            document.addEventListener('pointerup', eraseStop, {once: true});
         }
     });
     image.addEventListener('pointermove', (e) => {
@@ -580,8 +584,6 @@ window.addEventListener('resize', () => {
             erasing.finish(image.getMouseCoords(e).xRel * sizeRatio);
         }
     }
-    image.addEventListener('pointerup', eraseStop);
-    image.addEventListener('pointerleave', eraseStop);
 }
 
 // where everything starts
