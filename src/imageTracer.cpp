@@ -621,7 +621,12 @@ struct Image {
     }
 
     inline string eraseRegion(uint32_t begin, uint32_t end) {
-        traceHistory.add(traceHistory.getLatest()->eraseRegion(begin, end));
+        const auto result = traceHistory.getLatest()->eraseRegion(begin, end);
+        if (result->size() == traceHistory.getLatest()->size()) {
+            delete result;
+        } else {
+            traceHistory.add(result);
+        }
         return traceHistory.getLatest()->toSVG();
     }
 
