@@ -38,9 +38,14 @@ glass.updateImage = () => {
     glass.img.height = image.clientHeight * MAGNIFICATION;
 }
 
-const overlay = {
-    createOverlay: () => document.getElementById('waiting-overlay').classList.add('enabled'),
-    removeOverlays: () => document.getElementById('waiting-overlay').classList.remove('enabled')
+const waitingOverlay = {
+    createOverlay: () => document.querySelector('.waiting-overlay[data-for="trace"]').classList.add('enabled'),
+    removeOverlays: () => document.querySelector('.waiting-overlay[data-for="trace"]').classList.remove('enabled')
+}
+
+const urlOverlay = {
+    createOverlay: () => document.querySelector('.waiting-overlay[data-for="url"]').classList.add('enabled'),
+    removeOverlays: () => document.querySelector('.waiting-overlay[data-for="url"]').classList.remove('enabled')
 }
 
 const lines = {
@@ -239,7 +244,7 @@ const worker = {
                     break;
                 }
                 case 'error': {
-                    overlay.removeOverlays();
+                    waitingOverlay.removeOverlays();
                     indefinitePopup(data.message);
                     break;
                 }
@@ -257,7 +262,7 @@ const worker = {
                         else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
                         else {
                             graphs.setTracePath(data.svg);
-                            overlay.removeOverlays();
+                            waitingOverlay.removeOverlays();
                             worker.postMessage({type: 'getHistoryStatus'});
                         }
                         break;
@@ -599,7 +604,7 @@ image.addEventListener('load', () => {
 
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
-        overlay.createOverlay();
+        waitingOverlay.createOverlay();
         console.time("Initialise image");
         worker.addImage(width, height); // implicitly sets as current
         lines.setPosition(lines.lines.xHigh, width);

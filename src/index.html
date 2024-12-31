@@ -26,7 +26,7 @@
         </div>
     </noscript>
     <div id="sidebar">
-        <h1>UsyTrace</h1>
+        <h1 class="sidebarSection">UsyTrace</h1>
         <button class="sidebarSection standardButton hidden" id="updateAvailable">
             <b>Update Available, click here to update.</b>
         </button>
@@ -38,9 +38,9 @@
             <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled>Auto Trace</button>
             <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled>Select Path</button>
             <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" title="Click to add a point to the trace, will stack on top of previous trace (p)" data-disabled>Add Point</button>
-            <br>
+            <div class="break"></div>
             <button id="smoothTrace" class="standardButton" title="Apply smoothing to the current trace (s)" data-disabled>Smooth Trace</button>
-            <br>
+            <div class="break"></div>
             <div>
                 <button id="undo" class="standardButton" title="Undo the previous action done to the trace (Ctrl + z)" data-disabled>Undo</button>
                 <button id="redo" class="standardButton" title="Redo the previous actionm done to the trace (Ctrl + Shift + z)" data-disabled>Redo</button>
@@ -167,7 +167,8 @@
 
 </div>
 
-<div id="waiting-overlay"></div>
+<div class="waiting-overlay" data-for="trace"></div>
+<div class="waiting-overlay" data-for="url"></div>
 <script src="updater.js"></script>
 <script src="popups.js"></script>
 <script src="tutorial.js"></script>

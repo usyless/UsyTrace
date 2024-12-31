@@ -38,7 +38,7 @@ body {
     }
 }
 
-#waiting-overlay {
+.waiting-overlay {
     transition: ease-in-out 150ms;
     display: flex;
 
@@ -54,22 +54,28 @@ body {
     pointer-events: none;
 
     &.enabled {
-        transition: ease-in-out 300ms 200ms;
         backdrop-filter: blur(10px);
         pointer-events: all;
 
         &::after {
             opacity: 1;
-            transition: ease-in-out 300ms 200ms;
         }
     }
 
     &::after {
-        content: 'Image preparing, please wait';
         opacity: 0;
         font-weight: bold;
         font-size: 3em;
         transition: ease-in-out 150ms;
+    }
+
+    &[data-for="trace"] {
+        transition: ease-in-out 300ms 200ms;
+
+        &::after {
+            transition: ease-in-out 300ms 200ms;
+            content: 'Image preparing, please wait';
+        }
     }
 }
 
@@ -93,6 +99,11 @@ body {
     row-gap: var(--spacing-larger);
     padding: var(--spacing-larger);
     overflow-x: hidden;
+}
+
+#sidebar > h1 {
+    margin-bottom: var(--spacing-larger);
+    margin-top: 0;
 }
 
 #sidebar h3 {
