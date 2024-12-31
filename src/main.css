@@ -8,14 +8,12 @@
 * {
     user-select: none;
     color: var(--text-primary);
-    box-sizing: border-box;
     text-align: center;
 }
 
 body {
     margin: 0;
     background: var(--primary);
-    font-family: Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif;
     transition: 0.1s;
 }
 
