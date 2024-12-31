@@ -59,7 +59,6 @@ body {
         &::after {
             opacity: 1;
             transition: ease-in-out 300ms 200ms;
-            content: 'Image preparing, please wait';
         }
     }
 
@@ -68,6 +67,7 @@ body {
         font-weight: bold;
         font-size: 3em;
         transition: ease-in-out 150ms;
+        content: 'Image preparing, please wait';
     }
 }
 
