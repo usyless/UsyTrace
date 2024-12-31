@@ -123,7 +123,7 @@ function smoothTrace(data) {
 }
 
 function clear(data) {
-    return defaultTraceResponse(data, api.clear(), '');
+    return defaultTraceResponse(data, api.clear());
 }
 
 // Export
