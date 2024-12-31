@@ -1,24 +1,29 @@
 const cacheName = 'v16';
 
 contentToCache = [
-    'favicon.ico',
+    './favicon.ico',
 
-    'index.html',
+    './index.html',
 
-    'popup.css',
-    'shared.css',
-    'main.css',
-    'tutorial.css',
+    './popup.css',
+    './shared.css',
+    './main.css',
+    './tutorial.css',
 
-    'worker.js',
-    'main.js',
-    'updater.js',
-    'popups.js',
-    'tutorial.js',
+    './worker.js',
+    './main.js',
+    './updater.js',
+    './popups.js',
+    './tutorial.js',
 
-    'a.out.wasm',
-    'a.out.js',
-    'usytrace.webmanifest'
+    './a.out.wasm',
+    './a.out.js',
+    './usytrace.webmanifest',
+
+    './assets/fonts/open-sans-latin-400-normal.woff',
+    './assets/fonts/open-sans-latin-400-normal.woff2',
+    './assets/fonts/open-sans-latin-700-normal.woff',
+    './assets/fonts/open-sans-latin-700-normal.woff2',
 ]
 
 self.addEventListener('install', (e) => {
