@@ -43,11 +43,6 @@ const waitingOverlay = {
     removeOverlays: () => document.querySelector('.waiting-overlay[data-for="trace"]').classList.remove('enabled')
 }
 
-const urlOverlay = {
-    createOverlay: () => document.querySelector('.waiting-overlay[data-for="url"]').classList.add('enabled'),
-    removeOverlays: () => document.querySelector('.waiting-overlay[data-for="url"]').classList.remove('enabled')
-}
-
 const lines = {
     parent: document.getElementById('lines'),
     lines: {
@@ -276,16 +271,16 @@ const worker = {
     setCurrent: () => worker.postMessage({type: 'setCurrent'}),
     removeImage: (src) => worker.postMessage({type: 'removeImage', src: src}),
     addImage: (width, height) => {
-        let processing_canvas = document.createElement("canvas"),
+        const processing_canvas = document.createElement("canvas"),
             processing_context = processing_canvas.getContext('2d'),
-            new_image = new Image;
+            new_image = new Image();
+        new_image.src = image.src;
         processing_canvas.width = width;
         processing_canvas.height = height;
-        new_image.src = image.src;
         processing_context.drawImage(new_image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
         worker.postMessage({
-            type: 'setData', data: imageData.data, width: imageData.width, height: imageData.height
+            type: 'setData', data: imageData.data, width, height
         }, [imageData.data.buffer]);
     },
     clearTrace: () => worker.postMessage({type: 'clearTrace'}),
@@ -463,8 +458,10 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
     document.addEventListener('paste', (e) => {
         e.preventDefault();
         const d = new DataTransfer();
-        for (const item of e.clipboardData.items) if (item.kind === 'file') d.items.add(item.getAsFile());
-        fileInput.loadFiles(d.files);
+        for (const item of (e.clipboardData || window?.clipboardData).items) {
+            if (item.kind === 'file') d.items.add(item.getAsFile());
+        }
+        if (d.files.length > 0) fileInput.loadFiles(d.files);
     });
 }
 

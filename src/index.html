@@ -34,10 +34,6 @@
         <button class="standardButton sidebarSection" id="fileInputButton" title="Pick image(s) to trace (Enter)">
             <b>Load from files</b>
         </button>
-        <div class="sidebarSection" id="urlInput">
-            <input type="text" title="Enter URL for image" placeholder="Load from URL">
-            <button class="standardButton">+</button>
-        </div>
         <div class="sidebarSection">
             <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled>Auto Trace</button>
             <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled>Select Path</button>
@@ -172,7 +168,6 @@
 </div>
 
 <div class="waiting-overlay" data-for="trace"></div>
-<div class="waiting-overlay" data-for="url"></div>
 <script src="updater.js"></script>
 <script src="popups.js"></script>
 <script src="tutorial.js"></script>
