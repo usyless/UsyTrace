@@ -52,11 +52,14 @@ body {
     pointer-events: none;
 
     &.enabled {
+        transition: ease-in-out 300ms 200ms;
         backdrop-filter: blur(10px);
         pointer-events: all;
 
         &::after {
             opacity: 1;
+            transition: ease-in-out 300ms 200ms;
+            content: 'Image preparing, please wait';
         }
     }
 
@@ -65,15 +68,6 @@ body {
         font-weight: bold;
         font-size: 3em;
         transition: ease-in-out 150ms;
-    }
-
-    &[data-for="trace"] {
-        transition: ease-in-out 300ms 200ms;
-
-        &::after {
-            transition: ease-in-out 300ms 200ms;
-            content: 'Image preparing, please wait';
-        }
     }
 }
 
