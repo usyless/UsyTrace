@@ -1,6 +1,6 @@
-const cacheName = 'v17';
+const cacheName = 'v18';
 
-contentToCache = [
+const contentToCache = [
     './favicon.ico',
 
     './index.html',
@@ -24,7 +24,7 @@ contentToCache = [
     './assets/fonts/open-sans-latin-400-normal.woff2',
     './assets/fonts/open-sans-latin-700-normal.woff',
     './assets/fonts/open-sans-latin-700-normal.woff2',
-]
+].map(i => `${i}?v=${cacheName}`);
 
 self.addEventListener('install', (e) => {
     e.waitUntil((async () => {
@@ -48,17 +48,14 @@ self.addEventListener('activate', event => {
     return self.clients.claim();
 });
 
+// ONLY works with get requests with no search params, as they will be ignored
 self.addEventListener('fetch', (e) => {
     if (!(e.request.url.startsWith('http:') || e.request.url.startsWith('https:'))) return;
 
-    e.respondWith((async () => {
-        const r = await caches.match(e.request);
-        if (r) return r;
-        const response = await fetch(e.request, {cache: "no-cache"});
-        const cache = await caches.open(cacheName);
-        cache.put(e.request, response.clone());
-        return response;
-    })());
+    const url = new URL(e.request.url);
+    url.search = `?v=${cacheName}`;
+
+    e.respondWith((async () => await caches.match(url.href))());
 });
 
 self.addEventListener('message', event => {
