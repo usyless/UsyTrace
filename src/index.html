@@ -32,8 +32,12 @@
         </button>
         <input type='file' id='fileInput' class="hidden" multiple="multiple" accept="image/*"/>
         <button class="standardButton sidebarSection" id="fileInputButton" title="Pick image(s) to trace (Enter)">
-            <b>Choose Images</b>
+            <b>Load from files</b>
         </button>
+        <div class="sidebarSection" id="urlInput">
+            <input type="text" title="Enter URL for image" placeholder="Load from URL">
+            <button class="standardButton">+</button>
+        </div>
         <div class="sidebarSection">
             <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled>Auto Trace</button>
             <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled>Select Path</button>
@@ -151,7 +155,7 @@
                 <svg id="erasing" class="canvasSizing hidden removePointerEvents">
                     <rect x="0" y="0" width="0" height="100%" fill="red" opacity="0.3"></rect>
                 </svg>
-                <h1 id="defaultMainText">Please Load Images (Drop images onto the page, or paste image/url with Ctrl+V)</h1>
+                <h1 id="defaultMainText">Please Load Images (Drop onto the page, or paste with Ctrl+V)</h1>
             </div>
         </div>
         <div id="imageQueueContainer">

@@ -77,6 +77,33 @@ body {
     }
 }
 
+#urlInput {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    min-height: 40px;
+    border: 2px solid var(--primary);
+    padding: 0 0 0 var(--spacing);
+
+    > input {
+        width: 100%;
+        height: 100%;
+        background-color: var(--primary);
+        outline: none;
+        border: none;
+        text-align: left;
+    }
+
+    > button {
+        height: 100%;
+        right: 0;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+}
+
 #main {
     position: fixed;
     height: 100%;
@@ -110,6 +137,7 @@ body {
 
 .sidebarSection {
     background-color: var(--primary);
+    border-width: 0;
     border-radius: var(--radius);
     padding: var(--spacing-largest);
     display: flex;
