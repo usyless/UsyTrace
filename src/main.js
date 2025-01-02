@@ -272,12 +272,10 @@ const worker = {
     removeImage: (src) => worker.postMessage({type: 'removeImage', src: src}),
     addImage: (width, height) => {
         const processing_canvas = document.createElement("canvas"),
-            processing_context = processing_canvas.getContext('2d'),
-            new_image = new Image();
-        new_image.src = image.src;
+            processing_context = processing_canvas.getContext('2d');
         processing_canvas.width = width;
         processing_canvas.height = height;
-        processing_context.drawImage(new_image, 0, 0);
+        processing_context.drawImage(image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
         worker.postMessage({
             type: 'setData', data: imageData.data, width, height
