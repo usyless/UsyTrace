@@ -1,4 +1,4 @@
-const cacheName = 'v19';
+const cacheName = 'v20';
 
 contentToCache = [
     './favicon.ico',
@@ -24,7 +24,7 @@ contentToCache = [
     './assets/fonts/open-sans-latin-400-normal.woff2',
     './assets/fonts/open-sans-latin-700-normal.woff',
     './assets/fonts/open-sans-latin-700-normal.woff2',
-]
+].map((c) => `${c}?version=${cacheName}`);
 
 self.addEventListener('install', (e) => {
     e.waitUntil((async () => {
@@ -33,8 +33,8 @@ self.addEventListener('install', (e) => {
     })());
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(
+self.addEventListener('activate', e => {
+    e.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cn => {
@@ -49,20 +49,19 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', (e) => {
-    if (!(e.request.url.startsWith('http:') || e.request.url.startsWith('https:'))) return;
+    const req = e.request;
+    if (!(req.url.startsWith('http:') || req.url.startsWith('https:'))) return;
 
     e.respondWith((async () => {
-        const r = await caches.match(e.request);
-        if (r) return r;
-        const response = await fetch(e.request, {cache: "no-cache"});
-        const cache = await caches.open(cacheName);
-        cache.put(e.request, response.clone());
-        return response;
+        const url = new URL(req.url);
+        url.search = '';
+        url.searchParams.set('version', cacheName);
+        return (await caches.match(url.href)) ?? (await fetch(req));
     })());
 });
 
-self.addEventListener('message', event => {
-    if (event.data.action === 'skipWaiting') {
+self.addEventListener('message', e => {
+    if (e.data.action === 'skipWaiting') {
         self.skipWaiting();
     }
 });
