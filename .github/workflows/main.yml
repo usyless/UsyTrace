@@ -37,7 +37,6 @@ jobs:
         source ./emsdk_env.sh
         cd ../usytrace/src
         emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -fno-rtti -flto -sENVIRONMENT=worker -sFILESYSTEM=0
-        rm imageTracer.cpp
 
     - name: Checkout github pages repo
       uses: actions/checkout@v3
@@ -51,6 +50,7 @@ jobs:
     - name: Move built files to pages repo
       run: |
         cp -rf usytrace/src/* usyless.github.io/trace/
+        rm -f usyless.github.io/trace/imageTracer.cpp
     
     - name: Commit and push
       working-directory: usyless.github.io
