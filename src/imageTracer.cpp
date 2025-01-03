@@ -417,7 +417,7 @@ void padOutputData(const ImageData* original, ImageData* output) {
         outputData[ouy] = (data[ory] + data[ory + 1] + data[ory + 2]) / 3;
 
         ory += maxWidthOrig - 4;
-        outputData[maxWidthOut - 3] = (data[ory] + data[ory + 1] + data[ory + 2]) / 3;
+        outputData[ouy + maxWidthOut - 1] = (data[ory] + data[ory + 1] + data[ory + 2]) / 3;
     }
 }
 
