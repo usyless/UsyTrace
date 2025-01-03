@@ -1,15 +1,10 @@
 #include <algorithm>
 #include <cmath>
-#include <complex>
-#include <cstdint>
 #include <functional>
-#include <iomanip>
 #include <map>
 #include <memory>
 #include <numeric>
 #include <stack>
-#include <string>
-#include <utility>
 #include <vector>
 #include <emscripten.h>
 #include <string.h>
