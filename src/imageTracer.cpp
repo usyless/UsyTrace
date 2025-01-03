@@ -569,17 +569,17 @@ struct Image {
     string autoTrace(const TraceData&& traceData) {
         auto* traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         auto* traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour.rgb] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
+        Trace* preferred = nullptr;
         if (traceOne->size() > traceTwo->size()) {
-            traceHistory.add(traceOne);
+            preferred = traceOne;
             delete traceTwo;
         } else {
-            traceHistory.add(traceTwo);
+            preferred = traceTwo;
             delete traceOne;
         }
-        auto* smoothed = traceHistory.getLatest()->smooth(static_cast<int>(imageData->width) / 100, 1.5);
-        traceHistory.undo();
-        traceHistory.add(smoothed);
-        return smoothed->toSVG();
+        traceHistory.add(preferred->smooth(static_cast<int>(imageData->width) / 100, 1.5));
+        delete preferred;
+        return traceHistory.getLatest()->toSVG();
     }
 
     string exportTrace(const ExportData&& exportData) const {
