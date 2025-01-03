@@ -21,6 +21,7 @@ jobs:
       uses: dorny/paths-filter@v3
       id: changes
       with:
+        working-directory: usytrace
         filters: |
           imageTracer:
             - 'src/imageTracer.cpp'
