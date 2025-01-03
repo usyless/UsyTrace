@@ -49,8 +49,7 @@ jobs:
 
     - name: Move built files to pages repo
       run: |
-        rm -rf usyless.github.io/trace
-        cp -r usytrace/src usyless.github.io/trace
+        cp -rf usytrace/src usyless.github.io/trace
         rm usyless.github.io/trace/imageTracer.cpp
     
     - name: Commit and push
