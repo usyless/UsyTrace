@@ -30,10 +30,10 @@ struct RGB {
     }
 
     inline double getDifference(const RGB& rgb) const {
-        const auto rmean = (static_cast<int>(R) + static_cast<int>(rgb.R)) / 2;
-        const auto rdiff = static_cast<int>(R) - static_cast<int>(rgb.R);
-        const auto gdiff = static_cast<int>(G) - static_cast<int>(rgb.G);
-        const auto bdiff = static_cast<int>(B) - static_cast<int>(rgb.B);
+        const int rmean = (R + rgb.R) / 2;
+        const int rdiff = R - rgb.R;
+        const int gdiff = G - rgb.G;
+        const int bdiff = B - rgb.B;
         return sqrt((512 + rmean) * ((rdiff * rdiff) >> 8) + 4 * (gdiff * gdiff) + (((767 - rmean) * (bdiff * bdiff)) >> 8));
     }
 
@@ -46,7 +46,7 @@ struct RGB {
     }
 
     uint32_t sum() const {
-        return static_cast<uint32_t>(R) + static_cast<uint32_t>(G) + static_cast<uint32_t>(B);
+        return R + G + B;
     }
 
     string toString() const {
@@ -398,42 +398,32 @@ Trace* getPotentialTrace(const ImageData* imageData, TraceData traceData, const 
 
 void padOutputData(const ImageData* original, ImageData* output) {
     const auto width = original->width, height = original->height;
-    const auto maxWidthOrig = width * 4, maxWidthOut = width * 3;
+    const auto maxWidthOrig = width * original->channels, maxWidthOut = width * output->channels;
     const auto data = original->data;
     auto outputData = output->data;
     // CAN ONLY TAKE 3x3 KERNELS FOR NOW DUE TO THIS
-    // also cant just copy memory as input is 4 channels, output is 3
+    // also cant just copy memory as input is 4 channels, output is 1
     // Copy top and bottom rows
     for (size_t x = 0; x < width; ++x) {
-        size_t orx = x * 4, oux = x * 3;
-        outputData[oux] = data[orx];
-        outputData[oux + 1] = data[orx + 1];
-        outputData[oux + 2] = data[orx + 2];
+        size_t orx = x * 4;
+        outputData[x] = (data[orx] + data[orx + 1] + data[orx + 2]) / 3;
 
         orx += (height - 1) * maxWidthOrig;
-        oux += (height - 1) * maxWidthOut;
-        outputData[oux] = data[orx];
-        outputData[oux + 1] = data[orx + 1];
-        outputData[oux + 2] = data[orx + 2];
+        outputData[x + ((height - 1) * maxWidthOut)] = (data[orx] + data[orx + 1] + data[orx + 2]) / 3;
     }
     // Copy left and right columns
     for (size_t y = 0; y < height; ++y) {
         size_t ory = y * maxWidthOrig, ouy = y * maxWidthOut;
-        outputData[ouy] = data[ory];
-        outputData[ouy + 1] = data[ory + 1];
-        outputData[ouy + 2] = data[ory + 2];
+        outputData[ouy] = (data[ory] + data[ory + 1] + data[ory + 2]) / 3;
 
         ory += maxWidthOrig - 4;
-        ouy += maxWidthOut - 3;
-        outputData[ouy] = data[ory];
-        outputData[ouy + 1] = data[ory + 1];
-        outputData[ouy + 2] = data[ory + 2];
+        outputData[maxWidthOut - 3] = (data[ory] + data[ory + 1] + data[ory + 2]) / 3;
     }
 }
 
 void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
     const auto widthBound = original->width - 1, heightBound = original->height - 1;
-    const auto maxWidthOrig = original->width * 4, maxWidthOut = original->width * 3;
+    const auto maxWidthOrig = original->width * original->channels, maxWidthOut = original->width * outX->channels;
     const auto data = original->data;
     auto outputDataX = outX->data;
     auto outputDataY = outY->data;
@@ -453,36 +443,26 @@ void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
     for (size_t y = 1; y < heightBound; ++y) {
         size_t origY = y * maxWidthOrig, outY = y * maxWidthOut;
         for (size_t x = 1; x < widthBound; ++x) {
-            int XsumR = 0, XsumG = 0, XsumB = 0, YsumR = 0, YsumG = 0, YsumB = 0;
-            size_t origX = x * 4;
+            int Xsum = 0, Ysum = 0;
+            size_t origX = x * 4; // 4 channels assumed
 
             for (int k = -1; k <= 1; ++k) {
                 size_t yPos = origY + (k * maxWidthOrig) + origX;
                 auto knX = xFilter[k + 1];
                 auto knY = yFilter[k + 1];
                 for (int l = -1; l <= 1; ++l) {
-                    size_t pos = yPos + (l * 4);
-                    auto knnX = knX[l + 1];
-                    auto knnY = knY[l + 1];
+                    size_t pos = yPos + (l * 4); // 4 channels assumed
+                    int knnX = knX[l + 1], knnY = knY[l + 1];
+                    int sum = data[pos] + data[pos + 1] + data[pos + 2];
 
-                    XsumR += data[pos] * knnX;
-                    XsumG += data[pos + 1] * knnX;
-                    XsumB += data[pos + 2] * knnX;
-
-                    YsumR += data[pos] * knnY;
-                    YsumG += data[pos + 1] * knnY;
-                    YsumB += data[pos + 2] * knnY;
+                    Xsum += sum * knnX;
+                    Ysum += sum * knnY;
                 }
             }
 
-            size_t pos = outY + (x * 3);
-            outputDataX[pos] = static_cast<Colour>(max(0, min(XsumR * 2, 255)));
-            outputDataX[pos + 1] = static_cast<Colour>(max(0, min(XsumG * 2, 255)));
-            outputDataX[pos + 2] = static_cast<Colour>(max(0, min(XsumB * 2, 255)));
-
-            outputDataY[pos] = static_cast<Colour>(max(0, min(YsumR * 2, 255)));
-            outputDataY[pos + 1] = static_cast<Colour>(max(0, min(YsumG * 2, 255)));
-            outputDataY[pos + 2] = static_cast<Colour>(max(0, min(YsumB * 2, 255)));
+            size_t pos = outY + x; // 1 channel assumed
+            outputDataX[pos] = static_cast<Colour>(max(0, min(Xsum * 2 / 3, 255)));
+            outputDataY[pos] = static_cast<Colour>(max(0, min(Ysum * 2 / 3, 255)));
         }
     }
 }
@@ -533,9 +513,9 @@ struct Image {
         const auto darkMode = getBackgroundColour(imageData).sum() / 3 < 127;
         if (darkMode) invertImage(imageData);
 
-        auto* filteredDataX = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height, 3};
+        auto* filteredDataX = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * sizeof(Colour))), imageData->width, imageData->height, 1};
         padOutputData(imageData, filteredDataX);
-        auto* filteredDataY = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height, 3};
+        auto* filteredDataY = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * sizeof(Colour))), imageData->width, imageData->height, 1};
         padOutputData(imageData, filteredDataY);
 
         applySobel(imageData, filteredDataX, filteredDataY);
