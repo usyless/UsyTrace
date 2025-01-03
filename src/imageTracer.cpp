@@ -625,8 +625,7 @@ struct Image {
 
     inline string smoothTrace() {
         const int windowSize = max(static_cast<int>(imageData->width) / 100, 2);
-        traceHistory.add(traceHistory.getLatest()->smooth(windowSize, static_cast<double>(windowSize) / 2.0));
-        return traceHistory.getLatest()->toSVG();
+        return traceHistory.add(traceHistory.getLatest()->smooth(windowSize, static_cast<double>(windowSize) / 2.0))->toSVG();
     }
 
     ~Image() {
