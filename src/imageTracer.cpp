@@ -551,10 +551,7 @@ struct Image {
     }
 
     inline string trace(const TraceData&& traceData) {
-        auto* trace = traceHistory.getLatest()->newTrace(imageData, traceData);
-        traceHistory.add(trace->standardSmooth(static_cast<int>(imageData->width)));
-        delete trace;
-        return traceHistory.getLatest()->toSVG();
+        return traceHistory.add(traceHistory.getLatest()->newTrace(imageData, traceData))->toSVG();
     }
 
     inline string point(const TraceData&& traceData) {
