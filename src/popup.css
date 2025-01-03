@@ -37,6 +37,7 @@
 }
 
 .popupText {
+    padding: var(--spacing-largest);
     white-space: pre-wrap;
     word-break: break-word;
     overflow-y: scroll;

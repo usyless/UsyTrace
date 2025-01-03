@@ -17,7 +17,16 @@ jobs:
         ref: main
         persist-credentials: false
 
+    - name: Check if imageTracer.cpp changed
+      uses: dorny/paths-filter@v3
+      id: changes
+      with:
+        filters: |
+          imageTracer:
+            - 'src/imageTracer.cpp'
+
     - name: Set up Emscripten and build
+      if: steps.changes.outputs.imageTracer == 'true'
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
