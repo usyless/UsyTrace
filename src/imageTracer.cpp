@@ -576,7 +576,10 @@ struct Image {
             traceHistory.add(traceTwo);
             delete traceOne;
         }
-        return traceHistory.getLatest()->toSVG();
+        auto* smoothed = traceHistory.getLatest()->smooth(static_cast<int>(imageData->width) / 100, 1.5);
+        traceHistory.undo();
+        traceHistory.add(smoothed);
+        return smoothed->toSVG();
     }
 
     string exportTrace(const ExportData&& exportData) const {
