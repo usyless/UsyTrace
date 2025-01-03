@@ -25,11 +25,11 @@ struct RGB {
 
     RGB(const Colour r, const Colour g, const Colour b) : R(r), G(g), B(b) {}
 
-    static Colour biggestDifference(const RGB& rgb) {
+    static inline Colour biggestDifference(const RGB& rgb) {
         return max(max(rgb.R, rgb.G), rgb.B) - min(min(rgb.R, rgb.G), rgb.B);
     }
 
-    double getDifference(const RGB& rgb) const {
+    inline double getDifference(const RGB& rgb) const {
         const auto rmean = (static_cast<int>(R) + static_cast<int>(rgb.R)) / 2;
         const auto rdiff = static_cast<int>(R) - static_cast<int>(rgb.R);
         const auto gdiff = static_cast<int>(G) - static_cast<int>(rgb.G);
@@ -88,20 +88,14 @@ struct RGBTools {
 
     RGBTools(const RGB rgb, const uint32_t tolerance) : rgb(rgb), tolerance(tolerance) {}
 
-    bool withinTolerance(const RGB& rgb) const {
+    inline bool withinTolerance(const RGB& rgb) const {
         return this->rgb.getDifference(rgb) <= tolerance;
     }
 
-    void addToAverage(const RGB& rgb) {
-        const auto r1 = static_cast<int>(this->rgb.R);
-        const auto r2 = static_cast<int>(rgb.R);
-        const auto g1 = static_cast<int>(this->rgb.G);
-        const auto g2 = static_cast<int>(rgb.G);
-        const auto b1 = static_cast<int>(this->rgb.B);
-        const auto b2 = static_cast<int>(rgb.B);
-        this->rgb.R += static_cast<Colour>((sqrt(((r1 * r1) + (r2 * r2)) / 2) - r1) / count);
-        this->rgb.G += static_cast<Colour>((sqrt(((g1 * g1) + (g2 * g2)) / 2) - g1) / count);
-        this->rgb.B += static_cast<Colour>((sqrt(((b1 * b1) + (b2 * b2)) / 2) - b1) / count);
+    inline void addToAverage(const RGB& rgb) {
+        this->rgb.R += static_cast<Colour>((sqrt((pow(this->rgb.R, 2) + pow(rgb.R, 2)) / 2) - this->rgb.R) / count);
+        this->rgb.G += static_cast<Colour>((sqrt((pow(this->rgb.G, 2) + pow(rgb.G, 2)) / 2) - this->rgb.G) / count);
+        this->rgb.B += static_cast<Colour>((sqrt((pow(this->rgb.B, 2) + pow(rgb.B, 2)) / 2) - this->rgb.B) / count);
         ++count;
     }
 };
@@ -168,9 +162,10 @@ void traceFor(uint32_t startX, uint32_t startY, const uint32_t step, frTrace& tr
         }
         if (!yValues.empty()) {
             currJump = 0;
-            startY = reduce(yValues.begin(), yValues.end()) / static_cast<int>(yValues.size());
+            startY = reduce(yValues.begin(), yValues.end()) / static_cast<uint32_t>(yValues.size());
             trace[startX] = startY;
-            colour.addToAverage(imageData->getRGB(startX, startY));
+            RGB newRGB = imageData->getRGB(startX, startY);
+            if (colour.withinTolerance(newRGB)) colour.addToAverage(newRGB);
             continue;
         }
         if (currJump < maxJump) ++currJump;
@@ -432,35 +427,58 @@ void padOutputData(const ImageData* original, ImageData* output) {
     }
 }
 
-void applyFilter(const ImageData* original, ImageData* output, const double multiplier, const vector<vector<int>>&& kernel) {
+void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
     const auto widthBound = original->width - 1, heightBound = original->height - 1;
     const auto maxWidthOrig = original->width * 4, maxWidthOut = original->width * 3;
     const auto data = original->data;
-    auto outputData = output->data;
+    auto outputDataX = outX->data;
+    auto outputDataY = outY->data;
 
-    // Apply kernel, only supports 3x3 for now
+    int yFilter[3][3] = {
+        {-1, -2, -1},
+        { 0,  0,  0},
+        { 1,  2,  1}
+    };
+
+    int xFilter[3][3] = {
+        {-1,  0,  1},
+        {-2,  0,  2},
+        {-1,  0,  1}
+    };
+
     for (size_t y = 1; y < heightBound; ++y) {
         size_t origY = y * maxWidthOrig, outY = y * maxWidthOut;
         for (size_t x = 1; x < widthBound; ++x) {
-            int sumR = 0, sumG = 0, sumB = 0;
+            int XsumR = 0, XsumG = 0, XsumB = 0, YsumR = 0, YsumG = 0, YsumB = 0;
             size_t origX = x * 4;
 
             for (int k = -1; k <= 1; ++k) {
                 size_t yPos = origY + (k * maxWidthOrig) + origX;
-                auto kn = kernel[k + 1];
+                auto knX = xFilter[k + 1];
+                auto knY = yFilter[k + 1];
                 for (int l = -1; l <= 1; ++l) {
                     size_t pos = yPos + (l * 4);
-                    auto knn = kn[l + 1];
-                    sumR += data[pos] * knn;
-                    sumG += data[pos + 1] * knn;
-                    sumB += data[pos + 2] * knn;
+                    auto knnX = knX[l + 1];
+                    auto knnY = knY[l + 1];
+
+                    XsumR += data[pos] * knnX;
+                    XsumG += data[pos + 1] * knnX;
+                    XsumB += data[pos + 2] * knnX;
+
+                    YsumR += data[pos] * knnY;
+                    YsumG += data[pos + 1] * knnY;
+                    YsumB += data[pos + 2] * knnY;
                 }
             }
 
             size_t pos = outY + (x * 3);
-            outputData[pos] = static_cast<Colour>(max<uint32_t>(0, min<uint32_t>(sumR * multiplier, 255)));
-            outputData[pos + 1] = static_cast<Colour>(max<uint32_t>(0, min<uint32_t>(sumG * multiplier, 255)));
-            outputData[pos + 2] = static_cast<Colour>(max<uint32_t>(0, min<uint32_t>(sumB * multiplier, 255)));
+            outputDataX[pos] = static_cast<Colour>(max(0, min(XsumR * 2, 255)));
+            outputDataX[pos + 1] = static_cast<Colour>(max(0, min(XsumG * 2, 255)));
+            outputDataX[pos + 2] = static_cast<Colour>(max(0, min(XsumB * 2, 255)));
+
+            outputDataY[pos] = static_cast<Colour>(max(0, min(YsumR * 2, 255)));
+            outputDataY[pos + 1] = static_cast<Colour>(max(0, min(YsumG * 2, 255)));
+            outputDataY[pos + 2] = static_cast<Colour>(max(0, min(YsumB * 2, 255)));
         }
     }
 }
@@ -508,36 +526,24 @@ struct Image {
     set<uint32_t> hLines;
 
     Image(ImageData* imageData) {
-        auto* filteredData = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height, 3};
-        padOutputData(imageData, filteredData);
-
         const auto darkMode = getBackgroundColour(imageData).sum() / 3 < 127;
         if (darkMode) invertImage(imageData);
-        applyFilter(imageData, filteredData, 2, vector<vector<int>>{
-            {-1, -2, -1},
-            { 0,  0,  0},
-            { 1,  2,  1}
-        });
-        hLines = detectLines(filteredData, "Y", 20);
 
-        applyFilter(imageData, filteredData, 2, vector<vector<int>>{
-            {-1,  0,  1},
-            {-2,  0,  2},
-            {-1,  0,  1}
-        });
-        vLines = detectLines(filteredData, "X", 20);
+        auto* filteredDataX = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height, 3};
+        padOutputData(imageData, filteredDataX);
+        auto* filteredDataY = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * 3 * sizeof(Colour))), imageData->width, imageData->height, 3};
+        padOutputData(imageData, filteredDataY);
+
+        applySobel(imageData, filteredDataX, filteredDataY);
+        hLines = detectLines(filteredDataY, "Y", 20);
+        delete filteredDataY;
+        vLines = detectLines(filteredDataX, "X", 20);
+        delete filteredDataX;
 
         if (darkMode) invertImage(imageData);
-        applyFilter(imageData, filteredData, 0.1, vector<vector<int>>{
-            {1, 1, 1},
-            {1, 2, 1},
-            {1, 1, 1}
-        });
 
-        delete imageData;
-
-        this->imageData = filteredData;
-        this->backgroundColour = RGBTools{getBackgroundColour(filteredData), 10};
+        this->imageData = imageData;
+        this->backgroundColour = RGBTools{getBackgroundColour(imageData), 10};
     }
 
     inline string trace(const TraceData&& traceData) {
