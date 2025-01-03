@@ -258,6 +258,10 @@ struct Trace {
         return new Trace{newTrace};
     }
 
+    inline Trace* standardSmooth(int width) {
+        return smooth(static_cast<int>(width) / 100, 1.5);
+    }
+
     Trace* eraseRegion(uint32_t begin, uint32_t end) {
         auto newTrace = map{trace};
         const auto& higher = newTrace.upper_bound(end);
@@ -547,7 +551,10 @@ struct Image {
     }
 
     inline string trace(const TraceData&& traceData) {
-        return traceHistory.add(traceHistory.getLatest()->newTrace(imageData, traceData))->toSVG();
+        auto* trace = traceHistory.getLatest()->newTrace(imageData, traceData);
+        traceHistory.add(trace->standardSmooth(static_cast<int>(imageData->width)));
+        delete trace;
+        return traceHistory.getLatest()->toSVG();
     }
 
     inline string point(const TraceData&& traceData) {
@@ -577,7 +584,7 @@ struct Image {
             preferred = traceTwo;
             delete traceOne;
         }
-        traceHistory.add(preferred->smooth(static_cast<int>(imageData->width) / 100, 1.5));
+        traceHistory.add(preferred->standardSmooth(static_cast<int>(imageData->width)));
         delete preferred;
         return traceHistory.getLatest()->toSVG();
     }
