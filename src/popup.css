@@ -102,6 +102,7 @@
 
     --primary-logo: #b396e4;
     --dim-logo: #281a3e;
+    --line-colour: #fe6b8b;
     --fade-out: #00000000;
 
     > div {
@@ -151,25 +152,51 @@
     }
 
     > .line {
-        transform: translateZ(var(--half-face-size));
+        transform-origin: bottom;
+        transform: rotateX(-90deg) translateZ(calc(-1 * var(--half-face-size)));
+
+        display: grid;
+        grid-template-columns: repeat(16, 1fr);
+        grid-template-rows: repeat(16, 1fr);
 
         > div {
-            width: var(--face-size);
-            height: var(--face-size);
-            position: absolute;
-            transform: translateZ(var(--depth));
-            background-image: url("./assets/test.png");
-            background-repeat: repeat-x;
-            animation: scroll 3s linear infinite;
+            transform: translateZ(-25px);
+            width: 100%;
+            height: 100%;
+            background: var(--line-colour);
+            animation: wave 2s ease-in-out infinite;
+            animation-delay: calc((var(--i) + var(--j)) * 0.2s);
+            transform-style: preserve-3d;
+
+            &::before, &::after {
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                top: 0;
+                left: 0;
+            }
+
+            &::before {
+                transform-origin: top;
+                transform: rotateX(90deg);
+                background: linear-gradient(to bottom, var(--line-colour), var(--dim-logo));
+            }
+
+            &::after {
+                transform-origin: right;
+                transform: rotateY(90deg);
+                background: linear-gradient(to left, var(--line-colour), var(--dim-logo));
+            }
         }
     }
 }
 
-@keyframes scroll {
-    from {
-        background-position: 0 0;
+@keyframes wave {
+    0%, 100% {
+        transform: translateZ(-25px);
     }
-    to {
-        background-position: -96px 0;
+    50% {
+        transform: translateZ(25px);
     }
 }

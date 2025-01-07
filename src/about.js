@@ -26,10 +26,13 @@ document.getElementById("about").addEventListener('click', () => {
         corner3.classList.add('corner');
 
         const lineWrapper = document.createElement('div');
-        for (let i = -5; i <= 5; ++i) {
-            const line = document.createElement('div');
-            line.style.setProperty('--depth', `${i * 2}px`);
-            lineWrapper.appendChild(line);
+        for (let i = 0; i < 16; ++i) {
+            for (let j = 0; j < 16; ++j) {
+                const line = document.createElement('div');
+                line.style.setProperty('--j', j);
+                line.style.setProperty('--i', i);
+                lineWrapper.appendChild(line);
+            }
         }
         lineWrapper.classList.add('line');
 
