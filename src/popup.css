@@ -115,6 +115,7 @@
         &::before, &::after {
             content: '';
             position: absolute;
+            right: 0;
         }
     }
 
@@ -124,7 +125,6 @@
         transform: rotateY(-90deg);
 
         &::before {
-            right: 0;
             transform-origin: top;
             transform: rotateX(90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
@@ -133,7 +133,6 @@
         }
 
         &::after {
-            right: 0;
             transform-origin: right;
             transform: rotateY(90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
@@ -147,7 +146,6 @@
 
         &::before {
             transform-origin: top;
-            right: 0;
             transform: rotateX(-90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             width: calc(var(--face-size) + var(--border));
@@ -156,7 +154,6 @@
 
         &::after {
             transform-origin: right;
-            right: 0;
             transform: rotateY(-90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             height: calc(var(--face-size) + var(--border));
@@ -171,8 +168,6 @@
 
         &::before {
             transform-origin: top;
-            top: 0;
-            right: 0;
             transform: rotateX(90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             width: calc(var(--face-size) + var(--border));
@@ -181,8 +176,6 @@
 
         &::after {
             transform-origin: right;
-            top: 0;
-            right: 0;
             transform: rotateY(90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             height: calc(var(--face-size) + var(--border));
