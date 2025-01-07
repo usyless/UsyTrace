@@ -158,9 +158,10 @@
         display: grid;
         grid-template-columns: repeat(16, 1fr);
 
+        --block-height: 20px;
 
         > div {
-            transform: translateZ(-25px);
+            transform: translateZ(15px);
             background: var(--line-colour);
             animation: wave 2.5s ease-in-out infinite;
             animation-delay: calc(var(--i) * 0.2s);
@@ -169,21 +170,22 @@
             &::before, &::after {
                 content: '';
                 position: absolute;
-                aspect-ratio: 1;
                 top: 0;
-                left: 0;
             }
 
             &::before {
+                left: 0;
                 width: 100%;
+                height: var(--block-height);
                 transform-origin: top;
                 transform: rotateX(90deg);
                 background: linear-gradient(to bottom, var(--line-colour), var(--dim-logo));
             }
 
             &::after {
-                width: 100%;
+                width: var(--block-height);
                 height: 100%;
+                right: 0;
                 transform-origin: right;
                 transform: rotateY(90deg);
                 background: linear-gradient(to left, var(--line-colour), var(--dim-logo));
@@ -194,9 +196,9 @@
 
 @keyframes wave {
     0%, 100% {
-        transform: translateZ(-25px);
+        transform: translateZ(15px);
     }
     50% {
-        transform: translateZ(25px);
+        transform: translateZ(-35px);
     }
 }
