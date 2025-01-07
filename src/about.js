@@ -12,19 +12,8 @@ document.getElementById("about").addEventListener('click', () => {
 
     { // logo stuff
         const wall1 = document.createElement('div');
-        const wall1side1 = document.createElement('div');
-        const wall1side2 = document.createElement('div');
-        wall1.append(wall1side1, wall1side2);
-
         const wall2 = document.createElement('div');
-        const wall2side1 = document.createElement('div');
-        const wall2side2 = document.createElement('div');
-        wall2.append(wall2side1, wall2side2);
-
         const wall3 = document.createElement('div');
-        const wall3side1 = document.createElement('div');
-        const wall3side2 = document.createElement('div');
-        wall3.append(wall3side1, wall3side2);
 
         const lineWrapper = document.createElement('div');
         for (let i = -5; i <= 5; ++i) {

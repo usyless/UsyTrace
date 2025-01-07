@@ -110,7 +110,8 @@
         position: absolute;
         transform-style: preserve-3d;
 
-        > * {
+        &::before, &::after {
+            content: '';
             position: absolute;
         }
     }
@@ -121,7 +122,8 @@
         top: 20%;
         left: calc(50% - var(--half-face-size));
 
-        > div:first-of-type {
+        &::before {
+            left: 0;
             transform-origin: top;
             transform: rotateX(-90deg);
             background: linear-gradient(to bottom right, var(--primary-logo), var(--fade-out));
@@ -129,7 +131,8 @@
             height: var(--border);
         }
 
-        > div:nth-of-type(2) {
+        &::after {
+            left: 0;
             transform-origin: left;
             transform: rotateY(90deg);
             background: linear-gradient(to bottom right, var(--primary-logo), var(--fade-out));
@@ -143,7 +146,7 @@
         top: 20%;
         left: 50%;
 
-        > div:first-of-type {
+        &::before {
             transform-origin: top;
             right: 0;
             transform: rotateX(-90deg);
@@ -152,7 +155,7 @@
             height: var(--border);
         }
 
-        > div:nth-of-type(2) {
+        &::after {
             transform-origin: right;
             right: 0;
             transform: rotateY(-90deg);
@@ -168,7 +171,7 @@
         top: calc(20% + var(--half-face-size));
         background: linear-gradient(to top left, var(--primary-logo), var(--dim-logo));
 
-        > div:first-of-type {
+        &::before {
             transform-origin: bottom;
             bottom: 0;
             right: 0;
@@ -178,7 +181,7 @@
             height: var(--border);
         }
 
-        > div:nth-of-type(2) {
+        &::after {
             transform-origin: right;
             bottom: 0;
             right: 0;
