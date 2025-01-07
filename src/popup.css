@@ -92,7 +92,7 @@
 
     transition: 0.1s ease;
 
-    transform: rotateX(calc(var(--dx, 0deg) - 25deg)) rotateY(calc(var(--dy, 0deg) - 45deg)) translateY(-20px);
+    transform: rotateX(calc(var(--dx, 0deg) - 25deg)) rotateY(calc(var(--dy, 0deg) - 45deg));
     transform-style: preserve-3d;
 
     --face-size: 128px;
@@ -109,6 +109,8 @@
         height: var(--face-size);
         position: absolute;
         transform-style: preserve-3d;
+        left: 50%;
+        top: 5%;
 
         &::before, &::after {
             content: '';
@@ -117,25 +119,24 @@
     }
 
     > div:first-of-type {
-        background: linear-gradient(to bottom right, var(--primary-logo), var(--dim-logo));
-        transform: rotateY(90deg) translateX(calc(-1 * var(--half-face-size)));
-        top: 20%;
-        left: calc(50% - var(--half-face-size));
+        transform-origin: left;
+        background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
+        transform: rotateY(-90deg);
 
         &::before {
-            left: 0;
+            right: 0;
             transform-origin: top;
-            transform: rotateX(-90deg);
-            background: linear-gradient(to bottom right, var(--primary-logo), var(--fade-out));
+            transform: rotateX(90deg);
+            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             width: calc(var(--face-size) + var(--border));
             height: var(--border);
         }
 
         &::after {
-            left: 0;
-            transform-origin: left;
+            right: 0;
+            transform-origin: right;
             transform: rotateY(90deg);
-            background: linear-gradient(to bottom right, var(--primary-logo), var(--fade-out));
+            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             height: calc(var(--face-size) + var(--border));
             width: var(--border);
         }
@@ -143,8 +144,6 @@
 
     > div:nth-of-type(2) {
         background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
-        top: 20%;
-        left: 50%;
 
         &::before {
             transform-origin: top;
@@ -166,27 +165,26 @@
     }
 
     > div:nth-of-type(3) {
-        transform: rotateX(90deg) translateY(var(--half-face-size));
-        left: 50%;
-        top: calc(20% + var(--half-face-size));
-        background: linear-gradient(to top left, var(--primary-logo), var(--dim-logo));
+        transform-origin: bottom;
+        transform: rotateX(-90deg);
+        background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
 
         &::before {
-            transform-origin: bottom;
-            bottom: 0;
+            transform-origin: top;
+            top: 0;
             right: 0;
             transform: rotateX(90deg);
-            background: linear-gradient(to top left, var(--primary-logo), var(--fade-out));
+            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             width: calc(var(--face-size) + var(--border));
             height: var(--border);
         }
 
         &::after {
             transform-origin: right;
-            bottom: 0;
+            top: 0;
             right: 0;
-            transform: rotateY(-90deg);
-            background: linear-gradient(to top left, var(--primary-logo), var(--fade-out));
+            transform: rotateY(90deg);
+            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
             height: calc(var(--face-size) + var(--border));
             width: var(--border);
         }
@@ -194,8 +192,6 @@
 
     > div:nth-of-type(4) {
         transform: translateZ(var(--half-face-size));
-        top: 20%;
-        left: 50%;
 
         > div {
             width: var(--face-size);
