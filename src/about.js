@@ -26,13 +26,20 @@ document.getElementById("about").addEventListener('click', () => {
         const wall3side2 = document.createElement('div');
         wall3.append(wall3side1, wall3side2);
 
-        logo.append(wall1, wall2, wall3);
+        const lineWrapper = document.createElement('div');
+        for (let i = -5; i <= 5; ++i) {
+            const line = document.createElement('div');
+            line.style.setProperty('--depth', `${i * 2}px`);
+            lineWrapper.appendChild(line);
+        }
+
+        logo.append(wall1, wall2, wall3, lineWrapper);
 
         logoWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
         logoWrapper.addEventListener('pointermove', (e) => {
             const rect = logoWrapper.getBoundingClientRect();
-            logo.style.setProperty('--dy', `${((rect.width / 2) - (e.clientX - rect.left)) / 5}deg`);
-            logo.style.setProperty('--dx', `${((e.clientY - rect.top) - (rect.height / 2)) / 5}deg`);
+            logo.style.setProperty('--dy', `${((e.clientX - rect.left) - (rect.width / 2)) / 5}deg`);
+            logo.style.setProperty('--dx', `${((rect.height / 2) - (e.clientY - rect.top)) / 5}deg`);
         });
         const reset = () => {
             logo.style.removeProperty('--dx');
