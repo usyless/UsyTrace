@@ -47,6 +47,7 @@ document.getElementById("about").addEventListener('click', () => {
             logo.style.removeProperty('--dy');
         };
         logoWrapper.addEventListener('pointerout', reset);
+        logoWrapper.addEventListener('pointerup', reset);
         logoWrapper.addEventListener('pointerleave', reset);
         logoWrapper.addEventListener('pointercancel', reset);
         logoWrapper.addEventListener('dragstart', (e) => e.preventDefault());
