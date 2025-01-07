@@ -99,8 +99,8 @@
     --half-face-size: calc(var(--face-size) / 2);
     --vertical-offset: -20px;
 
-    --primary-logo: #D096E4;
-    --dim-logo: #301539;
+    --primary-logo: #b396e4;
+    --dim-logo: #281a3e;
 
     div {
         width: var(--face-size);
