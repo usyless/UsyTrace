@@ -111,76 +111,51 @@
         transform-style: preserve-3d;
         left: 50%;
         top: 5%;
+    }
+
+    .wall {
+        background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
 
         &::before, &::after {
             content: '';
             position: absolute;
             right: 0;
+            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
+        }
+
+        &::before {
+            transform-origin: top;
+            width: calc(var(--face-size) + var(--border));
+            height: var(--border);
+            transform: rotateX(90deg);
+        }
+
+        &::after {
+            transform-origin: right;
+            height: calc(var(--face-size) + var(--border));
+            width: var(--border);
+            transform: rotateY(90deg);
         }
     }
 
     > div:first-of-type {
         transform-origin: left;
-        background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
         transform: rotateY(-90deg);
-
-        &::before {
-            transform-origin: top;
-            transform: rotateX(90deg);
-            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            width: calc(var(--face-size) + var(--border));
-            height: var(--border);
-        }
-
-        &::after {
-            transform-origin: right;
-            transform: rotateY(90deg);
-            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            height: calc(var(--face-size) + var(--border));
-            width: var(--border);
-        }
     }
 
     > div:nth-of-type(2) {
-        background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
-
         &::before {
-            transform-origin: top;
             transform: rotateX(-90deg);
-            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            width: calc(var(--face-size) + var(--border));
-            height: var(--border);
         }
 
         &::after {
-            transform-origin: right;
             transform: rotateY(-90deg);
-            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            height: calc(var(--face-size) + var(--border));
-            width: var(--border);
         }
     }
 
     > div:nth-of-type(3) {
         transform-origin: bottom;
         transform: rotateX(-90deg);
-        background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
-
-        &::before {
-            transform-origin: top;
-            transform: rotateX(90deg);
-            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            width: calc(var(--face-size) + var(--border));
-            height: var(--border);
-        }
-
-        &::after {
-            transform-origin: right;
-            transform: rotateY(90deg);
-            background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            height: calc(var(--face-size) + var(--border));
-            width: var(--border);
-        }
     }
 
     > div:nth-of-type(4) {

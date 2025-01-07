@@ -14,6 +14,9 @@ document.getElementById("about").addEventListener('click', () => {
         const wall1 = document.createElement('div');
         const wall2 = document.createElement('div');
         const wall3 = document.createElement('div');
+        wall1.classList.add('wall');
+        wall2.classList.add('wall');
+        wall3.classList.add('wall');
 
         const lineWrapper = document.createElement('div');
         for (let i = -5; i <= 5; ++i) {
