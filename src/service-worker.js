@@ -1,4 +1,4 @@
-const cacheName = 'v25';
+const cacheName = 'v26';
 
 contentToCache = [
     './favicon.ico',
@@ -15,6 +15,7 @@ contentToCache = [
     './updater.js',
     './popups.js',
     './tutorial.js',
+    './about.js',
 
     './a.out.wasm',
     './a.out.js',
