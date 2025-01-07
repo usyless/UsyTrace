@@ -90,7 +90,9 @@
     min-height: 256px;
     position: relative;
 
-    transform: rotateX(25deg) rotateY(45deg);
+    transition: 0.1s ease;
+
+    transform: rotateX(calc(var(--dx, 0deg) + 25deg)) rotateY(calc(var(--dy, 0deg) + 45deg));
     transform-style: preserve-3d;
 
     --face-size: 128px;
