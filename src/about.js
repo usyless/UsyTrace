@@ -24,6 +24,7 @@ document.getElementById("about").addEventListener('click', () => {
             line.style.setProperty('--depth', `${i * 2}px`);
             lineWrapper.appendChild(line);
         }
+        lineWrapper.classList.add('line');
 
         logo.append(wall1, wall2, wall3, lineWrapper);
 

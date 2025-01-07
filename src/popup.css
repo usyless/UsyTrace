@@ -138,12 +138,12 @@
         }
     }
 
-    > div:first-of-type {
+    > .wall:first-of-type {
         transform-origin: left;
         transform: rotateY(-90deg);
     }
 
-    > div:nth-of-type(2) {
+    > .wall:nth-of-type(2) {
         &::before {
             transform: rotateX(-90deg);
         }
@@ -153,12 +153,12 @@
         }
     }
 
-    > div:nth-of-type(3) {
+    > .wall:nth-of-type(3) {
         transform-origin: bottom;
         transform: rotateX(-90deg);
     }
 
-    > div:nth-of-type(4) {
+    > .line {
         transform: translateZ(var(--half-face-size));
 
         > div {
