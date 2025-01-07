@@ -92,14 +92,13 @@
 
     transition: 0.1s ease;
 
-    transform: rotateX(calc(var(--dx, 0deg) + 25deg)) rotateY(calc(var(--dy, 0deg) + 45deg));
+    transform: rotateX(calc(var(--dx, 0deg) + 25deg)) rotateY(calc(var(--dy, 0deg) + 45deg)) translateY(-20px);
     transform-style: preserve-3d;
 
     --face-size: 128px;
     --half-face-size: calc(var(--face-size) / 2);
     --border: calc(var(--face-size) / 4);
     --half-border: calc(var(--border) / 2);
-    --vertical-offset: -20px;
 
     --primary-logo: #b396e4;
     --dim-logo: #281a3e;
@@ -114,7 +113,7 @@
 
     > div:first-of-type {
         background: linear-gradient(to bottom right, var(--primary-logo), var(--dim-logo));
-        transform: rotateY(-90deg) translateX(calc(-1 * var(--half-face-size))) translateY(var(--vertical-offset));
+        transform: rotateY(-90deg) translateX(calc(-1 * var(--half-face-size)));
         top: 20%;
         left: calc(50% - var(--half-face-size));
 
@@ -135,7 +134,6 @@
 
     > div:nth-of-type(2) {
         background: linear-gradient(to bottom left, var(--primary-logo), var(--dim-logo));
-        transform: translateY(var(--vertical-offset));
         top: 20%;
         left: 50%;
 
@@ -155,7 +153,7 @@
     }
 
     > div:nth-of-type(3) {
-        transform: rotateX(-90deg) translateY(var(--half-face-size)) translateZ(var(--vertical-offset));
+        transform: rotateX(-90deg) translateY(var(--half-face-size));
         left: 50%;
         top: calc(20% + var(--half-face-size));
         background: linear-gradient(to top left, var(--primary-logo), var(--dim-logo));
@@ -173,5 +171,10 @@
             height: calc(var(--face-size) + var(--border));
             width: var(--border);
         }
+    }
+
+    > div:nth-of-type(4) {
+        top: 20%;
+        left: 50%;
     }
 }
