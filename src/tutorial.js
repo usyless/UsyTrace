@@ -1,6 +1,6 @@
 'use strict';
 
-import { createPopup, clearPopups} from "./popups.js";
+import { clearPopups} from "./popups.js";
 
 const TUTORIAL_VERSION = 2;
 const USER_TUTORIAL_VERSION = (() => {
