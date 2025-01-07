@@ -93,29 +93,34 @@
     transform: rotateX(25deg) rotateY(45deg);
     transform-style: preserve-3d;
 
+    --face-size: 128px;
+    --half-face-size: calc(var(--face-size) / 2);
+    --vertical-offset: -20px;
+
     div {
-        width: 96px;
-        height: 96px;
+        width: var(--face-size);
+        height: var(--face-size);
         position: absolute;
     }
 
     div:first-of-type {
         background: linear-gradient(to bottom right, rgb(208, 150, 228), rgb(70, 35, 83));
-        transform: rotateY(-90deg) translateX(-48px);
+        transform: rotateY(-90deg) translateX(calc(-1 * var(--half-face-size))) translateY(var(--vertical-offset));
         top: 20%;
-        left: calc(50% - 48px);
+        left: calc(50% - var(--half-face-size));
     }
 
     div:nth-of-type(2) {
         background: linear-gradient(to bottom left, rgb(208, 150, 228), rgb(70, 35, 83));
+        transform: translateY(var(--vertical-offset));
         top: 20%;
         left: 50%;
     }
 
     div:nth-of-type(3) {
-        transform: rotateX(-90deg) translateY(48px);
+        transform: rotateX(-90deg) translateY(var(--half-face-size)) translateZ(var(--vertical-offset));
         left: 50%;
-        top: calc(20% + 48px);
+        top: calc(20% + var(--half-face-size));
         background: linear-gradient(to top left, rgb(208, 150, 228), rgb(70, 35, 83));
     }
 }
