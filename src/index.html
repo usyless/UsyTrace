@@ -73,7 +73,7 @@
 
 
             <label for="FRLower" title="X value of the left-most vertical line">Lower Frequency (Hz)</label>
-            <input type="number" id="FRLower" min="0" onchange="minVal(this)" title="X value of the left-most vertical line"/>
+            <input type="number" id="FRLower" min="0" title="X value of the left-most vertical line"/>
             <div class="moveButtons" data-for="xLow">
                 <button class="standardButton" data-direction="-1" data-disabled>◀</button>
                 <button class="standardButton" data-direction="1" data-disabled>▶</button>
@@ -87,7 +87,7 @@
         <div class="sidebarSection">
             <h3>Trace Settings</h3>
             <label for="colourTolerance" title="Maximum variation in colour of the line, increase if whole line is not being traced">Colour Tolerance</label>
-            <input type="number" id="colourTolerance" min="1" onchange="minVal(this)" title="Maximum variation in colour of the line, increase if whole line is not being traced"/>
+            <input type="number" id="colourTolerance" min="1" title="Maximum variation in colour of the line, increase if whole line is not being traced"/>
         </div>
         <div class="sidebarSection">
             <h3>Export Settings</h3>
@@ -109,7 +109,7 @@
                 </select>
             </div>
             <label for="lowFRExport" title="Minimum exported frequency value">Minimum Frequency (Hz)</label>
-            <input type="number" id="lowFRExport" min="1" onchange="minVal(this)" title="Minimum exported frequency value"/>
+            <input type="number" id="lowFRExport" min="1" title="Minimum exported frequency value"/>
             <label for="highFRExport" title="Maximum exported frequency value">Maximum Frequency (Hz)</label>
             <input type="number" id="highFRExport" title="Maximum exported frequency value"/>
         </div>
@@ -118,6 +118,9 @@
         </button>
         <button id="tutorial" class="sidebarSection standardButton">
             <b>Tutorial/Help</b>
+        </button>
+        <button id="about" class="sidebarSection standardButton">
+            <b>About/Contact</b>
         </button>
         <div class="sidebarSection">
             <div>Report an issue or suggest features:</div>
@@ -168,9 +171,10 @@
 </div>
 
 <div class="waiting-overlay" data-for="trace"></div>
-<script src="updater.js"></script>
-<script src="popups.js"></script>
-<script src="tutorial.js"></script>
-<script src="main.js"></script>
+<script src="updater.js" type="module"></script>
+<script src="popups.js" type="module"></script>
+<script src="tutorial.js" type="module"></script>
+<script src="main.js" type="module"></script>
+<script src="about.js" type="module"></script>
 </body>
 </html>

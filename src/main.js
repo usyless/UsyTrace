@@ -1,5 +1,7 @@
 'use strict';
 
+import { createPopup, clearPopups} from "./popups.js";
+
 // Defaults
 const defaults = {
     "FRHigher": 20000,
@@ -18,7 +20,7 @@ const defaults = {
 const MAGNIFICATION = 3;
 document.getElementById('restoreDefault').addEventListener('click', () => {
     resetToDefault();
-    Popups.createPopup("Restored settings to default");
+    createPopup("Restored settings to default");
 });
 function resetToDefault() {
     for (const val in defaults) document.getElementById(val).value = defaults[val];
@@ -162,7 +164,7 @@ const preferences = {
 }
 
 const indefinitePopup = (message) => {
-    Popups.createPopup(message).then(_ => indefinitePopup(message)).catch(_ => indefinitePopup(message));
+    createPopup(message).then(_ => indefinitePopup(message)).catch(_ => indefinitePopup(message));
 }
 
 const buttons = {
@@ -314,7 +316,7 @@ const worker = {
                 bottomPixel: lines.getPosition(lines.lines.xLow),
             }
         }
-        if (hasNullOrEmpty(data)) Popups.createPopup("Please fill in all required values to export (SPL and FR values)");
+        if (hasNullOrEmpty(data)) createPopup("Please fill in all required values to export (SPL and FR values)");
         else worker.postMessage(data);
     },
     addPoint: (x, y) => worker.postMessage({type: 'addPoint', x: x, y: y}),
@@ -436,13 +438,13 @@ initAll();
 fileInput.loadFiles = (files) => {
     const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/")), lastId = validFiles.length - 1;
     if (validFiles.length > 0) {
-        Popups.clearPopups();
+        clearPopups();
         validFiles.forEach((file, index) => {
             file = URL.createObjectURL(file);
             imageQueue.addImage(file, index === lastId);
         });
     }
-    else Popups.createPopup("Invalid image/file(s) added!");
+    else createPopup("Invalid image/file(s) added!");
 }
 fileInput.addEventListener('change', (e) => {
     fileInput.loadFiles(e.target.files);
@@ -625,7 +627,7 @@ image.addEventListener('load', () => {
 { // keybindings
     const pointerDown = new PointerEvent('pointerdown', {bubbles: true}), pointerUp = new PointerEvent('pointerup', {bubbles: true});
     const keydownMap = {
-        'escape': Popups.clearPopups,
+        'escape': clearPopups,
         'z': (e) => e.ctrlKey && document.getElementById(e.shiftKey ? 'redo' : 'undo').click(),
         'a': () => document.getElementById('autoPath').click(),
         't': () => document.getElementById('selectPath').click(),
@@ -690,20 +692,13 @@ function updateSizeRatio() {
     sizeRatio = width / image.clientWidth;
 }
 
-// HTML function
-function minVal(e) {
-    if (e.value < e.min) e.value = e.min;
-}
+{
+    const minVal = (e) => {
+        e = e.target;
+        if (e.value < e.min) e.value = e.min;
+    }
 
-console.groupCollapsed('Hi! Welcome to UsyTrace, expend this for some info on the inner workings');
-console.log('If you want to mess with the javascript in this site, objects of note are:');
-console.log('graphs', graphs);
-console.log('lines', lines);
-console.log('worker', worker);
-console.log('image', image);
-console.log('imageQueue', imageQueue);
-console.log('preferences', preferences);
-console.log('buttons', buttons);
-console.log(`I won't explain what they do, but it should be pretty self explanatory`);
-console.log('If you happen to want to report a bug or add a new feature then you can always contact me with the details on the site!');
-console.groupEnd();
+    for (const id of ['FRLower', 'colourTolerance', 'lowFRExport']) {
+        document.getElementById(id).addEventListener('change', minVal);
+    }
+}
