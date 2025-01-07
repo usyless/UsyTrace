@@ -121,14 +121,14 @@
         > div:first-of-type {
             transform: rotateX(90deg) translateZ(var(--half-border)) translateY(var(--half-border));
             background: linear-gradient(to bottom right, var(--primary-logo), var(--fade-out));
-            width: var(--face-size);
+            width: calc(var(--face-size) + var(--border));
             height: var(--border);
         }
 
-        > div:last-of-type {
+        > div:nth-of-type(2) {
             transform: translateY(calc(-1 * var(--border))) translateX(calc(-1 * var(--half-border))) translateZ(var(--half-border)) rotateY(90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            height: var(--face-size);
+            height: calc(var(--face-size) + var(--border));
             width: var(--border);
         }
     }
@@ -140,16 +140,16 @@
         left: 50%;
 
         > div:first-of-type {
-            transform: rotateX(90deg) translateZ(var(--half-border)) translateY(var(--half-border));
+            transform: rotateX(90deg) translateZ(var(--half-border)) translateY(var(--half-border)) translateX(calc(-1 * var(--border)));
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            width: var(--face-size);
+            width: calc(var(--face-size) + var(--border));
             height: var(--border);
         }
 
-        > div:last-of-type {
+        > div:nth-of-type(2) {
             transform: translateY(calc(-1 * var(--border))) translateX(calc(var(--face-size) - var(--half-border))) translateZ(var(--half-border)) rotateY(90deg);
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            height: var(--face-size);
+            height: calc(var(--face-size) + var(--border));
             width: var(--border);
         }
     }
@@ -161,16 +161,16 @@
         background: linear-gradient(to top left, var(--primary-logo), var(--dim-logo));
 
         > div:first-of-type {
-            transform: rotateX(90deg) translateZ(calc(var(--half-border) - var(--face-size))) translateY(calc(var(--half-border) - 1px));
+            transform: rotateX(90deg) translateZ(calc(var(--half-border) - var(--face-size))) translateY(calc(var(--half-border) - 1px)) translateX(calc(-1 * var(--border)));
             background: linear-gradient(to bottom left, var(--primary-logo), var(--fade-out));
-            width: var(--face-size);
+            width: calc(var(--face-size) + var(--border));
             height: var(--border);
         }
 
-        > div:last-of-type {
-            transform: translateY(calc(-1 * var(--border))) translateX(calc(var(--face-size) - var(--half-border))) translateZ(calc(var(--half-border) - 1px)) rotateY(90deg);
+        > div:nth-of-type(2) {
+            transform: translateY(calc(-2 * var(--border))) translateX(calc(var(--face-size) - var(--half-border))) translateZ(calc(var(--half-border) - 1px)) rotateY(90deg);
             background: linear-gradient(to top left, var(--primary-logo), var(--fade-out));
-            height: var(--face-size);
+            height: calc(var(--face-size) + var(--border));
             width: var(--border);
         }
     }
