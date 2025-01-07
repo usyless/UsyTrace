@@ -1,11 +1,12 @@
 'use strict';
 
-import { createPopup } from "./popups.js";
+import { createPopup, addEventListener } from "./popups.js";
 
 document.getElementById("about").addEventListener('click', () => {
     const wrapper = document.createElement('div');
     wrapper.classList.add('popupInner', 'about');
     const logoWrapper = document.createElement('div');
+    let logoWrapperRect = null;
     const logo = document.createElement('div');
     logo.classList.add('logo');
     logoWrapper.appendChild(logo);
@@ -37,9 +38,9 @@ document.getElementById("about").addEventListener('click', () => {
 
         logoWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
         logoWrapper.addEventListener('pointermove', (e) => {
-            const rect = logoWrapper.getBoundingClientRect();
-            logo.style.setProperty('--dy', `${((e.clientX - rect.left) - (rect.width / 2)) / 5}deg`);
-            logo.style.setProperty('--dx', `${((rect.height / 2) - (e.clientY - rect.top)) / 5}deg`);
+            logoWrapperRect = logoWrapperRect ?? logoWrapper.getBoundingClientRect();
+            logo.style.setProperty('--dy', `${((e.clientX - logoWrapperRect.left) - (logoWrapperRect.width / 2)) / 5}deg`);
+            logo.style.setProperty('--dx', `${((logoWrapperRect.height / 2) - (e.clientY - logoWrapperRect.top)) / 5}deg`);
         });
         const reset = () => {
             logo.style.removeProperty('--dx');
@@ -80,4 +81,7 @@ document.getElementById("about").addEventListener('click', () => {
     wrapper.append(logoWrapper, innerWrapper);
 
     createPopup(null, wrapper);
+    addEventListener({target: window, type: 'resize', listener: () => {
+        logoWrapperRect = logoWrapper.getBoundingClientRect();
+    }});
 });

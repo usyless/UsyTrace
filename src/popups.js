@@ -46,6 +46,15 @@ export async function createPopup(textContent, customTextElem) {
     });
 }
 
+const eventListeners = [];
+
+export function addEventListener(listener) {
+    eventListeners.push(listener);
+    listener.target.addEventListener(listener.type, listener.listener);
+}
+
 export function clearPopups() {
+    for (const listener of eventListeners) listener.target.removeEventListener(listener.type, listener.listener);
+    eventListeners.length = 0;
     document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
 }
