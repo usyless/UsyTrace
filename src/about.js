@@ -27,12 +27,9 @@ document.getElementById("about").addEventListener('click', () => {
 
         const lineWrapper = document.createElement('div');
         for (let i = 0; i < 16; ++i) {
-            for (let j = 0; j < 16; ++j) {
-                const line = document.createElement('div');
-                line.style.setProperty('--j', j);
-                line.style.setProperty('--i', i);
-                lineWrapper.appendChild(line);
-            }
+            const line = document.createElement('div');
+            line.style.setProperty('--i', i);
+            lineWrapper.appendChild(line);
         }
         lineWrapper.classList.add('line');
 

@@ -82,7 +82,7 @@
     }
 }
 
-.logo { /* give depth */
+.logo {
     width: 256px;
     height: 256px;
     aspect-ratio: 1;
@@ -90,7 +90,7 @@
     min-height: 256px;
     position: relative;
 
-    transition: 0.1s ease;
+    transition: 0.2s ease-in-out;
 
     transform: rotateX(calc(var(--dx, 0deg) - 25deg)) rotateY(calc(var(--dy, 0deg) - 45deg));
     transform-style: preserve-3d;
@@ -157,33 +157,33 @@
 
         display: grid;
         grid-template-columns: repeat(16, 1fr);
-        grid-template-rows: repeat(16, 1fr);
+
 
         > div {
             transform: translateZ(-25px);
-            width: 100%;
-            height: 100%;
             background: var(--line-colour);
-            animation: wave 2s ease-in-out infinite;
-            animation-delay: calc((var(--i) + var(--j)) * 0.2s);
+            animation: wave 2.5s ease-in-out infinite;
+            animation-delay: calc(var(--i) * 0.2s);
             transform-style: preserve-3d;
 
             &::before, &::after {
                 content: '';
                 position: absolute;
-                width: 100%;
-                height: 100%;
+                aspect-ratio: 1;
                 top: 0;
                 left: 0;
             }
 
             &::before {
+                width: 100%;
                 transform-origin: top;
                 transform: rotateX(90deg);
                 background: linear-gradient(to bottom, var(--line-colour), var(--dim-logo));
             }
 
             &::after {
+                width: 100%;
+                height: 100%;
                 transform-origin: right;
                 transform: rotateY(90deg);
                 background: linear-gradient(to left, var(--line-colour), var(--dim-logo));
