@@ -35,9 +35,11 @@ glass.setColour = (colour) => {
     glass.style.borderColor = `rgb(${colour})`;
 }
 glass.updateImage = () => {
-    glass.img.src = image.src;
-    glass.img.width = image.clientWidth * MAGNIFICATION;
-    glass.img.height = image.clientHeight * MAGNIFICATION;
+    if (image.isValid()) {
+        glass.img.src = image.src;
+        glass.img.width = image.clientWidth * MAGNIFICATION;
+        glass.img.height = image.clientHeight * MAGNIFICATION;
+    }
 }
 
 const waitingOverlay = {
@@ -133,6 +135,7 @@ image.getMouseCoords = (e) => {
         yRel: y - r.top
     }
 }
+image.isValid = () => image.src.startsWith('blob:');
 image.saveLines = () => {
     const imageData = imageMap.get(image.src), lineData = {};
     if (imageData) {
@@ -269,7 +272,7 @@ const worker = {
         }
         return w;
     })(),
-    postMessage: (data) => image.src.startsWith('blob:') && worker.worker.postMessage({src: image.src, ...data}),
+    postMessage: (data) => image.isValid() && worker.worker.postMessage({src: image.src, ...data}),
     setCurrent: () => worker.postMessage({type: 'setCurrent'}),
     removeImage: (src) => worker.postMessage({type: 'removeImage', src: src}),
     addImage: (width, height) => {
