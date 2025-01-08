@@ -74,6 +74,12 @@
     h3:last-of-type {
         margin-bottom: var(--spacing-largest);
     }
+
+    h6 {
+        margin-top: var(--spacing-largest);
+        margin-bottom: 0;
+        max-width: 180px;
+    }
 }
 
 @media(max-width: 600px) {

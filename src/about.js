@@ -72,6 +72,9 @@ document.getElementById("about").addEventListener('click', () => {
     const lower = document.createElement('h3');
     lower.textContent = 'made with ❤️ by usy';
 
+    const smallest = document.createElement('h6');
+    smallest.textContent = 'i made the 3d icon while procrastinating studying for exams, try hovering over it or dragging it';
+
     const contact = document.createElement('div');
     contact.textContent = 'Find me at:';
 
@@ -90,7 +93,7 @@ document.getElementById("about").addEventListener('click', () => {
     githubLink.textContent = 'usyless';
     github.appendChild(githubLink);
 
-    innerWrapper.append(meText, lower, contact, discord, email, github);
+    innerWrapper.append(meText, lower, contact, discord, email, github, smallest);
     wrapper.append(logoWrapper, innerWrapper);
 
     createPopup(wrapper, {listeners: [
