@@ -1,4 +1,4 @@
-const cacheName = 'v30';
+const cacheName = 'v31';
 
 contentToCache = [
     './favicon.ico',
@@ -56,10 +56,9 @@ self.addEventListener('fetch', (e) => {
     if (!(req.url.startsWith('http:') || req.url.startsWith('https:'))) return;
 
     e.respondWith((async () => {
-        const url = new URL(req.url);
-        url.search = '';
-        url.searchParams.set('version', cacheName);
-        return (await caches.match(url.href)) ?? (await fetch(req));
+        const match = await caches.match(req, {ignoreSearch: true});
+        console.log("Match: ", match);
+        return match ?? (await fetch(req));
     })());
 });
 
