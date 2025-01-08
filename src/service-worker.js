@@ -1,4 +1,4 @@
-const cacheName = 'v29';
+const cacheName = 'v30';
 
 contentToCache = [
     './favicon.ico',
@@ -20,6 +20,8 @@ contentToCache = [
     './a.out.wasm',
     './a.out.js',
     './usytrace.webmanifest',
+
+    './icon.svg',
 
     './assets/fonts/open-sans-latin-400-normal.woff',
     './assets/fonts/open-sans-latin-400-normal.woff2',

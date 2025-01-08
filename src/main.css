@@ -93,9 +93,28 @@ body {
     overflow-x: hidden;
 }
 
-#sidebar > h1 {
+#sidebar > :first-child h1 {
+    margin: 0;
+}
+
+#sidebar > :first-child {
     margin-bottom: var(--spacing-larger);
-    margin-top: 0;
+}
+
+@media(max-width: 800px) {
+    #sidebar > :first-child {
+        background-image: url("./icon.svg");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 50px;
+        height: 70px;
+        max-height: 70px;
+        flex-shrink: 0;
+
+        h1 {
+            display: none;
+        }
+    }
 }
 
 #sidebar h3 {
