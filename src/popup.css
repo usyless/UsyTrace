@@ -88,6 +88,10 @@
     }
 }
 
+.logoWrapper {
+    touch-action: none;
+}
+
 .logo {
     pointer-events: none;
     width: 256px;

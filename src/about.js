@@ -10,6 +10,7 @@ document.getElementById("about").addEventListener('click', () => {
     const logo = document.createElement('div');
     logo.classList.add('logo');
     logoWrapper.appendChild(logo);
+    logoWrapper.classList.add('logoWrapper');
 
     { // logo stuff
         const wall1 = document.createElement('div');
