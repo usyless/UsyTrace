@@ -1,4 +1,4 @@
-# UsyTrace: Online Frequency Response Tracer
+<h1 style="display: flex; align-items: center; column-gap: 10px;"><img src="https://github.com/usyless/UsyTrace/blob/main/src/assets/icon64.png?raw=true" alt="logo">UsyTrace: Online Frequency Response Tracer</h1>
 
 - https://usyless.uk/trace
 - All Processing is done on device and no analytics are performed. 
@@ -42,9 +42,9 @@
 1. Download and install [emscripten](https://emscripten.org/)
 2. Compile with build.bat, or using the commands below.
  ### Testing
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -fno-rtti -flto -sENVIRONMENT=worker -sINITIAL_HEAP=104857600 -sFILESYSTEM=0`
+<pre>emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -fno-rtti -flto -sENVIRONMENT=worker -sINITIAL_HEAP=104857600 -sFILESYSTEM=0</pre>
 ### Release
-`emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -flto -fno-rtti -sENVIRONMENT=worker -sFILESYSTEM=0`
+<pre>emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -flto -fno-rtti -sENVIRONMENT=worker -sFILESYSTEM=0</pre>
 
 ### Info/Extras
 - Default heap size set to 100mb
