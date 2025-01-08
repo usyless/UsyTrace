@@ -1,6 +1,6 @@
 'use strict';
 
-import { createPopup, addEventListener } from "./popups.js";
+import { createPopup } from "./popups.js";
 
 document.getElementById("about").addEventListener('click', () => {
     const wrapper = document.createElement('div');
@@ -35,16 +35,26 @@ document.getElementById("about").addEventListener('click', () => {
         lineWrapper.classList.add('line');
 
         logo.append(wall1, wall2, wall3, corner1, corner2, corner3, lineWrapper);
-
+        let timer, timerTransition;
         logoWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
         logoWrapper.addEventListener('pointermove', (e) => {
-            logoWrapperRect = logoWrapperRect ?? logoWrapper.getBoundingClientRect();
-            logo.style.setProperty('--dy', `${((e.clientX - logoWrapperRect.left) - (logoWrapperRect.width / 2)) / 5}deg`);
-            logo.style.setProperty('--dx', `${((logoWrapperRect.height / 2) - (e.clientY - logoWrapperRect.top)) / 5}deg`);
+            if (e.target === e.currentTarget) {
+                clearTimeout(timer);
+                logoWrapperRect = logoWrapperRect ?? logoWrapper.getBoundingClientRect();
+                logo.style.setProperty('--dy', `${((e.clientX - logoWrapperRect.left) - (logoWrapperRect.width / 2)) / 5}deg`);
+                logo.style.setProperty('--dx', `${((logoWrapperRect.height / 2) - (e.clientY - logoWrapperRect.top)) / 5}deg`);
+                timerTransition = setTimeout(() => {
+                    logo.classList.add('no-transition');
+                }, 1000);
+            }
         });
         const reset = () => {
-            logo.style.removeProperty('--dx');
-            logo.style.removeProperty('--dy');
+            timer = setTimeout(() => {
+                clearTimeout(timerTransition);
+                logo.classList.remove('no-transition');
+                logo.style.removeProperty('--dx');
+                logo.style.removeProperty('--dy');
+            }, 100);
         };
         logoWrapper.addEventListener('pointerout', reset);
         logoWrapper.addEventListener('pointerup', reset);
@@ -81,8 +91,8 @@ document.getElementById("about").addEventListener('click', () => {
     innerWrapper.append(meText, lower, contact, discord, email, github);
     wrapper.append(logoWrapper, innerWrapper);
 
-    createPopup(null, wrapper);
-    addEventListener({target: window, type: 'resize', listener: () => {
+    createPopup(wrapper, {listeners: [
+        {target: window, type: 'resize', listener: () => {
         logoWrapperRect = logoWrapper.getBoundingClientRect();
-    }});
+    }}]});
 });

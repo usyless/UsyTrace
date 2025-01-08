@@ -1,60 +1,77 @@
 'use strict';
 
-export async function createPopup(textContent, customTextElem) {
+const eventListeners = [];
+const onclosefuncs = [];
+
+export async function createPopup(content, {listeners = [], buttons, classes = [], onclose} = {}) {
     clearPopups();
     return new Promise((resolve) => {
         const center_div = document.createElement('div'),
             main_div = document.createElement('div'),
-            inner_div = document.createElement('div'),
-            buttons_div = document.createElement('div'),
-            ok_button = document.createElement('button');
-        let text_div = document.createElement('div');
+            inner_div = document.createElement('div');
 
         center_div.setAttribute('usy-overlay', '');
         center_div.classList.add('fullscreen', 'blur');
-        main_div.classList.add('popupOuter');
-        inner_div.classList.add('popupInner');
-        buttons_div.classList.add('popupButtons');
-        if (textContent != null) {
-            text_div.classList.add('popupText');
-            text_div.textContent = textContent;
-        } else text_div = customTextElem;
-        ok_button.classList.add('standardButton');
+        main_div.classList.add('popupOuter', ...classes);
+        inner_div.classList.add('popupInner', ...classes);
 
-        ok_button.textContent = 'Ok';
+        const innerContent = [];
+        if (typeof content === 'string') {
+            const text_div = document.createElement('div');
+            text_div.classList.add('popupText');
+            text_div.textContent = content;
+            innerContent.push(text_div);
+        } else if (Array.isArray(content)) {
+            innerContent.push(...content);
+        } else {
+            innerContent.push(content);
+        }
 
         main_div.appendChild(inner_div);
-        inner_div.append(text_div, buttons_div);
-        buttons_div.appendChild(ok_button);
 
-        ok_button.addEventListener('click', () => {
-            clearPopups();
-            resolve(true);
-        });
-        center_div.addEventListener('click', () => {
-            clearPopups();
-            resolve(false);
-        });
-        main_div.addEventListener('click', (e) => {
-            e.stopPropagation();
-            e.stopImmediatePropagation();
+        let buttons_div;
+
+        if (buttons != null) {
+            buttons_div = buttons;
+        } else {
+            buttons_div = document.createElement('div');
+            buttons_div.classList.add('popupButtons');
+            const ok_button = document.createElement('button');
+            ok_button.classList.add('standardButton');
+            ok_button.textContent = 'Ok';
+
+            buttons_div.appendChild(ok_button);
+
+            ok_button.addEventListener('click', () => {
+                clearPopups();
+                resolve(true);
+            });
+        }
+        inner_div.append(...innerContent, buttons_div);
+
+        center_div.addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                clearPopups();
+                resolve(false);
+            }
         });
 
         center_div.appendChild(main_div);
 
+        for (const listener of listeners) {
+            eventListeners.push(listener);
+            listener.target.addEventListener(listener.type, listener.listener);
+        }
+
+        if (onclose != null) onclosefuncs.push(onclose);
         document.body.appendChild(center_div);
     });
 }
 
-const eventListeners = [];
-
-export function addEventListener(listener) {
-    eventListeners.push(listener);
-    listener.target.addEventListener(listener.type, listener.listener);
-}
-
 export function clearPopups() {
-    for (const listener of eventListeners) listener.target.removeEventListener(listener.type, listener.listener);
+    for (const listener of eventListeners) listener.target?.removeEventListener?.(listener.type, listener.listener);
+    for (const f of onclosefuncs) f();
+    onclosefuncs.length = 0;
     eventListeners.length = 0;
     document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
 }

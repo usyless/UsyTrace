@@ -1,6 +1,6 @@
 'use strict';
 
-import { clearPopups} from "./popups.js";
+import { createPopup, clearPopups } from "./popups.js";
 
 const TUTORIAL_VERSION = 2;
 const USER_TUTORIAL_VERSION = (() => {
@@ -66,21 +66,11 @@ if (TUTORIAL_VERSION !== USER_TUTORIAL_VERSION) showTutorial();
 
 function showTutorial() {
     CURRENT_PAGE = 0;
-    const center_div = document.createElement('div'),
-        main_div = document.createElement('div'),
-        inner_div = document.createElement('div'),
-        text_div = document.createElement('div'),
+    const text_div = document.createElement('div'),
         buttons_div = document.createElement('div');
 
-    center_div.setAttribute('usy-overlay', '');
-    center_div.classList.add('fullscreen', 'blur');
-    main_div.classList.add('popupOuter', 'fixedSize');
-    inner_div.classList.add('popupInner', 'fixedSize');
     buttons_div.classList.add('popupButtons');
     text_div.classList.add('popupText');
-
-    center_div.appendChild(main_div);
-    main_div.appendChild(inner_div);
 
     // Main Page
     const headContainer = document.createElement('div'),
@@ -89,10 +79,9 @@ function showTutorial() {
     headContainer.classList.add('headContainer');
     exit.classList.add('standardButton');
     exit.textContent = '𐌢';
-    exit.addEventListener('click', hideTutorial);
+    exit.addEventListener('click', clearPopups);
 
     headContainer.append(head, exit);
-    inner_div.append(headContainer, text_div, buttons_div);
 
     const mainText = document.createElement('p');
     text_div.append(mainText);
@@ -135,21 +124,12 @@ function showTutorial() {
         mainText.innerHTML = data['body'];
     }
 
-    center_div.addEventListener('click', () => {
-        clearPopups();
-    });
-    main_div.addEventListener('click', (e) => {
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-    });
-
     buttons_div.append(previousPage, nextPage);
 
-    document.body.appendChild(center_div);
+    createPopup([headContainer, text_div, buttons_div], {buttons: buttons_div, classes: ['fixedSize'], onclose: finishTutorial});
 }
 
-function hideTutorial() {
-    clearPopups();
+function finishTutorial() {
     window.localStorage.setItem('USER_TUTORIAL_VERSION', TUTORIAL_VERSION.toString());
 }
 

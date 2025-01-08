@@ -83,6 +83,7 @@
 }
 
 .logo {
+    pointer-events: none;
     width: 256px;
     height: 256px;
     aspect-ratio: 1;
@@ -90,9 +91,13 @@
     min-height: 256px;
     position: relative;
 
-    transition: 0.2s ease-in-out;
+    transition: 1s ease-out 100ms;
 
-    transform: rotateX(calc(var(--dx, 0deg) - 25deg)) rotateY(calc(var(--dy, 0deg) - 45deg));
+    &.no-transition {
+        transition: none;
+    }
+
+    transform: rotateX(calc(var(--dx, 0deg) - 25deg)) rotateY(calc(var(--dy, 0deg) - 45deg)) translateZ(calc(-1 * var(--half-face-size))) translateX(calc(-1 * var(--half-face-size))) translateY(calc(-1 * var(--half-face-size)));
     transform-style: preserve-3d;
 
     --face-size: 128px;
@@ -111,7 +116,7 @@
         position: absolute;
         transform-style: preserve-3d;
         left: 50%;
-        top: 5%;
+        top: 47%;
     }
 
     .wall {
