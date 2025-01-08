@@ -35,31 +35,33 @@ document.getElementById("about").addEventListener('click', () => {
         lineWrapper.classList.add('line');
 
         logo.append(wall1, wall2, wall3, corner1, corner2, corner3, lineWrapper);
-        let timer, timerTransition;
-        logoWrapper.addEventListener('pointerdown', (e) => e.stopPropagation());
+        let timer, transitioned;
         logoWrapper.addEventListener('pointermove', (e) => {
             if (e.target === e.currentTarget) {
                 clearTimeout(timer);
                 logoWrapperRect = logoWrapperRect ?? logoWrapper.getBoundingClientRect();
                 logo.style.setProperty('--dy', `${((e.clientX - logoWrapperRect.left) - (logoWrapperRect.width / 2)) / 5}deg`);
                 logo.style.setProperty('--dx', `${((logoWrapperRect.height / 2) - (e.clientY - logoWrapperRect.top)) / 5}deg`);
-                timerTransition = setTimeout(() => {
-                    logo.classList.add('no-transition');
-                }, 1000);
+                if (transitioned == null) {
+                    logo.classList.add('quick');
+                    transitioned = setTimeout(() => {
+                        logo.classList.add('no-transition');
+                        logo.classList.remove('quick');
+                    }, 200);
+                }
             }
         });
         const reset = () => {
+            clearTimeout(transitioned);
+            transitioned = null;
             timer = setTimeout(() => {
-                clearTimeout(timerTransition);
+                logo.classList.remove('quick');
                 logo.classList.remove('no-transition');
                 logo.style.removeProperty('--dx');
                 logo.style.removeProperty('--dy');
             }, 100);
         };
-        logoWrapper.addEventListener('pointerout', reset);
-        logoWrapper.addEventListener('pointerup', reset);
         logoWrapper.addEventListener('pointerleave', reset);
-        logoWrapper.addEventListener('pointercancel', reset);
         logoWrapper.addEventListener('dragstart', (e) => e.preventDefault());
     }
 
