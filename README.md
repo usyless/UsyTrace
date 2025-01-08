@@ -1,4 +1,4 @@
-<h1 style="display: flex; align-items: center; column-gap: 10px;"><img src="https://github.com/usyless/UsyTrace/blob/main/src/assets/icon64.png?raw=true" alt="logo">UsyTrace: Online Frequency Response Tracer</h1>
+<h1><img src="https://github.com/usyless/UsyTrace/blob/main/src/assets/icon64.png?raw=true" alt="logo"> UsyTrace: Online Frequency Response Tracer</h1>
 
 - https://usyless.uk/trace
 - All Processing is done on device and no analytics are performed. 
