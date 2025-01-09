@@ -1,10 +1,9 @@
-const cacheName = 'v33';
+const cacheName = 'v34';
 
 contentToCache = [
     './favicon.ico',
 
     './',
-    './index.html',
 
     './popup.css',
     './shared.css',

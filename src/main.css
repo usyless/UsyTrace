@@ -266,3 +266,13 @@ input[type="number"]:focus-visible, select:focus-visible {
     max-height: 100%;
     cursor: pointer;
 }
+
+#traceHistoryControl {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    row-gap: var(--spacing);
+    column-gap: var(--spacing);
+
+    justify-content: center;
+}
