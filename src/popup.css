@@ -151,7 +151,7 @@
         width: calc(var(--face-size) + var(--border));
         height: calc(var(--face-size) + var(--border));
 
-        border-bottom-left-radius: 30px;
+        /*border-bottom-left-radius: 30px;*/
         clip-path: polygon(0 0, var(--border) 0, var(--border) calc(100% - var(--border)), 100% calc(100% - var(--border)), 100% 100%, 0% 100%);
         background: linear-gradient(to bottom left, var(--primary-logo) 50%, var(--dim-logo));
 
