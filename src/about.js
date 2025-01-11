@@ -20,13 +20,6 @@ document.getElementById("about").addEventListener('click', () => {
         wall2.classList.add('wall');
         wall3.classList.add('wall');
 
-        const corner1 = document.createElement('div');
-        const corner2 = document.createElement('div');
-        const corner3 = document.createElement('div');
-        corner1.classList.add('corner');
-        corner2.classList.add('corner');
-        corner3.classList.add('corner');
-
         const lineWrapper = document.createElement('div');
         for (let i = 0; i < 16; ++i) {
             const line = document.createElement('div');
@@ -35,7 +28,7 @@ document.getElementById("about").addEventListener('click', () => {
         }
         lineWrapper.classList.add('line');
 
-        logo.append(wall1, wall2, wall3, corner1, corner2, corner3, lineWrapper);
+        logo.append(wall1, wall2, wall3, lineWrapper);
         let timer, transitioned;
         logoWrapper.addEventListener('pointermove', (e) => {
             if (e.target === e.currentTarget) {

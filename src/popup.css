@@ -139,34 +139,37 @@
         &:nth-child(1) {
             transform-origin: left;
             transform: rotateY(-90deg);
+
+            &::before {
+                transform-origin: left;
+                transform: rotateY(90deg) translateZ(calc(var(--face-size) + var(--border))) translateX(calc(-1 * var(--border)));
+            }
+        }
+
+        &:nth-child(2)::before {
+            transform-origin: top;
+            transform: rotateX(90deg) rotateZ(90deg) translateX(calc(1.5 * var(--border))) translateY(calc(-2.5 * var(--border)));
         }
 
         &:nth-child(3) {
             transform-origin: bottom;
             transform: rotateX(-90deg);
-        }
-    }
 
-    .corner {
-        width: calc(var(--face-size) + var(--border));
-        height: calc(var(--face-size) + var(--border));
-
-        /*border-bottom-left-radius: 30px;*/
-        clip-path: polygon(0 0, var(--border) 0, var(--border) calc(100% - var(--border)), 100% calc(100% - var(--border)), 100% 100%, 0% 100%);
-        background: linear-gradient(to bottom left, var(--primary-logo) 50%, var(--dim-logo));
-
-        &:nth-child(4) {
-            transform: translateZ(var(--face-size)) translateX(calc(-1 * var(--border)));
+            &::before {
+                transform-origin: right;
+                transform: rotateY(90deg) translateX(var(--face-size));
+            }
         }
 
-        &:nth-child(5) {
-            transform-origin: top;
-            transform: rotateX(90deg) rotateZ(90deg) translateX(calc(1.5 * var(--border))) translateY(calc(-1.5 * var(--border)));
-        }
-
-        &:nth-child(6) {
-            transform-origin: right;
-            transform: rotateY(-90deg) translateX(var(--face-size)) translateZ(var(--border));
+        &::before {
+            position: absolute;
+            content: '';
+            width: calc(var(--face-size) + var(--border));
+            height: calc(var(--face-size) + var(--border));
+            right: 0;
+            top: 0;
+            clip-path: polygon(0 0, var(--border) 0, var(--border) calc(100% - var(--border)), 100% calc(100% - var(--border)), 100% 100%, 0% 100%);
+            background: linear-gradient(to bottom left, var(--primary-logo) 50%, var(--dim-logo));
         }
     }
 
