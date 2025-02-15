@@ -1,4 +1,4 @@
-<h1 align="center"><a href="https://usyless.uk/trace"><img src="https://github.com/usyless/UsyTrace/blob/main/src/icon.svg?raw=true" alt="logo" width="160" height="160"></a><br>UsyTrace</h1><h3 align="center">Online Frequency Response Tracer</h3>
+<h1 align="center"><a href="https://usyless.uk/trace"><img src="https://github.com/usyless/UsyTrace/blob/main/src/favicon.svg?raw=true" alt="logo" width="160" height="160"></a><br>UsyTrace</h1><h3 align="center">Online Frequency Response Tracer</h3>
 
 - https://usyless.uk/trace
 - All Processing is done on device and no analytics are performed. 

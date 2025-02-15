@@ -103,7 +103,7 @@ body {
 
 @media(max-width: 800px) {
     #sidebar > :first-child {
-        background-image: url("./icon.svg");
+        background-image: url("./favicon.svg");
         background-repeat: no-repeat;
         background-position: center;
         background-size: 50px;
