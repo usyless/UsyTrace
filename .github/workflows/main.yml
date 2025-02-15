@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
 
 jobs:
   build:
@@ -25,8 +27,6 @@ jobs:
         filters: |
           imageTracer:
             - 'src/imageTracer.cpp'
-          anything:
-            - 'src/**'
 
     - name: Set up Emscripten and build
       if: steps.changes.outputs.imageTracer == 'true'
@@ -42,7 +42,6 @@ jobs:
 
     - name: Checkout github pages repo
       uses: actions/checkout@v4
-      if: steps.changes.outputs.anything == 'true'
       with:
         repository: usyless/usyless.github.io
         token: ${{ secrets.BOT_TOKEN }}
@@ -51,14 +50,12 @@ jobs:
         persist-credentials: true
 
     - name: Move built files to pages repo
-      if: steps.changes.outputs.anything == 'true'
       run: |
         cp -rf usytrace/src/* usyless.github.io/trace/
         rm -f usyless.github.io/trace/imageTracer.cpp
     
     - name: Commit and push
       working-directory: usyless.github.io
-      if: steps.changes.outputs.anything == 'true'
       run: |
         git config --global user.name 'usy [github actions]'
         git config --global user.email 'github-actions@github.com'

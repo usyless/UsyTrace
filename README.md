@@ -1,11 +1,11 @@
-<h1><img src="https://github.com/usyless/UsyTrace/blob/main/src/icon.svg?raw=true" alt="logo" width="64" height="64"> UsyTrace: Online Frequency Response Tracer</h1>
+<h1 align="center"><a href="https://usyless.uk/trace"><img src="https://github.com/usyless/UsyTrace/blob/main/src/icon.svg?raw=true" alt="logo" width="160" height="160"></a><br>UsyTrace</h1><h3 align="center">Online Frequency Response Tracer</h3>
 
 - https://usyless.uk/trace
 - All Processing is done on device and no analytics are performed. 
 - #### Feel free to contribute or suggest changes
 - #### Found a bug? Report it to @usy_ on Discord!
 
-## General use
+# General use
 - Press "Choose Image" and choose an image to trace from, drop any images onto the page, or paste an image into the page using Ctrl+V
 - Align the top and bottom lines for SPL and Frequency to known values, then input those in the sidebar
 - The line should be traced initially, if it is not, refer below
@@ -22,13 +22,13 @@
 ### Mobile Specifics
 - Move the SPL and Frequency lines by using the buttons, selecting the line to trace works as normal but may require more tries
 
-## Trace Settings:
+# Trace Settings:
 ### Colour Tolerance
 - Adjust the maximum tolerance for colours that the tracer takes into account when tracing the line
 - Increase this if the tracer isn't selecting the whole line
 - Decrease this if the trace is jittery
 
-## Export Settings
+# Export Settings
 ### Points Per Octave
 - The points per octave to export data with, applied smoothing is half of the export PPO
 ### Delimitation
