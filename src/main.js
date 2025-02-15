@@ -100,11 +100,11 @@ const erasing = {
     },
     begin: (x) => {
         erasing.show();
-        erasing.x = Math.max(Math.min(Number(x), width), 0);
+        erasing.x = Math.max(Math.min(+x, width), 0);
         erasing.svg.setAttributeNS(null, 'x', x);
     },
     move: (x) => {
-        x = Number(x);
+        x = +x;
         if (x < erasing.x) {
             erasing.svg.setAttributeNS(null, 'width', `${erasing.x - x}px`);
             erasing.svg.setAttributeNS(null, 'x', x);
@@ -114,7 +114,7 @@ const erasing = {
         }
     },
     finish: (x) => {
-        x = Math.max(Math.min(Number(x), width), 0);
+        x = Math.max(Math.min(+x, width), 0);
         worker.eraseRegion(...(erasing.x < x) ? [erasing.x, x] : [x, erasing.x]);
         erasing.svg.setAttributeNS(null, 'width', '0');
     },
