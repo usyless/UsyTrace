@@ -186,7 +186,7 @@
             transform: translateZ(15px);
             background: var(--line-colour);
             animation: wave 2.5s ease-in-out infinite;
-            animation-delay: calc(var(--i) * 0.2s);
+            animation-delay: calc(var(--i) * -0.2s);
             transform-style: preserve-3d;
 
             &::before, &::after {
