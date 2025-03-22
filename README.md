@@ -40,7 +40,8 @@
 
 # Compiling Instructions
 1. Download and install [emscripten](https://emscripten.org/)
-2. Compile with build.bat, or for linux, follow the compiling commands in .github/workflows/main.yml
+2. Make sure to install `3.1.74`, newer versions perform worse with tracing (this will be fixed eventually)
+3. Compile with build.bat, or for linux, follow the compiling commands in .github/workflows/main.yml
 
 ### Info/Extras
 - Default heap size set to 100mb
