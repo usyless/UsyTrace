@@ -12,7 +12,7 @@ const api = {
     smoothTrace: Module["cwrap"]("smoothTrace", "string"),
     clear: Module["cwrap"]("clear", ""),
     auto: Module["cwrap"]("autoTrace", "string", ["number"]),
-    exportTrace: Module["cwrap"]("exportTrace", "string", new Array(12).fill("number")),
+    exportTrace: Module["cwrap"]("exportTrace", "string", Array(12).fill("number")),
     snap: Module["cwrap"]("snap", "number", ["number", "number", "number"]),
     getPixelColour: Module["cwrap"]("getPixelColour", "number", ["number", "number"]),
     getCurrentPath: Module["cwrap"]("getCurrentPath", "string")
