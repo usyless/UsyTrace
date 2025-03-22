@@ -41,7 +41,7 @@ jobs:
       run: |
         source ./emsdk/emsdk_env.sh
         cd ./usytrace/src
-        emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -fno-rtti -flto -g0 -fno-exceptions --closure 1 --closure-args=--externs=worker.js
+        emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -fno-rtti -flto -g0 -fno-exceptions --closure 1 --closure-args=--compilation_level=SIMPLE --post-js worker.js
 
     - name: Minify files
       run: |
@@ -50,7 +50,6 @@ jobs:
         echo "JAVA_HOME=${{ env.JAVA_HOME_21_X64 }}" >> $GITHUB_ENV
         
         java -jar "$EMSDK/upstream/emscripten/node_modules/google-closure-compiler-java/compiler.jar" --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 --js main.js popups.js tutorial.js about.js updater.js --js_output_file main.min.js
-        java -jar "$EMSDK/upstream/emscripten/node_modules/google-closure-compiler-java/compiler.jar" --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 --js worker.js --js_output_file worker.min.js
 
     - name: Checkout github pages repo
       uses: actions/checkout@v4

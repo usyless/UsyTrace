@@ -12,7 +12,6 @@ contentToCache = [
     './main.css',
     './tutorial.css',
 
-    './worker.min.js',
     './main.min.js',
 
     './a.out.wasm',

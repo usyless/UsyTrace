@@ -1,5 +1,3 @@
-self.importScripts('./a.out.js');
-
 const typeMap = {
     setCurrent: setCurrent,
     removeImage: removeImage,
