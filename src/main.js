@@ -282,7 +282,8 @@ const worker = {
         processing_canvas.height = height;
         processing_context.drawImage(image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
-        worker.postMessage({
+        worker.worker.postMessage({
+            src: image.src, // use postMessage directly to pass buffer properly
             type: 'setData', data: imageData.data, width, height
         }, [imageData.data.buffer]);
     },
@@ -537,9 +538,9 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
             line = lines.lines[p.dataset.for];
             if (!snap) {
                 holdInterval = setInterval(() => {
-                    lines.setPosition(line, lines.getPosition(line) + parseInt(t.dataset.direction) * sizeRatio);
+                    lines.setPosition(line, lines.getPosition(line) + parseInt(t.dataset.direction, 10) * sizeRatio);
                 }, 10);
-            } else worker.snapLine(lines.lines[p.dataset.for], parseInt(t.dataset.direction));
+            } else worker.snapLine(lines.lines[p.dataset.for], parseInt(t.dataset.direction, 10));
         }
     });
 

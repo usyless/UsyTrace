@@ -4,7 +4,7 @@ import { createPopup, clearPopups } from "./popups.js";
 
 const TUTORIAL_VERSION = 2;
 const USER_TUTORIAL_VERSION = (() => {
-    try {return parseInt(window.localStorage.getItem('USER_TUTORIAL_VERSION') ?? 0);} catch {return 0;}
+    try {return parseInt(window.localStorage.getItem('USER_TUTORIAL_VERSION') ?? 0, 10);} catch {return 0;}
 })();
 
 const TUTORIAL_PAGES = [{

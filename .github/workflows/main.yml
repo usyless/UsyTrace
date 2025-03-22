@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'src/**'
 
 jobs:
   build:
@@ -47,7 +49,7 @@ jobs:
         cd ./usytrace/src
         echo "JAVA_HOME=${{ env.JAVA_HOME_21_X64 }}" >> $GITHUB_ENV
         
-        java -jar "$EMSDK/upstream/emscripten/node_modules/google-closure-compiler-java/compiler.jar" --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 --js main.js --js popups.js --js tutorial.js --js about.js --js updater.js --js_output_file main.min.js
+        java -jar "$EMSDK/upstream/emscripten/node_modules/google-closure-compiler-java/compiler.jar" --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 --js main.js popups.js tutorial.js about.js updater.js --js_output_file main.min.js
         java -jar "$EMSDK/upstream/emscripten/node_modules/google-closure-compiler-java/compiler.jar" --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 --js worker.js --js_output_file worker.min.js
 
     - name: Checkout github pages repo
@@ -62,7 +64,14 @@ jobs:
     - name: Move built files to pages repo
       run: |
         cp -rf usytrace/src/* usyless.github.io/trace/
-        rm -f usyless.github.io/trace/imageTracer.cpp
+        cd usyless.github.io/trace
+        rm -f imageTracer.cpp
+        rm -f about.js
+        rm -f main.js
+        rm -f worker.js
+        rm -f updater.js
+        rm -f tutorial.js
+        rm -f popups.js
     
     - name: Commit and push
       working-directory: usyless.github.io

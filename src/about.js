@@ -23,7 +23,7 @@ document.getElementById("about").addEventListener('click', () => {
         const lineWrapper = document.createElement('div');
         for (let i = 0; i < 16; ++i) {
             const line = document.createElement('div');
-            line.style.setProperty('--i', i);
+            line.style.setProperty('--i', i.toString());
             lineWrapper.appendChild(line);
         }
         lineWrapper.classList.add('line');
