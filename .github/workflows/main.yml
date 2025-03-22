@@ -27,6 +27,7 @@ jobs:
             - 'src/imageTracer.cpp'
 
     - name: Set up Emscripten
+      run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
         git pull
