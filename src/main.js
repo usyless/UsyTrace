@@ -225,7 +225,7 @@ const buttons = {
 
 const worker = {
     worker: (() => {
-        const w = new Worker("./worker.js");
+        const w = new Worker("./worker.min.js");
         w.onmessage = (e) => {
             const data = e.data, type = data.type;
 

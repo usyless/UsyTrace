@@ -40,11 +40,7 @@
 
 # Compiling Instructions
 1. Download and install [emscripten](https://emscripten.org/)
-2. Compile with build.bat, or using the commands below.
- ### Testing
-<pre>emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING -fno-rtti -flto -sENVIRONMENT=worker -sINITIAL_HEAP=104857600 -sFILESYSTEM=0</pre>
-### Release
-<pre>emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -flto -fno-rtti -sENVIRONMENT=worker -sFILESYSTEM=0</pre>
+2. Compile with build.bat, or for linux, follow the compiling commands in .github/workflows/main.yml
 
 ### Info/Extras
 - Default heap size set to 100mb
