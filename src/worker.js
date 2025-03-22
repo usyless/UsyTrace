@@ -1,55 +1,101 @@
+const api = {
+    create_buffer: Module["cwrap"]("create_buffer", "number", ["number", "number"]),
+    setCurrent: Module["cwrap"]("setCurrent", "", ["string"]),
+    addImage: Module["cwrap"]("addImage", "", ["string", "number", "number", "number"]),
+    removeImage: Module["cwrap"]("removeImage", "", ["string"]),
+    historyStatus: Module["cwrap"]("historyStatus", "number"),
+    trace: Module["cwrap"]("trace", "string", ["number", "number", "number"]),
+    point: Module["cwrap"]("point", "string", ["number", "number"]),
+    undo: Module["cwrap"]("undo", "string"),
+    redo: Module["cwrap"]("redo", "string"),
+    eraseRegion: Module["cwrap"]("eraseRegion", "string", ["number", "number"]),
+    smoothTrace: Module["cwrap"]("smoothTrace", "string"),
+    clear: Module["cwrap"]("clear", ""),
+    auto: Module["cwrap"]("autoTrace", "string", ["number"]),
+    exportTrace: Module["cwrap"]("exportTrace", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]),
+    snap: Module["cwrap"]("snap", "number", ["number", "number", "number"]),
+    getPixelColour: Module["cwrap"]("getPixelColour", "number", ["number", "number"]),
+    getCurrentPath: Module["cwrap"]("getCurrentPath", "string")
+}
+
+const defaultTraceResponse = (data, response) => {
+    data["svg"] = response;
+    return data;
+}
+
 const typeMap = {
-    setCurrent: setCurrent,
-    removeImage: removeImage,
-    setData: addImage,
-    getHistoryStatus: getHistoryStatus,
+    /** @export */
+    setCurrent: (data) => api.setCurrent(data["src"]),
+    /** @export */
+    removeImage: (data) => api.removeImage(data["src"]),
+    /** @export */
+    setData: (data) => {
+        const p = api.create_buffer(parseInt(data["width"], 10), parseInt(data["height"], 10));
+        Module["HEAPU8"]["set"](data["data"], p);
+        api.addImage(data["src"], p, parseInt(data["width"], 10), parseInt(data["height"], 10));
+        return {src: data["src"], type: data["type"]};
+    },
+    /** @export */
+    getHistoryStatus: (data) => {
+        const value = api.historyStatus();
+        data["undo"] = Boolean((value & 2) >> 1);
+        data["redo"] = Boolean(value & 1);
+        return data;
+    },
 
-    clearTrace: clear,
-    undoTrace: undo,
-    redoTrace: redo,
-    eraseRegion: eraseRegion,
-    smoothTrace: smoothTrace,
+    /** @export */
+    clearTrace: (data) => defaultTraceResponse(data, api.clear()),
+    /** @export */
+    undoTrace: (data) => defaultTraceResponse(data, api.undo()),
+    /** @export */
+    redoTrace: (data) => defaultTraceResponse(data, api.redo()),
+    /** @export */
+    eraseRegion: (data) => defaultTraceResponse(data, api.eraseRegion(parseInt(data["begin"], 10), parseInt(data["end"], 10))),
+    /** @export */
+    smoothTrace: (data) => defaultTraceResponse(data, api.smoothTrace()),
 
-    exportTrace: exportTrace,
+    /** @export */
+    exportTrace: (data) => {
+        data["export"] = api.exportTrace(parseInt(data["PPO"], 10), data["delim"] === "tab" ? 1 : 0,
+            parseFloat(data["lowFR"]), parseFloat(data["highFR"]), parseFloat(data["SPL"]["top"]), parseFloat(data["SPL"]["topPixel"]),
+            parseFloat(data["SPL"]["bottom"]), parseFloat(data["SPL"]["bottomPixel"]), parseFloat(data["FR"]["top"]),
+            parseFloat(data["FR"]["topPixel"]), parseFloat(data["FR"]["bottom"]), parseFloat(data["FR"]["bottomPixel"]));
+        return data;
+    },
 
-    addPoint: point,
-    autoTrace: auto,
-    trace: trace,
+    /** @export */
+    addPoint: (data) => defaultTraceResponse(data, api.point(parseInt(data["x"], 10), parseInt(data["y"], 10))),
+    /** @export */
+    autoTrace: (data) => defaultTraceResponse(data, api.auto(parseInt(data["colourTolerance"], 10))),
+    /** @export */
+    trace: (data) => defaultTraceResponse(data, api.trace(parseInt(data["x"], 10), parseInt(data["y"], 10), parseInt(data["colourTolerance"], 10))),
 
-    snapLine: snapLine,
+    /** @export */
+    snapLine: (data) => {
+        data["line"]["position"] = api.snap(parseInt(data["line"]["position"]), data["line"]["direction"] === "x" ? 1 : 0, parseInt(data["direction"], 10));
+        return data;
+    },
 
-    getPixelColour: getPixelColour,
-    getCurrentPath: getCurrentPath
-}, api = {
-    create_buffer: Module.cwrap("create_buffer", "number", ["number", "number"]),
-    setCurrent: Module.cwrap("setCurrent", "", ["string"]),
-    addImage: Module.cwrap("addImage", "", ["string", "number", "number", "number"]),
-    removeImage: Module.cwrap("removeImage", "", ["string"]),
-    historyStatus: Module.cwrap("historyStatus", "number"),
-    trace: Module.cwrap("trace", "string", ["number", "number", "number"]),
-    point: Module.cwrap("point", "string", ["number", "number"]),
-    undo: Module.cwrap("undo", "string"),
-    redo: Module.cwrap("redo", "string"),
-    eraseRegion: Module.cwrap("eraseRegion", "string", ["number", "number"]),
-    smoothTrace: Module.cwrap("smoothTrace", "string"),
-    clear: Module.cwrap("clear", ""),
-    auto: Module.cwrap("autoTrace", "string", ["number"]),
-    exportTrace: Module.cwrap("exportTrace", "string", ["number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number", "number"]),
-    snap: Module.cwrap("snap", "number", ["number", "number", "number"]),
-    getPixelColour: Module.cwrap("getPixelColour", "number", ["number", "number"]),
-    getCurrentPath: Module.cwrap("getCurrentPath", "string")
-};
+    /** @export */
+    getPixelColour: (data) => {
+        const value = api.getPixelColour(parseInt(data["x"], 10), parseInt(data["y"], 10));
+        data["pixelColour"] = `${value >> 16}, ${(value >> 8) & 255}, ${value & 255}`;
+        return data;
+    },
+    /** @export */
+    getCurrentPath: (data) => defaultTraceResponse(data, api.getCurrentPath())
+}
 
 let initialised = false;
 const preInitQueue = [];
 const messageListener = (e) => {
     if (initialised) {
-        const d = e.data;
+        e = e["data"];
         let r;
         try {
-            r = typeMap[d.type](d);
-        } catch (e) {
-            console.error(e.message);
+            r = typeMap[e["type"]](e);
+        } catch (err) {
+            console.error(err["message"]);
             r = {
                 type: 'error',
                 message: 'Out of memory, please refresh the site. (You must have loaded a LOT of images at once)'
@@ -65,92 +111,4 @@ function onLoad() {
     for (const e of preInitQueue) messageListener(e);
 }
 
-// onMessage handling
-onmessage = messageListener;
-
-// Image control
-function setCurrent(data) {
-    api.setCurrent(data.src);
-}
-
-function addImage(data) {
-    const p = api.create_buffer(data.width, data.height);
-    Module.HEAPU8.set(data.data, p);
-    api.addImage(data.src, p, parseInt(data.width), parseInt(data.height));
-    return {src: data.src, type: data.type};
-}
-
-function removeImage(data) {
-    api.removeImage(data.src);
-}
-
-function getHistoryStatus(data) {
-    const value = api.historyStatus();
-    data.undo = Boolean((value & 2) >> 1);
-    data.redo = Boolean(value & 1);
-    return data;
-}
-
-// Tracing
-function trace(data) {
-    return defaultTraceResponse(data, api.trace(parseInt(data.x), parseInt(data.y), parseInt(data.colourTolerance)));
-}
-
-function point(data) {
-    return defaultTraceResponse(data, api.point(parseInt(data.x), parseInt(data.y)));
-}
-
-function auto(data) {
-    return defaultTraceResponse(data, api.auto(parseInt(data.colourTolerance)));
-}
-
-function undo(data) {
-    return defaultTraceResponse(data, api.undo());
-}
-
-function redo(data) {
-    return defaultTraceResponse(data, api.redo());
-}
-
-function eraseRegion(data) {
-    return defaultTraceResponse(data, api.eraseRegion(parseInt(data.begin), parseInt(data.end)));
-}
-
-function smoothTrace(data) {
-    return defaultTraceResponse(data, api.smoothTrace());
-}
-
-function clear(data) {
-    return defaultTraceResponse(data, api.clear());
-}
-
-// Export
-function exportTrace(data) {
-    data.export = api.exportTrace(parseInt(data.PPO), data.delim === "tab" ? 1 : 0,
-        parseFloat(data.lowFR), parseFloat(data.highFR), parseFloat(data.SPL.top), parseFloat(data.SPL.topPixel),
-        parseFloat(data.SPL.bottom), parseFloat(data.SPL.bottomPixel), parseFloat(data.FR.top),
-        parseFloat(data.FR.topPixel), parseFloat(data.FR.bottom), parseFloat(data.FR.bottomPixel));
-    return data;
-}
-
-// Lines
-function snapLine(data) {
-    data.line.position = api.snap(parseInt(data.line.position), data.line.direction === "x" ? 1 : 0, parseInt(data.direction));
-    return data;
-}
-
-// Image Data
-function getPixelColour(data) {
-    const value = api.getPixelColour(parseInt(data.x), parseInt(data.y));
-    data.pixelColour = `${value >> 16}, ${(value >> 8) & 255}, ${value & 255}`;
-    return data;
-}
-
-function getCurrentPath(data) {
-    return defaultTraceResponse(data, api.getCurrentPath());
-}
-
-function defaultTraceResponse(data, response) {
-    data.svg = response;
-    return data;
-}
+self.onmessage = messageListener;

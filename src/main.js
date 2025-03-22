@@ -226,8 +226,9 @@ const buttons = {
 const worker = {
     worker: (() => {
         const w = new Worker("./a.out.js");
-        w.onmessage = (e) => {
-            const data = e.data, type = data.type;
+        w.onmessage = (data) => {
+            data = data.data;
+            const type = data.type;
 
             switch (type) {
                 case 'exportTrace': {
