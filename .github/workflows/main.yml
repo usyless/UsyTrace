@@ -27,6 +27,7 @@ jobs:
         filters: |
           imageTracer:
             - 'src/imageTracer.cpp'
+            - 'src/worker.js'
 
     - name: Set up Emscripten
       run: |

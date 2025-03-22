@@ -1,7 +1,6 @@
-/out/
-/venv/
-/.idea/
-/.git/
+/.idea
+/.vscode
+/.git
 a.out.js
 a.out.wasm
 build_config.txt
