@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'src/**'
 
 jobs:
   build:
@@ -28,16 +26,18 @@ jobs:
           imageTracer:
             - 'src/imageTracer.cpp'
 
-    - name: Set up Emscripten and build
-      if: steps.changes.outputs.imageTracer == 'true'
-      run: |
+    - name: Set up Emscripten
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
         git pull
         ./emsdk install latest
         ./emsdk activate latest
-        source ./emsdk_env.sh
-        cd ../usytrace/src
+
+    - name: Build WASM
+      if: steps.changes.outputs.imageTracer == 'true'
+      run: |
+        source ./emsdk/emsdk_env.sh
+        cd ./usytrace/src
         emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -fno-rtti -flto -g0 -fno-exceptions --closure 1 --closure-args=--externs=worker.js
 
     - name: Minify files
