@@ -38,7 +38,7 @@ jobs:
         ./emsdk activate latest
         source ./emsdk_env.sh
         cd ../usytrace/src
-        emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -fno-exceptions -fno-rtti -flto -sENVIRONMENT=worker -sFILESYSTEM=0
+        emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -fno-rtti -flto -g0 -fno-exceptions
 
     - name: Checkout github pages repo
       uses: actions/checkout@v4
