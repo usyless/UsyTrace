@@ -796,7 +796,7 @@ image.addEventListener('load', () => {
         /** @export */
         's': (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
         /** @export */
-        'e': () => document.getElementById(e.ctrlKey ? 'editImage' : 'eraseRegion').click(),
+        'e': (e) => document.getElementById(e.ctrlKey ? 'editImage' : 'eraseRegion').click(),
         /** @export */
         'enter': () => document.getElementById('fileInputButton').click(),
         /** @export */
