@@ -359,14 +359,9 @@ const worker = {
         type: 'smoothTrace'
     }),
     exportTrace: () => {
-        const hasNullOrEmpty = (obj) => {
-            return Object.values(obj).some(value => {
-                if (value && typeof value === 'object') {
-                    return hasNullOrEmpty(value);
-                }
-                return value === null || value === '';
-            });
-        };
+        const hasNullOrEmpty = (obj) =>
+            Object.values(obj).some(v => (v && typeof v === 'object') ? hasNullOrEmpty(v) : v == null || v === '');
+
         const data = {
             /** @export */
             type: 'exportTrace',
