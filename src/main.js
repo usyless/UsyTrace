@@ -615,7 +615,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
             glass.classList.remove('hidden');
         }
     });
-    multiEventListener(['pointerup', 'pointerleave', 'pointerout', 'pointercancel'], image, () => glass.classList.add('hidden'));
+    multiEventListener(['pointerleave', 'pointerout', 'pointercancel'], image, () => glass.classList.add('hidden'));
 }
 
 { // Move canvas lines
