@@ -40,9 +40,7 @@ let sizeRatio, width, height, lineWidth, CURRENT_MODE = null, MODE_RESET_CB = nu
 
 const glass = document.getElementById('glass');
 glass.img = glass.querySelector('img');
-glass.setColour = (colour) => {
-    glass.style.borderColor = `rgb(${colour})`;
-}
+glass.setColour = (colour) => glass.style.borderColor = `rgb(${colour})`;
 glass.updateImage = () => {
     if (image.isValid()) {
         glass.img.src = image.src;
