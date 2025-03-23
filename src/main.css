@@ -285,3 +285,25 @@ input[type="number"]:focus-visible, select:focus-visible {
     height: 100%;
     background-color: var(--primary);
 }
+
+#editContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    row-gap: var(--spacing-largest);
+
+    > div:first-of-type {
+        display: flex;
+        column-gap: var(--spacing);
+    }
+
+    img {
+        max-width: 100%;
+    }
+
+    h3 {
+        margin-top: var(--spacing-smaller);
+        margin-bottom: var(--spacing-smaller);
+    }
+}

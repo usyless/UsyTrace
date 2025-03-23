@@ -549,6 +549,39 @@ const imageQueue = {
 }
 document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]')?.dispatchEvent(new Event('contextmenu')));
 document.getElementById('toggleImageQueue').addEventListener('click', imageQueue.toggle);
+document.getElementById('editImage').addEventListener('click', () => {
+    if (image.isValid()) {
+        const elem = document.createElement('div'),
+            header = document.createElement('h3'),
+            edit_buttons = document.createElement('div'),
+            invert_button = document.createElement('button'),
+            free_crop_button = document.createElement('button'),
+            img = document.createElement('img');
+        elem.id = 'editContainer';
+        elem.append(header, edit_buttons, img);
+        header.textContent = 'Crop/Edit Image';
+        edit_buttons.append(invert_button, free_crop_button);
+        invert_button.textContent = 'Invert';
+        free_crop_button.textContent = 'Free Crop Mode';
+        invert_button.classList.add('standardButton');
+        free_crop_button.classList.add('standardButton');
+        img.src = image.src;
+
+        const buttons = document.createElement('div');
+        buttons.classList.add('popupButtons');
+        const cancel = document.createElement('button'), confirm = document.createElement('button');
+        cancel.classList.add('standardButton');
+        cancel.textContent = 'Cancel';
+        confirm.classList.add('standardButton');
+        confirm.textContent = 'Save';
+        buttons.append(cancel, confirm);
+        cancel.addEventListener('click', clearPopups);
+        confirm.addEventListener('click', () => {
+
+        });
+        createPopup(elem, {buttons});
+    } else createPopup('No valid image selected');
+});
 
 // Initialise the page
 resetToDefault();
@@ -751,8 +784,6 @@ image.addEventListener('load', () => {
     const pointerDown = new PointerEvent('pointerdown', {bubbles: true}), pointerUp = new PointerEvent('pointerup', {bubbles: true});
     const keydownMap = {
         /** @export */
-        'escape': clearPopups,
-        /** @export */
         'z': (e) => e.ctrlKey && document.getElementById(e.shiftKey ? 'redo' : 'undo').click(),
         /** @export */
         'a': () => document.getElementById('autoPath').click(),
@@ -765,7 +796,7 @@ image.addEventListener('load', () => {
         /** @export */
         's': (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
         /** @export */
-        'e': () => document.getElementById('eraseRegion').click(),
+        'e': () => document.getElementById(e.ctrlKey ? 'editImage' : 'eraseRegion').click(),
         /** @export */
         'enter': () => document.getElementById('fileInputButton').click(),
         /** @export */

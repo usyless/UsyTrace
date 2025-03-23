@@ -2,7 +2,7 @@
 
 import {createPopup, clearPopups} from "./popups.js";
 
-const TUTORIAL_VERSION = 2;
+const TUTORIAL_VERSION = 3;
 const USER_TUTORIAL_VERSION = (() => {
     try {
         return parseInt(window.localStorage.getItem('USER_TUTORIAL_VERSION') ?? 0, 10);
@@ -61,6 +61,8 @@ Raise if line is not being detected, Lower if line is jagged or detecting multip
 }, {
     header: 'Miscellaneous',
     body: `You can <b>drop</b>, or <b>choose any amount of images</b> you like into the site, other than with pasting, as that only supports one image at a time.
+
+To open the edit or cropping menu for the currently selected image, press <b>Ctrl + e</b> or the Edit/Crop button in the image queue.
     
 Loaded images show in the image queue on the bottom, and can be removed by right-clicking them (long hold on mobile), pressing <b>Remove</b> or pressing the <b>Delete</b> key on your keyboard`
 }];
