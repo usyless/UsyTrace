@@ -187,15 +187,15 @@ const indefinitePopup = (message) => {
 
 const buttons = {
     resetButtons: () => {
-        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset["default"];});
+        for (const b of document.querySelectorAll('#sidebar [data-default]')) b.textContent = b.dataset["default"]
         CURRENT_MODE = null;
         MODE_RESET_CB?.();
     },
     enableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = false;});
+        for (const b of document.querySelectorAll('[data-disabled]')) b.disabled = false;
     },
     disableButtons: () => {
-        document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
+        for (const b of document.querySelectorAll('[data-disabled]')) b.disabled = true;
     },
     toggleHistory: (data) => {
         document.getElementById('undo').disabled = !data["undo"];
