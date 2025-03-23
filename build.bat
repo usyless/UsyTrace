@@ -45,6 +45,7 @@ if "%DEBUG_MODE%"=="true" (
     call emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sEXPORTED_RUNTIME_METHODS=cwrap -sINITIAL_HEAP=104857600 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -fno-rtti -flto -g0 -fno-exceptions --closure 1 --post-js worker.js
     call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\compiler.exe" ^
             --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ^
+            --compilation_level ADVANCED ^
             --js main.js popups.js tutorial.js about.js updater.js ^
             --js_output_file main.min.js
 )

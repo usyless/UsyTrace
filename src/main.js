@@ -4,18 +4,27 @@ import { createPopup, clearPopups} from "./popups.js";
 
 // Defaults
 const defaults = {
-    "FRHigher": 20000,
-    "FRLower": 20,
+    /** @export */
+    FRHigher: 20000,
+    /** @export */
+    FRLower: 20,
 
-    "colourTolerance": 67,
+    /** @export */
+    colourTolerance: 67,
 
-    "PPO": 48,
-    "delimitation": "tab",
-    "lowFRExport": 20,
-    "highFRExport": 20000,
+    /** @export */
+    PPO: 48,
+    /** @export */
+    delimitation: "tab",
+    /** @export */
+    lowFRExport: 20,
+    /** @export */
+    highFRExport: 20000,
 
-    "SPLHigher": "",
-    "SPLLower": "",
+    /** @export */
+    SPLHigher: "",
+    /** @export */
+    SPLLower: ""
 }
 const MAGNIFICATION = 3;
 document.getElementById('restoreDefault').addEventListener('click', () => {
@@ -50,13 +59,17 @@ const waitingOverlay = {
 const lines = {
     parent: document.getElementById('lines'),
     lines: {
+        /** @export */
         xHigh: document.getElementById('xHigh'),
+        /** @export */
         xLow: document.getElementById('xLow'),
+        /** @export */
         yHigh: document.getElementById('yHigh'),
+        /** @export */
         yLow: document.getElementById('yLow'),
     },
     updateLinePosition: (line, position) => {
-        const attr = line.dataset.direction;
+        const attr = line.dataset["direction"];
         line.nextElementSibling.setAttribute(attr, position);
         line.setAttribute(`${attr}1`, position);
         line.setAttribute(`${attr}2`, position);
@@ -65,30 +78,30 @@ const lines = {
         for (const line of lines.parent.querySelectorAll('line')) line.setAttribute('stroke-width', sizeRatio);
         for (const text of lines.parent.querySelectorAll('text')) text.setAttribute('font-size', `${1.3 * sizeRatio}em`);
     },
-    getPosition: (line) => parseFloat(line.getAttribute(`${line.dataset.direction}1`)),
+    getPosition: (line) => parseFloat(line.getAttribute(`${line.dataset["direction"]}1`)),
     setPosition: (line, position) => {
-        const ls = lines.lines, otherLinePos = lines.getPosition(ls[line.dataset.other]), sizeAttr = line.dataset.direction === 'x' ? width : height;
-        if (line === ls.xHigh || line === ls.yLow) lines.updateLinePosition(line, Math.max(otherLinePos + 1, Math.min(sizeAttr - 1, position)));
+        const ls = lines.lines, otherLinePos = lines.getPosition(ls[line.dataset["other"]]), sizeAttr = line.dataset["direction"] === 'x' ? width : height;
+        if (line === ls["xHigh"] || line === ls["yLow"]) lines.updateLinePosition(line, Math.max(otherLinePos + 1, Math.min(sizeAttr - 1, position)));
         else lines.updateLinePosition(line, Math.max(1, Math.min(otherLinePos - 1, position)));
     },
     showLines: () => lines.parent.classList.remove('hidden'),
     hideLines: () => lines.parent.classList.add('hidden'),
     initialiseTextPosition: () => {
-        lines.lines.xHigh.nextElementSibling.setAttribute('y', height / 2);
-        lines.lines.xLow.nextElementSibling.setAttribute('y', height / 2);
-        lines.lines.yHigh.nextElementSibling.setAttribute('x', width / 2);
-        lines.lines.yLow.nextElementSibling.setAttribute('x', width / 2);
+        lines.lines["xHigh"].nextElementSibling.setAttribute('y', (height / 2).toString());
+        lines.lines["xLow"].nextElementSibling.setAttribute('y', (height / 2).toString());
+        lines.lines["yHigh"].nextElementSibling.setAttribute('x', (width / 2).toString());
+        lines.lines["yLow"].nextElementSibling.setAttribute('x', (width / 2).toString());
     },
     initialise: () => {
         for (const name in lines.lines) {
-            const line = lines.lines[name], [otherDir, sizeAttr] = line.dataset.direction === 'x' ? ['y', height] : ['x', width];
+            const line = lines.lines[name], [otherDir, sizeAttr] = line.dataset["direction"] === 'x' ? ['y', height] : ['x', width];
             line.setAttribute(`${otherDir}1`, 0);
             line.setAttribute(`${otherDir}2`, sizeAttr);
         }
         lines.initialiseTextPosition();
     }
 }
-lines.lineArray = [lines.lines.xHigh, lines.lines.xLow, lines.lines.yHigh, lines.lines.yLow];
+lines.lineArray = [lines.lines["xHigh"], lines.lines["xLow"], lines.lines["yHigh"], lines.lines["yLow"]];
 
 const erasing = {
     show: () => {
@@ -110,7 +123,7 @@ const erasing = {
             erasing.svg.setAttributeNS(null, 'x', x);
         } else {
             erasing.svg.setAttributeNS(null, 'width', `${x - erasing.x}px`);
-            erasing.svg.setAttributeNS(null, 'x', erasing.x);
+            erasing.svg.setAttributeNS(null, 'x', (erasing.x).toString());
         }
     },
     finish: (x) => {
@@ -129,9 +142,13 @@ const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
     const r = image.getBoundingClientRect(), x = e.clientX, y = e.clientY;
     return {
-        x: x,
-        y: y,
+        /** @export */
+        x,
+        /** @export */
+        y,
+        /** @export */
         xRel: x - r.left,
+        /** @export */
         yRel: y - r.top
     }
 }
@@ -172,7 +189,7 @@ const indefinitePopup = (message) => {
 
 const buttons = {
     resetButtons: () => {
-        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset.default;});
+        document.querySelectorAll('#sidebar [data-default]').forEach((e) => {e.textContent = e.dataset["default"];});
         CURRENT_MODE = null;
         MODE_RESET_CB?.();
     },
@@ -182,37 +199,43 @@ const buttons = {
     disableButtons: () => {
         document.querySelectorAll('[data-disabled]').forEach((e) => {e.disabled = true;});
     },
-    toggleHistory: ({undo, redo}) => {
-        document.getElementById('undo').disabled = !undo;
-        document.getElementById('redo').disabled = !redo;
+    toggleHistory: (data) => {
+        document.getElementById('undo').disabled = !data["undo"];
+        document.getElementById('redo').disabled = !data["redo"];
     }
 }
 { // Handling modes with buttons
     const MODE_BUTTON_IDS = ['selectPath', 'selectPoint', 'eraseRegion'];
     const ENABLE_CALLBACK = {
+        /** @export */
         'path': lines.hideLines,
+        /** @export */
         'point': lines.hideLines,
+        /** @export */
         'erase': () => {
             lines.hideLines();
             erasing.show();
         }
     }
     const DISABLE_CALLBACK = {
+        /** @export */
         'path': lines.showLines,
+        /** @export */
         'point': lines.showLines,
+        /** @export */
         'erase': () => {
             erasing.hide();
             lines.showLines();
         }
     }
     const cb = (e) => {
-        const button = e.target, mode = button.dataset.mode, previousMode = JSON.parse(JSON.stringify(CURRENT_MODE));
+        const button = e.target, mode = button.dataset["mode"], previousMode = JSON.parse(JSON.stringify(CURRENT_MODE));
         buttons.resetButtons();
         if (previousMode === mode) {
             MODE_RESET_CB?.();
             CURRENT_MODE = null;
         } else {
-            button.textContent = button.dataset.active;
+            button.textContent = button.dataset["active"];
             MODE_RESET_CB?.();
             MODE_RESET_CB = DISABLE_CALLBACK[mode];
             CURRENT_MODE = mode;
@@ -227,13 +250,16 @@ const worker = {
     worker: (() => {
         const w = new Worker("./a.out.js");
         w.onmessage = (data) => {
-            data = data.data;
-            const type = data.type;
+            data = data["data"];
+            const type = data["type"];
 
             switch (type) {
                 case 'exportTrace': {
                     const a = document.createElement("a"),
-                        url = URL.createObjectURL(new Blob([data.export], {type: "text/plain;charset=utf-8"}));
+                        url = URL.createObjectURL(new Blob([data["export"]], {
+                            /** @export */
+                            type: "text/plain;charset=utf-8"
+                        }));
                     a.href = url;
                     a.download = "trace.txt";
                     document.body.appendChild(a);
@@ -246,7 +272,7 @@ const worker = {
                 }
                 case 'error': {
                     waitingOverlay.removeOverlays();
-                    indefinitePopup(data.message);
+                    indefinitePopup(data["message"]);
                     break;
                 }
                 case 'getHistoryStatus': {
@@ -258,13 +284,16 @@ const worker = {
                     break;
                 }
                 default: {
-                    if (image.src === data.src) {
-                        if (type === 'getPixelColour') glass.setColour(data.pixelColour);
-                        else if (type === 'snapLine') lines.setPosition(lines.lines[data.line.name], data.line.position);
+                    if (image.src === data["src"]) {
+                        if (type === 'getPixelColour') glass.setColour(data["pixelColour"]);
+                        else if (type === 'snapLine') lines.setPosition(lines.lines[data["line"]["name"]], data["line"]["position"]);
                         else {
-                            graphs.setTracePath(data.svg);
+                            graphs.setTracePath(data["svg"]);
                             waitingOverlay.removeOverlays();
-                            worker.postMessage({type: 'getHistoryStatus'});
+                            worker.postMessage({
+                                /** @export */
+                                type: 'getHistoryStatus'
+                            });
                         }
                         break;
                     }
@@ -273,9 +302,20 @@ const worker = {
         }
         return w;
     })(),
-    postMessage: (data) => image.isValid() && worker.worker.postMessage({src: image.src, ...data}),
-    setCurrent: () => worker.postMessage({type: 'setCurrent'}),
-    removeImage: (src) => worker.postMessage({type: 'removeImage', src: src}),
+    postMessage: (data) => image.isValid() && worker.worker.postMessage({
+        /** @export */
+        src: image.src, ...data
+    }),
+    setCurrent: () => worker.postMessage({
+        /** @export */
+        type: 'setCurrent'
+    }),
+    removeImage: (src) => worker.postMessage({
+        /** @export */
+        type: 'removeImage',
+        /** @export */
+        src: src
+    }),
     addImage: (width, height) => {
         const processing_canvas = document.createElement("canvas"),
             processing_context = processing_canvas.getContext('2d');
@@ -284,15 +324,42 @@ const worker = {
         processing_context.drawImage(image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
         worker.worker.postMessage({
+            /** @export */
             src: image.src, // use postMessage directly to pass buffer properly
-            type: 'setData', data: imageData.data, width, height
+            /** @export */
+            type: 'setData',
+            /** @export */
+            data: imageData.data,
+            /** @export */
+            width,
+            /** @export */
+            height
         }, [imageData.data.buffer]);
     },
-    clearTrace: () => worker.postMessage({type: 'clearTrace'}),
-    undoTrace: () => worker.postMessage({type: 'undoTrace'}),
-    redoTrace: () => worker.postMessage({type: 'redoTrace'}),
-    eraseRegion: (begin, end) => worker.postMessage({type: 'eraseRegion', begin, end}),
-    smoothTrace: () => worker.postMessage({type: 'smoothTrace'}),
+    clearTrace: () => worker.postMessage({
+        /** @export */
+        type: 'clearTrace'
+    }),
+    undoTrace: () => worker.postMessage({
+        /** @export */
+        type: 'undoTrace'
+    }),
+    redoTrace: () => worker.postMessage({
+        /** @export */
+        type: 'redoTrace'
+    }),
+    eraseRegion: (begin, end) => worker.postMessage({
+        /** @export */
+        type: 'eraseRegion',
+        /** @export */
+        begin,
+        /** @export */
+        end
+    }),
+    smoothTrace: () => worker.postMessage({
+        /** @export */
+        type: 'smoothTrace'
+    }),
     exportTrace: () => {
         const hasNullOrEmpty = (obj) => {
             return Object.values(obj).some(value => {
@@ -303,43 +370,96 @@ const worker = {
             });
         };
         const data = {
+            /** @export */
             type: 'exportTrace',
+            /** @export */
             PPO: preferences.PPO(),
+            /** @export */
             delim: preferences.delimitation(),
+            /** @export */
             lowFR: preferences.lowFRExport(),
+            /** @export */
             highFR: preferences.highFRExport(),
+            /** @export */
             SPL: {
+                /** @export */
                 top: preferences.SPLHigher(),
-                topPixel: lines.getPosition(lines.lines.yHigh),
+                /** @export */
+                topPixel: lines.getPosition(lines.lines["yHigh"]),
+                /** @export */
                 bottom: preferences.SPLLower(),
-                bottomPixel: lines.getPosition(lines.lines.yLow)
+                /** @export */
+                bottomPixel: lines.getPosition(lines.lines["yLow"])
             },
+            /** @export */
             FR: {
+                /** @export */
                 top: preferences.FRHigher(),
-                topPixel: lines.getPosition(lines.lines.xHigh),
+                /** @export */
+                topPixel: lines.getPosition(lines.lines["xHigh"]),
+                /** @export */
                 bottom: preferences.FRLower(),
-                bottomPixel: lines.getPosition(lines.lines.xLow),
+                /** @export */
+                bottomPixel: lines.getPosition(lines.lines["xLow"]),
             }
         }
         if (hasNullOrEmpty(data)) createPopup("Please fill in all required values to export (SPL and FR values)");
         else worker.postMessage(data);
     },
-    addPoint: (x, y) => worker.postMessage({type: 'addPoint', x: x, y: y}),
+    addPoint: (x, y) => worker.postMessage({
+        /** @export */
+        type: 'addPoint',
+        /** @export */
+        x,
+        /** @export */
+        y
+    }),
     autoTrace: () => {
-        worker.postMessage({type: 'autoTrace', colourTolerance: preferences.colourTolerance()});
+        worker.postMessage({
+            /** @export */
+            type: 'autoTrace', colourTolerance: preferences.colourTolerance()
+        });
     },
     trace: (x, y) => {
-        worker.postMessage({type: 'trace', x: x, y: y, colourTolerance: preferences.colourTolerance()});
+        worker.postMessage({
+            /** @export */
+            type: 'trace',
+            /** @export */
+            x,
+            /** @export */
+            y,
+            /** @export */
+            colourTolerance: preferences.colourTolerance()
+        });
     },
     snapLine: (line, direction) => {
         worker.postMessage({
             type: 'snapLine',
-            line: {name: line.id, position: lines.getPosition(line), direction: line.dataset.direction},
+            /** @export */
+            line: {
+                /** @export */
+                name: line.id,
+                /** @export */
+                position: lines.getPosition(line),
+                /** @export */
+                direction: line.dataset["direction"]
+            },
+            /** @export */
             direction
         });
     },
-    getPixelColour: (x, y) => worker.postMessage({type: 'getPixelColour', x, y}),
-    getCurrentPath: () => worker.postMessage({type: 'getCurrentPath'})
+    getPixelColour: (x, y) => worker.postMessage({
+        /** @export */
+        type: 'getPixelColour',
+        /** @export */
+        x,
+        /** @export */
+        y
+    }),
+    getCurrentPath: () => worker.postMessage({
+        /** @export */
+        type: 'getCurrentPath'
+    })
 }
 
 const graphs = {
@@ -356,7 +476,7 @@ const graphs = {
         path.setAttribute('stroke', '#ff0000');
         path.setAttribute('stroke-width', lineWidth);
         path2.setAttribute('d', d);
-        path2.setAttribute('stroke-width', lineWidth * 1.5);
+        path2.setAttribute('stroke-width', (lineWidth * 1.5).toString());
     },
     clearTracePath: () => {
         graphs.setTracePath('');
@@ -424,11 +544,11 @@ const imageQueue = {
     toggle: (e) => {
         const button = e.target;
         document.getElementById('imageContainer').addEventListener('transitionend', () => window.dispatchEvent(new Event('resize')), {once: true});
-        if (button.textContent === button.dataset.active) {
-            button.textContent = button.dataset.default;
+        if (button.textContent === button.dataset["active"]) {
+            button.textContent = button.dataset["default"];
             button.removeAttribute('active');
         } else {
-            button.textContent = button.dataset.active;
+            button.textContent = button.dataset["active"];
             button.setAttribute('active', '');
         }
     }
@@ -493,11 +613,11 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
             e.preventDefault();
             const parentElement = image.parentElement,
                 parentRect = parentElement.getBoundingClientRect(), m = image.getMouseCoords(e);
-            glass.style.left = `${Math.min(m.x - parentRect.left, parentElement.clientWidth - glass.clientWidth)}px`;
-            glass.style.top = `${Math.min(m.y - parentRect.top, parentElement.clientHeight - glass.clientHeight)}px`;
-            glass.img.style.left = `${(m.xRel * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
-            glass.img.style.top = `${(m.yRel * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
-            worker.getPixelColour(m.xRel * sizeRatio, m.yRel * sizeRatio);
+            glass.style.left = `${Math.min(m["x"] - parentRect.left, parentElement.clientWidth - glass.clientWidth)}px`;
+            glass.style.top = `${Math.min(m["y"] - parentRect.top, parentElement.clientHeight - glass.clientHeight)}px`;
+            glass.img.style.left = `${(m["xRel"] * MAGNIFICATION - (glass.clientWidth / 2)) * -1}px`;
+            glass.img.style.top = `${(m["yRel"] * MAGNIFICATION - (glass.clientHeight / 2)) * -1}px`;
+            worker.getPixelColour(m["xRel"] * sizeRatio, m["yRel"] * sizeRatio);
             glass.classList.remove('hidden');
         }
     });
@@ -510,16 +630,18 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
     lines.parent.addEventListener('pointerdown', (e) => {
         const m = getCoords(e);
         const sizes = {
+            /** @export */
             x: width * 0.02,
+            /** @export */
             y: height * 0.02
         }
-        for (const line of lines.lineArray) line.offset = m[`${line.dataset.direction}Rel`] * sizeRatio - lines.getPosition(line);
+        for (const line of lines.lineArray) line.offset = m[`${line.dataset["direction"]}Rel`] * sizeRatio - lines.getPosition(line);
         const closest = lines.lineArray.reduce((acc, curr) => Math.abs(curr.offset) < Math.abs(acc.offset) ? curr : acc, lines.lineArray[0]);
-        if (Math.abs(closest.offset) < sizes[closest.dataset.direction]) selectedLine = closest;
+        if (Math.abs(closest.offset) < sizes[closest.dataset["direction"]]) selectedLine = closest;
     });
 
     lines.parent.addEventListener('pointermove', (e) => {
-        if (selectedLine) lines.setPosition(selectedLine, getCoords(e)[`${selectedLine.dataset.direction}Rel`] * sizeRatio - selectedLine.offset);
+        if (selectedLine) lines.setPosition(selectedLine, getCoords(e)[`${selectedLine.dataset["direction"]}Rel`] * sizeRatio - selectedLine.offset);
     });
 
     multiEventListener(['pointerup', 'pointerleave', 'pointercancel'], lines.parent, (e) => {
@@ -536,12 +658,12 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
         const t = e.target, p = t.parentNode;
         if (!holdInterval && p.classList.contains('moveButtons')) {
             e.preventDefault();
-            line = lines.lines[p.dataset.for];
+            line = lines.lines[p.dataset["for"]];
             if (!snap) {
                 holdInterval = setInterval(() => {
-                    lines.setPosition(line, lines.getPosition(line) + parseInt(t.dataset.direction, 10) * sizeRatio);
+                    lines.setPosition(line, lines.getPosition(line) + parseInt(t.dataset["direction"], 10) * sizeRatio);
                 }, 10);
-            } else worker.snapLine(lines.lines[p.dataset.for], parseInt(t.dataset.direction, 10));
+            } else worker.snapLine(lines.lines[p.dataset["for"]], parseInt(t.dataset["direction"], 10));
         }
     });
 
@@ -560,13 +682,15 @@ window.addEventListener('resize', () => {
 
 { // Image click handling
     const callbacks = {
+        /** @export */
         path: worker.trace,
+        /** @export */
         point: worker.addPoint
     }
     image.addEventListener('click', (e) => {
         if (CURRENT_MODE != null) {
             const m = image.getMouseCoords(e);
-            callbacks[CURRENT_MODE]?.(m.xRel * sizeRatio, m.yRel * sizeRatio);
+            callbacks[CURRENT_MODE]?.(m["xRel"] * sizeRatio, m["yRel"] * sizeRatio);
         }
     });
     let holding = false;
@@ -574,21 +698,21 @@ window.addEventListener('resize', () => {
         if (CURRENT_MODE === 'erase') {
             e.preventDefault();
             holding = true;
-            erasing.begin(image.getMouseCoords(e).xRel * sizeRatio);
+            erasing.begin(image.getMouseCoords(e)["xRel"] * sizeRatio);
             document.addEventListener('pointerup', eraseStop, {once: true});
         }
     });
     image.addEventListener('pointermove', (e) => {
         if (holding && CURRENT_MODE === 'erase') {
             e.preventDefault();
-            erasing.move(image.getMouseCoords(e).xRel * sizeRatio);
+            erasing.move(image.getMouseCoords(e)["xRel"] * sizeRatio);
         }
     });
     const eraseStop = (e) => {
         if (holding && CURRENT_MODE === 'erase') {
             e.preventDefault();
             holding = false;
-            erasing.finish(image.getMouseCoords(e).xRel * sizeRatio);
+            erasing.finish(image.getMouseCoords(e)["xRel"] * sizeRatio);
         }
     }
 }
@@ -609,16 +733,16 @@ image.addEventListener('load', () => {
         waitingOverlay.createOverlay();
         console.time("Initialise image");
         worker.addImage(width, height); // implicitly sets as current
-        lines.setPosition(lines.lines.xHigh, width);
-        lines.setPosition(lines.lines.xLow, 0);
-        lines.setPosition(lines.lines.yHigh, 0);
-        lines.setPosition(lines.lines.yLow, height);
+        lines.setPosition(lines.lines["xHigh"], width);
+        lines.setPosition(lines.lines["xLow"], 0);
+        lines.setPosition(lines.lines["yHigh"], 0);
+        lines.setPosition(lines.lines["yLow"], height);
         lines.initialise();
         lines.showLines();
-        worker.snapLine(lines.lines.xHigh, -1);
-        worker.snapLine(lines.lines.xLow, 1);
-        worker.snapLine(lines.lines.yHigh, 1);
-        worker.snapLine(lines.lines.yLow, -1);
+        worker.snapLine(lines.lines["xHigh"], -1);
+        worker.snapLine(lines.lines["xLow"], 1);
+        worker.snapLine(lines.lines["yHigh"], 1);
+        worker.snapLine(lines.lines["yLow"], -1);
         worker.autoTrace();
         imageData.initial = false;
     } else {
@@ -632,26 +756,45 @@ image.addEventListener('load', () => {
 { // keybindings
     const pointerDown = new PointerEvent('pointerdown', {bubbles: true}), pointerUp = new PointerEvent('pointerup', {bubbles: true});
     const keydownMap = {
+        /** @export */
         'escape': clearPopups,
+        /** @export */
         'z': (e) => e.ctrlKey && document.getElementById(e.shiftKey ? 'redo' : 'undo').click(),
+        /** @export */
         'a': () => document.getElementById('autoPath').click(),
+        /** @export */
         't': () => document.getElementById('selectPath').click(),
+        /** @export */
         'p': () => document.getElementById('selectPoint').click(),
+        /** @export */
         'h': () => document.getElementById('toggleImageQueue').click(),
+        /** @export */
         's': (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
+        /** @export */
         'e': () => document.getElementById('eraseRegion').click(),
+        /** @export */
         'enter': () => document.getElementById('fileInputButton').click(),
+        /** @export */
         'delete': () => document.getElementById('removeImage').click(),
+        /** @export */
         'backspace': () => document.getElementById('clearPath').click(),
+        /** @export */
         'arrowup': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
+        /** @export */
         'arrowdown': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
+        /** @export */
         'arrowleft': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
+        /** @export */
         'arrowright': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
     };
     const keyupMap = {
+        /** @export */
         'arrowup': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
+        /** @export */
         'arrowdown': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
+        /** @export */
         'arrowleft': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
+        /** @export */
         'arrowright': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
     };
     document.addEventListener('keydown', (e) => {
@@ -672,8 +815,7 @@ image.addEventListener('load', () => {
 
 // Helper Functions
 function multiEventListener(events, target, callback) {
-    if (typeof (events) !== "object") events = [events];
-    events.forEach((ev) => target.addEventListener(ev, callback));
+    for (const ev of Array.isArray(events) ? events : [events]) target.addEventListener(ev, callback);
 }
 
 function initAll() {

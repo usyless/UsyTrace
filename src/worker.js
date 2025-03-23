@@ -33,7 +33,12 @@ const typeMap = {
         const p = api.create_buffer(parseInt(data["width"], 10), parseInt(data["height"], 10));
         Module["HEAPU8"]["set"](data["data"], p);
         api.addImage(data["src"], p, parseInt(data["width"], 10), parseInt(data["height"], 10));
-        return {src: data["src"], type: data["type"]};
+        return {
+            /** @export */
+            src: data["src"],
+            /** @export */
+            type: data["type"]
+        };
     },
     /** @export */
     getHistoryStatus: (data) => {
@@ -97,7 +102,9 @@ const messageListener = (e) => {
         } catch (err) {
             console.error(err["message"]);
             r = {
+                /** @export */
                 type: 'error',
+                /** @export */
                 message: 'Out of memory, please refresh the site. (You must have loaded a LOT of images at once)'
             }
         }
