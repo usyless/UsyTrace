@@ -72,6 +72,7 @@ jobs:
         rm -f updater.js
         rm -f tutorial.js
         rm -f popups.js
+        rm -f state.js
     
     - name: Commit and push
       working-directory: usyless.github.io
