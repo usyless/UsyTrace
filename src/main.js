@@ -577,7 +577,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
     document.addEventListener('paste', (e) => {
         e.preventDefault();
         const d = new DataTransfer();
-        for (const item of (e.clipboardData || window?.clipboardData).items) {
+        for (const item of e.clipboardData.items) {
             if (item.kind === 'file') d.items.add(item.getAsFile());
         }
         if (d.files.length > 0) fileInput.loadFiles(d.files);
