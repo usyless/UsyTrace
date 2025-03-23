@@ -307,3 +307,7 @@ input[type="number"]:focus-visible, select:focus-visible {
         margin-bottom: var(--spacing-smaller);
     }
 }
+
+.inverted {
+    filter: invert(1);
+}

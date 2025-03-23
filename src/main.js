@@ -567,6 +567,8 @@ document.getElementById('editImage').addEventListener('click', () => {
         free_crop_button.classList.add('standardButton');
         img.src = image.src;
 
+        invert_button.addEventListener('click', () => img.classList.toggle('inverted'));
+
         const buttons = document.createElement('div');
         buttons.classList.add('popupButtons');
         const cancel = document.createElement('button'), confirm = document.createElement('button');
@@ -577,8 +579,29 @@ document.getElementById('editImage').addEventListener('click', () => {
         buttons.append(cancel, confirm);
         cancel.addEventListener('click', clearPopups);
         confirm.addEventListener('click', () => {
+            const canvas = document.createElement("canvas"),
+                ctx = canvas.getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0);
 
-        });
+            if (img.classList.contains('inverted')) {
+                const imageData = ctx.getImageData(0, 0, width, height),
+                    data = imageData.data, l = data.length;
+                for (let i = 0; i < l; i += 4) {
+                    data[i] = 255 - data[i];
+                    data[i + 1] = 255 - data[i + 1];
+                    data[i + 2] = 255 - data[i + 2];
+                }
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            document.getElementById('removeImage').click();
+            canvas.toBlob((b) => {
+                imageQueue.addImage(URL.createObjectURL(b), true);
+                clearPopups();
+            })
+        }, {once: true});
         createPopup(elem, {buttons});
     } else createPopup('No valid image selected');
 });
