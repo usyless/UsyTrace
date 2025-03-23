@@ -45,6 +45,7 @@
 
 body {
     font-size: 14px;
+    position: relative;
 }
 
 button.altButton {

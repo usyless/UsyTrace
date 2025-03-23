@@ -556,9 +556,12 @@ document.getElementById('editImage').addEventListener('click', () => {
             edit_buttons = document.createElement('div'),
             invert_button = document.createElement('button'),
             free_crop_button = document.createElement('button'),
+            img_wrapper = document.createElement('div'),
             img = document.createElement('img');
         elem.id = 'editContainer';
-        elem.append(header, edit_buttons, img);
+        elem.append(header, edit_buttons, img_wrapper);
+        img_wrapper.append(img);
+        img_wrapper.classList.add('cropWrapper');
         header.textContent = 'Crop/Edit Image';
         edit_buttons.append(invert_button, free_crop_button);
         invert_button.textContent = 'Invert';
