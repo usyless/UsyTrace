@@ -46,7 +46,7 @@ if "%DEBUG_MODE%"=="true" (
     call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\compiler.exe" ^
             --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ^
             --compilation_level ADVANCED ^
-            --js main.js popups.js tutorial.js about.js updater.js ^
+            --js state.js main.js popups.js tutorial.js about.js updater.js ^
             --js_output_file main.min.js
 )
 

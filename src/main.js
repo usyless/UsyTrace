@@ -1,6 +1,7 @@
 'use strict';
 
 import { createPopup, clearPopups} from "./popups.js";
+import { state } from "./state.js";
 
 // Defaults
 const defaults = {
@@ -791,17 +792,21 @@ image.addEventListener('load', () => {
         'arrowright': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
     };
     document.addEventListener('keydown', (e) => {
-        const cb = keydownMap[e.key.toLowerCase()];
-        if (!e.target.closest('input') && cb) {
-            e.preventDefault();
-            cb(e);
+        if (state.keyBindsEnabled) {
+            const cb = keydownMap[e.key.toLowerCase()];
+            if (!e.target.closest('input') && cb) {
+                e.preventDefault();
+                cb(e);
+            }
         }
     });
     document.addEventListener('keyup', (e) => {
-        const cb = keyupMap[e.key.toLowerCase()];
-        if (!e.target.closest('input') && cb) {
-            e.preventDefault();
-            cb(e);
+        if (state.keyBindsEnabled) {
+            const cb = keyupMap[e.key.toLowerCase()];
+            if (!e.target.closest('input') && cb) {
+                e.preventDefault();
+                cb(e);
+            }
         }
     });
 }

@@ -1,10 +1,13 @@
 'use strict';
 
+import { state } from "./state.js";
+
 const eventListeners = [];
 const onclosefuncs = [];
 
 export async function createPopup(content, {listeners = [], buttons, classes = [], onclose} = {}) {
     clearPopups();
+    state.disableKeyBinds();
     return new Promise((resolve) => {
         const center_div = document.createElement('div'),
             main_div = document.createElement('div'),
@@ -69,6 +72,7 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
 }
 
 export function clearPopups() {
+    state.enableKeyBinds();
     for (const listener of eventListeners) listener.target?.removeEventListener?.(listener.type, listener.listener);
     for (const f of onclosefuncs) f();
     onclosefuncs.length = 0;
