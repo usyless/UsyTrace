@@ -12,16 +12,12 @@ const USER_TUTORIAL_VERSION = (() => {
 })();
 
 const TUTORIAL_PAGES = [{
-    /** @export */
     header: 'Welcome to UsyTrace',
-    /** @export */
     body: `<h2>Here you can trace frequency responses from images</h2>
 
 All you need to know, as well as keybindings are on the next few pages`
 }, {
-    /** @export */
     header: 'Tracing',
-    /** @export */
     body: `<h3>Auto Trace (a)</h3>
 Tries to automatically select a line in the image, may fail, applied automatically upon image import
     
@@ -46,9 +42,7 @@ Select a region to erase a trace from by dragging a box around the area
 <h3>Clear Path (Backspace)</h3>
 Clears the current trace on screen, can go back using Undo`
 }, {
-    /** @export */
     header: 'Exporting',
-    /** @export */
     body: `Align <b>High</b> and <b>Low</b> lines with given values in their respective axis, then input the respective values into <b>Higher SPL</b>, <b>Lower SPL</b>, <b>Higher Frequency</b> and <b>Lower Frequency</b>.
 
 The lines can be moved with the arrow keys, defaulting to the <b>High</b> line for each axis, but can control the <b>Low</b> line by holding <b>Shift</b>
@@ -58,18 +52,14 @@ Adjust the <b>Minimum Exported Frequency</b>, <b>Maximum Exported Frequency</b>,
 
 Then <b>Export Trace</b> will give you the result`
 }, {
-    /** @export */
     header: 'Settings',
-    /** @export */
     body: `<h3>Buttons Snap To Axis</h3>
 whether the buttons underneath the Export values will attempt to snap the lines to their axis, or to enable smooth manual movement
     
 <h3>Colour Tolerance</h3>
 Raise if line is not being detected, Lower if line is jagged or detecting multiple lines`
 }, {
-    /** @export */
     header: 'Miscellaneous',
-    /** @export */
     body: `You can <b>drop</b>, or <b>choose any amount of images</b> you like into the site, other than with pasting, as that only supports one image at a time.
     
 Loaded images show in the image queue on the bottom, and can be removed by right-clicking them (long hold on mobile), pressing <b>Remove</b> or pressing the <b>Delete</b> key on your keyboard`
@@ -134,8 +124,8 @@ function showTutorial() {
 
     function loadPage() {
         const data = TUTORIAL_PAGES[CURRENT_PAGE] ?? TUTORIAL_PAGES[0];
-        head.textContent = data['header'];
-        mainText.innerHTML = data['body'];
+        head.textContent = data.header;
+        mainText.innerHTML = data.body;
     }
 
     buttons_div.append(previousPage, nextPage);
