@@ -646,13 +646,18 @@ struct ImageQueue {
 
 Image* currentImage = nullptr;
 
-inline const char* stringReturn(string str) {
+inline const char* stringReturn(const string& str) {
     char* buffer = new char[str.size() + 1];
     strcpy(buffer, str.c_str());
     return buffer;
 }
 
 extern "C" {
+    // string util
+    EMSCRIPTEN_KEEPALIVE void clean_string(const char* str) {
+        delete[] str;
+    }
+
     // Image Control
     EMSCRIPTEN_KEEPALIVE void* create_buffer(const uint32_t width, const uint32_t height) {
         return malloc(width * height * 4 * sizeof(Colour));

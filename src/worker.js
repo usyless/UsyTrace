@@ -1,21 +1,31 @@
+const textDecoder = new TextDecoder('utf-8');
+const readStringFromMemory = (ptr) => {
+    const b = Module["HEAPU8"].buffer, nullTerm = new Uint8Array(b, ptr).indexOf(0),
+        str = textDecoder.decode(new Uint8Array(b, ptr, nullTerm));
+    Module["_clean_string"](ptr);
+    return str;
+}
+
+const stringRetNumCall = (func) => (...args) => readStringFromMemory(func(...args));
+
 const api = {
     create_buffer: Module["_create_buffer"], // ["cwrap"]("create_buffer", "number", ["number", "number"]),
     setCurrent: Module["cwrap"]("setCurrent", "", ["string"]),
     addImage: Module["cwrap"]("addImage", "", ["string", "number", "number", "number"]),
     removeImage: Module["cwrap"]("removeImage", "", ["string"]),
     historyStatus: Module["_historyStatus"], // ["cwrap"]("historyStatus", "number"),
-    trace: Module["cwrap"]("trace", "string", ["number", "number", "number"]),
-    point: Module["cwrap"]("point", "string", ["number", "number"]),
-    undo: Module["cwrap"]("undo", "string"),
-    redo: Module["cwrap"]("redo", "string"),
-    eraseRegion: Module["cwrap"]("eraseRegion", "string", ["number", "number"]),
-    smoothTrace: Module["cwrap"]("smoothTrace", "string"),
+    trace: stringRetNumCall(Module["_trace"]), // Module["cwrap"]("trace", "string", ["number", "number", "number"]),
+    point: stringRetNumCall(Module["_point"]), // ["cwrap"]("point", "string", ["number", "number"]),
+    undo: stringRetNumCall(Module["_undo"]), // ["cwrap"]("undo", "string"),
+    redo: stringRetNumCall(Module["_redo"]), // Module["cwrap"]("redo", "string"),
+    eraseRegion: stringRetNumCall(Module["_eraseRegion"]), // Module["cwrap"]("eraseRegion", "string", ["number", "number"]),
+    smoothTrace: stringRetNumCall(Module["_smoothTrace"]), // Module["cwrap"]("smoothTrace", "string"),
     clear: Module["_clear"], // ["cwrap"]("clear", ""),
-    auto: Module["cwrap"]("autoTrace", "string", ["number"]),
-    exportTrace: Module["cwrap"]("exportTrace", "string", Array(12).fill("number")),
+    auto: stringRetNumCall(Module["_autoTrace"]), // Module["cwrap"]("autoTrace", "string", ["number"]),
+    exportTrace: stringRetNumCall(Module["_exportTrace"]), // Module["cwrap"]("exportTrace", "string", Array(12).fill("number")),
     snap: Module["_snap"], // ["cwrap"]("snap", "number", ["number", "number", "number"]),
     getPixelColour: Module["_getPixelColour"], // ["cwrap"]("getPixelColour", "number", ["number", "number"]),
-    getCurrentPath: Module["cwrap"]("getCurrentPath", "string")
+    getCurrentPath: stringRetNumCall(Module["_getCurrentPath"]), // Module["cwrap"]("getCurrentPath", "string")
 }
 
 const defaultTraceResponse = (data, response) => {
