@@ -84,7 +84,7 @@ const lines = {
         else lines.updateLinePosition(line, Math.max(1, Math.min(otherLinePos - 1, position)));
     },
     showLines: () => lines.parent.classList.remove('hidden'),
-    hideLines: () => lines.parent.classList.add('hidden'),
+    hideLines: () => lines.parent.classList.add('hidden'), // potentially disable line keybinds
     initialiseTextPosition: () => {
         lines.lines["xHigh"].nextElementSibling.setAttribute('y', (height / 2).toString());
         lines.lines["xLow"].nextElementSibling.setAttribute('y', (height / 2).toString());

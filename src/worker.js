@@ -1,20 +1,20 @@
 const api = {
-    create_buffer: Module["cwrap"]("create_buffer", "number", ["number", "number"]),
+    create_buffer: Module["_create_buffer"], // ["cwrap"]("create_buffer", "number", ["number", "number"]),
     setCurrent: Module["cwrap"]("setCurrent", "", ["string"]),
     addImage: Module["cwrap"]("addImage", "", ["string", "number", "number", "number"]),
     removeImage: Module["cwrap"]("removeImage", "", ["string"]),
-    historyStatus: Module["cwrap"]("historyStatus", "number"),
+    historyStatus: Module["_historyStatus"], // ["cwrap"]("historyStatus", "number"),
     trace: Module["cwrap"]("trace", "string", ["number", "number", "number"]),
     point: Module["cwrap"]("point", "string", ["number", "number"]),
     undo: Module["cwrap"]("undo", "string"),
     redo: Module["cwrap"]("redo", "string"),
     eraseRegion: Module["cwrap"]("eraseRegion", "string", ["number", "number"]),
     smoothTrace: Module["cwrap"]("smoothTrace", "string"),
-    clear: Module["cwrap"]("clear", ""),
+    clear: Module["_clear"], // ["cwrap"]("clear", ""),
     auto: Module["cwrap"]("autoTrace", "string", ["number"]),
     exportTrace: Module["cwrap"]("exportTrace", "string", Array(12).fill("number")),
-    snap: Module["cwrap"]("snap", "number", ["number", "number", "number"]),
-    getPixelColour: Module["cwrap"]("getPixelColour", "number", ["number", "number"]),
+    snap: Module["_snap"], // ["cwrap"]("snap", "number", ["number", "number", "number"]),
+    getPixelColour: Module["_getPixelColour"], // ["cwrap"]("getPixelColour", "number", ["number", "number"]),
     getCurrentPath: Module["cwrap"]("getCurrentPath", "string")
 }
 
