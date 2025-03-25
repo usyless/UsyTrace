@@ -63,7 +63,7 @@ Raise if line is not being detected, Lower if line is jagged or detecting multip
     body: `You can <b>drop</b>, or <b>choose any amount of images</b> you like into the site, other than with pasting, as that only supports one image at a time.
 
 <h3>Image Editing (Ctrl + e)</h3>
-Here you can apply filters to the image that may make it trace better, or you can crop the image.
+Here you can apply filters to the image that may make it trace better.
 
 <h3>Image Queue</h3>
 Loaded images show in the image queue on the bottom, and can be removed by right-clicking them (long hold on mobile), pressing <b>Remove</b> or pressing the <b>Delete</b> key on your keyboard`
