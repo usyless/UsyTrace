@@ -2,13 +2,14 @@
 #include <cmath>
 #include <functional>
 #include <map>
-#include <memory>
 #include <numeric>
 #include <stack>
 #include <vector>
 #include <emscripten.h>
 #include <string.h>
 #include <set>
+#include <cstdint>
+#include <string>
 
 using namespace std;
 
@@ -628,22 +629,6 @@ struct Image {
     }
 };
 
-struct ImageQueue {
-    map<string, unique_ptr<Image>> images;
-
-    void add(const char* id, unique_ptr<Image> image) {
-        images.insert({string{id}, std::move(image)});
-    }
-
-    void remove(const char* id) {
-        images.erase(string{id});
-    }
-
-    Image* get(const char* id) const {
-        return images.at(string{id}).get();
-    }
-} imageQueue;
-
 Image* currentImage = nullptr;
 
 inline const char* stringReturn(const string& str) {
@@ -663,19 +648,20 @@ extern "C" {
         return malloc(width * height * 4 * sizeof(Colour));
     }
 
-    EMSCRIPTEN_KEEPALIVE void setCurrent(const char* id) {
-        currentImage = imageQueue.get(id);
+    EMSCRIPTEN_KEEPALIVE void setCurrent(Image* ptr) {
+        currentImage = ptr;
     }
 
-    EMSCRIPTEN_KEEPALIVE void addImage(const char* id, Colour* data, const uint32_t width, const uint32_t height) {
+    EMSCRIPTEN_KEEPALIVE void* addImage(Colour* data, const uint32_t width, const uint32_t height) {
         // Images come in with 4 channels (RGBA)
-        imageQueue.add(id, make_unique<Image>(new ImageData{data, width, height, 4}));
-        setCurrent(id);
+        auto ptr = new Image{new ImageData{data, width, height, 4}};
+        currentImage = ptr;
+        return ptr;
     }
 
-    EMSCRIPTEN_KEEPALIVE void removeImage(const char* id) {
-        if (currentImage == imageQueue.get(id)) currentImage = nullptr;
-        imageQueue.remove(id);
+    EMSCRIPTEN_KEEPALIVE void removeImage(Image* ptr) {
+        if (currentImage == ptr) currentImage = nullptr;
+        delete ptr;
     }
 
     EMSCRIPTEN_KEEPALIVE int historyStatus() {

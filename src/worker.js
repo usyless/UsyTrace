@@ -8,11 +8,15 @@ const readStringFromMemory = (ptr) => {
 
 const stringRetNumCall = (func) => (...args) => readStringFromMemory(func(...args));
 
+const srcMap = new Map();
 const api = {
     create_buffer: Module["_create_buffer"], // ["cwrap"]("create_buffer", "number", ["number", "number"]),
-    setCurrent: Module["cwrap"]("setCurrent", "", ["string"]),
-    addImage: Module["cwrap"]("addImage", "", ["string", "number", "number", "number"]),
-    removeImage: Module["cwrap"]("removeImage", "", ["string"]),
+    setCurrent: (src) => Module["_setCurrent"](srcMap.get(src)), // Module["cwrap"]("setCurrent", "", ["number"]),
+    addImage: (src, ...args) => srcMap.set(src, Module["_addImage"](...args)), // Module["cwrap"]("addImage", "", ["number", "number", "number"]),
+    removeImage: (src) => {
+        Module["_removeImage"](srcMap.get(src));
+        srcMap.delete(src);
+    }, // Module["cwrap"]("removeImage", "", ["number"]),
     historyStatus: Module["_historyStatus"], // ["cwrap"]("historyStatus", "number"),
     trace: stringRetNumCall(Module["_trace"]), // Module["cwrap"]("trace", "string", ["number", "number", "number"]),
     point: stringRetNumCall(Module["_point"]), // ["cwrap"]("point", "string", ["number", "number"]),
