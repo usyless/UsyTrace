@@ -1,7 +1,7 @@
-const textDecoder = new TextDecoder('utf-8');
+const decode = TextDecoder.prototype.decode.bind(new TextDecoder('utf-8'));
 const readStringFromMemory = (ptr) => {
     const b = Module["HEAPU8"].buffer, nullTerm = new Uint8Array(b, ptr).indexOf(0),
-        str = textDecoder.decode(new Uint8Array(b, ptr, nullTerm));
+        str = decode(new Uint8Array(b, ptr, nullTerm));
     Module["_clean_string"](ptr);
     return str;
 }
