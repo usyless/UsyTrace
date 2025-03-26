@@ -49,7 +49,7 @@ struct RGB {
         return to_string(R) + ", " + to_string(G) + ", " + to_string(B);
     }
 
-    int toBin() const {
+    inline int toBin() const {
         return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
     }
 };
