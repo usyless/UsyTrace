@@ -1,21 +1,35 @@
+const decode = TextDecoder.prototype.decode.bind(new TextDecoder('utf-8'));
+const readStringFromMemory = (ptr) => {
+    const HEAPU32 = Module["HEAPU32"],
+        str = decode(new Uint8Array(Module["HEAPU8"].buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1]));
+    Module["_clean_string"](ptr);
+    return str;
+}
+
+const stringReturn = (func) => (...args) => readStringFromMemory(func(...args));
+
+const srcMap = new Map();
 const api = {
-    create_buffer: Module["cwrap"]("create_buffer", "number", ["number", "number"]),
-    setCurrent: Module["cwrap"]("setCurrent", "", ["string"]),
-    addImage: Module["cwrap"]("addImage", "", ["string", "number", "number", "number"]),
-    removeImage: Module["cwrap"]("removeImage", "", ["string"]),
-    historyStatus: Module["cwrap"]("historyStatus", "number"),
-    trace: Module["cwrap"]("trace", "string", ["number", "number", "number"]),
-    point: Module["cwrap"]("point", "string", ["number", "number"]),
-    undo: Module["cwrap"]("undo", "string"),
-    redo: Module["cwrap"]("redo", "string"),
-    eraseRegion: Module["cwrap"]("eraseRegion", "string", ["number", "number"]),
-    smoothTrace: Module["cwrap"]("smoothTrace", "string"),
-    clear: Module["cwrap"]("clear", ""),
-    auto: Module["cwrap"]("autoTrace", "string", ["number"]),
-    exportTrace: Module["cwrap"]("exportTrace", "string", Array(12).fill("number")),
-    snap: Module["cwrap"]("snap", "number", ["number", "number", "number"]),
-    getPixelColour: Module["cwrap"]("getPixelColour", "number", ["number", "number"]),
-    getCurrentPath: Module["cwrap"]("getCurrentPath", "string")
+    create_buffer: Module["_create_buffer"], // ["cwrap"]("create_buffer", "number", ["number", "number"]),
+    setCurrent: (src) => Module["_setCurrent"](srcMap.get(src)), // Module["cwrap"]("setCurrent", "", ["number"]),
+    addImage: (src, buf, width, height) => srcMap.set(src, Module["_addImage"](buf, width, height)), // Module["cwrap"]("addImage", "", ["number", "number", "number"]),
+    removeImage: (src) => {
+        Module["_removeImage"](srcMap.get(src));
+        srcMap.delete(src);
+    }, // Module["cwrap"]("removeImage", "", ["number"]),
+    historyStatus: Module["_historyStatus"], // ["cwrap"]("historyStatus", "number"),
+    trace: stringReturn(Module["_trace"]), // Module["cwrap"]("trace", "string", ["number", "number", "number"]),
+    point: stringReturn(Module["_point"]), // ["cwrap"]("point", "string", ["number", "number"]),
+    undo: stringReturn(Module["_undo"]), // ["cwrap"]("undo", "string"),
+    redo: stringReturn(Module["_redo"]), // Module["cwrap"]("redo", "string"),
+    eraseRegion: stringReturn(Module["_eraseRegion"]), // Module["cwrap"]("eraseRegion", "string", ["number", "number"]),
+    smoothTrace: stringReturn(Module["_smoothTrace"]), // Module["cwrap"]("smoothTrace", "string"),
+    clear: Module["_clear"], // ["cwrap"]("clear", ""),
+    auto: stringReturn(Module["_autoTrace"]), // Module["cwrap"]("autoTrace", "string", ["number"]),
+    exportTrace: stringReturn(Module["_exportTrace"]), // Module["cwrap"]("exportTrace", "string", Array(12).fill("number")),
+    snap: Module["_snap"], // ["cwrap"]("snap", "number", ["number", "number", "number"]),
+    getPixelColour: Module["_getPixelColour"], // ["cwrap"]("getPixelColour", "number", ["number", "number"]),
+    getCurrentPath: stringReturn(Module["_getCurrentPath"]), // Module["cwrap"]("getCurrentPath", "string")
 }
 
 const defaultTraceResponse = (data, response) => {

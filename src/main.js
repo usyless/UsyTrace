@@ -84,7 +84,7 @@ const lines = {
         else lines.updateLinePosition(line, Math.max(1, Math.min(otherLinePos - 1, position)));
     },
     showLines: () => lines.parent.classList.remove('hidden'),
-    hideLines: () => lines.parent.classList.add('hidden'),
+    hideLines: () => lines.parent.classList.add('hidden'), // potentially disable line keybinds
     initialiseTextPosition: () => {
         lines.lines["xHigh"].nextElementSibling.setAttribute('y', (height / 2).toString());
         lines.lines["xLow"].nextElementSibling.setAttribute('y', (height / 2).toString());
@@ -549,6 +549,62 @@ const imageQueue = {
 }
 document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]')?.dispatchEvent(new Event('contextmenu')));
 document.getElementById('toggleImageQueue').addEventListener('click', imageQueue.toggle);
+document.getElementById('editImage').addEventListener('click', () => {
+    if (image.isValid()) {
+        const elem = document.createElement('div'),
+            header = document.createElement('h3'),
+            edit_buttons = document.createElement('div'),
+            invert_button = document.createElement('button'),
+            img_wrapper = document.createElement('div'),
+            img = document.createElement('img');
+        elem.id = 'editContainer';
+        elem.append(header, edit_buttons, img_wrapper);
+        img_wrapper.append(img);
+        img_wrapper.classList.add('cropWrapper');
+        header.textContent = 'Crop/Edit Image';
+        edit_buttons.appendChild(invert_button);
+        invert_button.textContent = 'Invert';
+        invert_button.classList.add('standardButton');
+        img.src = image.src;
+
+        invert_button.addEventListener('click', () => img.classList.toggle('inverted'));
+
+        const buttons = document.createElement('div');
+        buttons.classList.add('popupButtons');
+        const cancel = document.createElement('button'), confirm = document.createElement('button');
+        cancel.classList.add('standardButton');
+        cancel.textContent = 'Cancel';
+        confirm.classList.add('standardButton');
+        confirm.textContent = 'Save';
+        buttons.append(cancel, confirm);
+        cancel.addEventListener('click', clearPopups);
+        confirm.addEventListener('click', () => {
+            const canvas = document.createElement("canvas"),
+                ctx = canvas.getContext('2d');
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0);
+
+            if (img.classList.contains('inverted')) {
+                const imageData = ctx.getImageData(0, 0, width, height),
+                    data = imageData.data, l = data.length;
+                for (let i = 0; i < l; i += 4) {
+                    data[i] = 255 - data[i];
+                    data[i + 1] = 255 - data[i + 1];
+                    data[i + 2] = 255 - data[i + 2];
+                }
+                ctx.putImageData(imageData, 0, 0);
+            }
+
+            document.getElementById('removeImage').click();
+            canvas.toBlob((b) => {
+                imageQueue.addImage(URL.createObjectURL(b), true);
+                clearPopups();
+            })
+        }, {once: true});
+        createPopup(elem, {buttons});
+    } else createPopup('No valid image selected');
+});
 
 // Initialise the page
 resetToDefault();
@@ -751,8 +807,6 @@ image.addEventListener('load', () => {
     const pointerDown = new PointerEvent('pointerdown', {bubbles: true}), pointerUp = new PointerEvent('pointerup', {bubbles: true});
     const keydownMap = {
         /** @export */
-        'escape': clearPopups,
-        /** @export */
         'z': (e) => e.ctrlKey && document.getElementById(e.shiftKey ? 'redo' : 'undo').click(),
         /** @export */
         'a': () => document.getElementById('autoPath').click(),
@@ -765,7 +819,7 @@ image.addEventListener('load', () => {
         /** @export */
         's': (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
         /** @export */
-        'e': () => document.getElementById('eraseRegion').click(),
+        'e': (e) => document.getElementById(e.ctrlKey ? 'editImage' : 'eraseRegion').click(),
         /** @export */
         'enter': () => document.getElementById('fileInputButton').click(),
         /** @export */

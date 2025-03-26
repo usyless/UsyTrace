@@ -285,3 +285,36 @@ input[type="number"]:focus-visible, select:focus-visible {
     height: 100%;
     background-color: var(--primary);
 }
+
+#editContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    row-gap: var(--spacing-largest);
+    max-height: 100%;
+
+    > div:first-of-type {
+        display: flex;
+        column-gap: var(--spacing);
+    }
+
+    h3 {
+        margin-top: var(--spacing-smaller);
+        margin-bottom: var(--spacing-smaller);
+    }
+
+    .cropWrapper {
+        max-width: 100%;
+        max-height: 100%;
+
+        img {
+            max-width: 100%;
+            max-height: 50vh;
+        }
+    }
+}
+
+.inverted {
+    filter: invert(1);
+}
