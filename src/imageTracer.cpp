@@ -69,8 +69,8 @@ struct ImageData {
         return data[(y * width + x) * channels];
     }
 
-    inline size_t getMaxPos() const {
-        return static_cast<size_t>(width) * static_cast<size_t>(height) * static_cast<size_t>(channels);
+    inline uint32_t getMaxPos() const {
+        return width * height * channels;
     }
 
     ~ImageData() {
@@ -467,7 +467,7 @@ void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
 }
 
 void invertImage(ImageData* data) {
-    const auto maxSize = data->getMaxPos();
+    const size_t maxSize = data->getMaxPos();
     const auto d = data->data;
     for (size_t pos = 0; pos < maxSize; ++pos) d[pos] = 255 - d[pos];
 }
