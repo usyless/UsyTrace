@@ -196,7 +196,7 @@ struct Trace {
             if (startY + max > maxHeight) max = maxHeight - startY;
             for (; low <= max; ++low) {
                 const auto y = startY + low;
-                if (colour.withinTolerance(imageData->getRGB(startX, y))) yValues.push_back(y);
+                if (colour.withinTolerance(imageData->getRGB(startX, y))) yValues.emplace_back(y);
             }
             if (!yValues.empty()) {
                 currJump = 0;
