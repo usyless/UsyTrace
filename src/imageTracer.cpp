@@ -631,16 +631,20 @@ struct Image {
 
 Image* currentImage = nullptr;
 
-inline const char* stringReturn(const string& str) {
-    char* buffer = new char[str.size() + 1];
-    strcpy(buffer, str.c_str());
-    return buffer;
+inline void** stringReturn(const string& str) {
+    const auto size = str.size();
+    void** ret = new void*[2];
+    ret[0] = new char[size];
+    ret[1] = reinterpret_cast<void*>(size); // cursed
+    memcpy(ret[0], str.c_str(), size);
+    return ret;
 }
 
 extern "C" {
     // string util
-    EMSCRIPTEN_KEEPALIVE void clean_string(const char* str) {
-        delete[] str;
+    EMSCRIPTEN_KEEPALIVE void clean_string(void** ret) {
+        delete[] static_cast<char*>(ret[0]);
+        delete[] ret;
     }
 
     // Image Control
@@ -669,15 +673,15 @@ extern "C" {
     }
 
     // Tracing
-    EMSCRIPTEN_KEEPALIVE const char* trace(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) {
+    EMSCRIPTEN_KEEPALIVE void** trace(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) {
         return stringReturn(currentImage->trace(TraceData{x, y, colourTolerance}));
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* undo() {
+    EMSCRIPTEN_KEEPALIVE void** undo() {
         return stringReturn(currentImage->undo());
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* redo() {
+    EMSCRIPTEN_KEEPALIVE void** redo() {
         return stringReturn(currentImage->redo());
     }
 
@@ -685,24 +689,24 @@ extern "C" {
         currentImage->clear();
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* point(const uint32_t x, const uint32_t y) {
+    EMSCRIPTEN_KEEPALIVE void** point(const uint32_t x, const uint32_t y) {
         return stringReturn(currentImage->point(TraceData{x, y}));
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* autoTrace(const uint32_t colourTolerance) {
+    EMSCRIPTEN_KEEPALIVE void** autoTrace(const uint32_t colourTolerance) {
         return stringReturn(currentImage->autoTrace(TraceData{colourTolerance}));
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* eraseRegion(uint32_t begin, uint32_t end) {
+    EMSCRIPTEN_KEEPALIVE void** eraseRegion(uint32_t begin, uint32_t end) {
         return stringReturn(currentImage->eraseRegion(begin, end));
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* smoothTrace() {
+    EMSCRIPTEN_KEEPALIVE void** smoothTrace() {
         return stringReturn(currentImage->smoothTrace());
     }
 
     // Exporting
-    EMSCRIPTEN_KEEPALIVE const char* exportTrace(const int PPO, const int delim, const double lowFRExport,
+    EMSCRIPTEN_KEEPALIVE void** exportTrace(const int PPO, const int delim, const double lowFRExport,
         const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
         const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
         const double FRBottomPixel) {
@@ -721,7 +725,7 @@ extern "C" {
         return currentImage->getPixelColour(x, y).toBin();
     }
 
-    EMSCRIPTEN_KEEPALIVE const char* getCurrentPath() {
+    EMSCRIPTEN_KEEPALIVE void** getCurrentPath() {
         return stringReturn(currentImage->getPath());
     }
 }
