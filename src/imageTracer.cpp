@@ -26,10 +26,10 @@ struct RGB {
     }
 
     inline double getDifference(const RGB& rgb) const {
-        const int rmean = (R + rgb.R) / 2;
-        const int rdiff = R - rgb.R;
-        const int gdiff = G - rgb.G;
-        const int bdiff = B - rgb.B;
+        const int rmean = (static_cast<int>(R) + rgb.R) / 2;
+        const int rdiff = static_cast<int>(R) - rgb.R;
+        const int gdiff = static_cast<int>(G) - rgb.G;
+        const int bdiff = static_cast<int>(B) - rgb.B;
         return sqrt((512 + rmean) * ((rdiff * rdiff) >> 8) + 4 * (gdiff * gdiff) + (((767 - rmean) * (bdiff * bdiff)) >> 8));
     }
 
