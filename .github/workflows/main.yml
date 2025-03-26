@@ -34,8 +34,8 @@ jobs:
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
         git pull
-        ./emsdk install 3.1.74
-        ./emsdk activate 3.1.74
+        ./emsdk install 4.0.5
+        ./emsdk activate 4.0.5
 
     - name: Build WASM
       if: steps.changes.outputs.imageTracer == 'true'
