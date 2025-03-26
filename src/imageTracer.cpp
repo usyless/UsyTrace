@@ -80,7 +80,8 @@ struct ImageData {
 
 struct RGBTools {
     RGB rgb;
-    uint32_t tolerance, count = 0;
+    uint32_t tolerance;
+    uint32_t count = 1;
 
     RGBTools(const RGB rgb, const uint32_t tolerance) : rgb(rgb), tolerance(tolerance) {}
 
@@ -89,9 +90,11 @@ struct RGBTools {
     }
 
     inline void addToAverage(const RGB& rgb) {
-        this->rgb.R += static_cast<Colour>((sqrt((pow(this->rgb.R, 2) + pow(rgb.R, 2)) / 2) - this->rgb.R) / count);
-        this->rgb.G += static_cast<Colour>((sqrt((pow(this->rgb.G, 2) + pow(rgb.G, 2)) / 2) - this->rgb.G) / count);
-        this->rgb.B += static_cast<Colour>((sqrt((pow(this->rgb.B, 2) + pow(rgb.B, 2)) / 2) - this->rgb.B) / count);
+        const auto r = static_cast<int>(this->rgb.R), g = static_cast<int>(this->rgb.G), b = static_cast<int>(this->rgb.B);
+        const auto oR = static_cast<int>(rgb.R), oG = static_cast<int>(rgb.G), oB = static_cast<int>(rgb.B);
+        this->rgb.R += static_cast<Colour>((sqrt(((r * r) + (oR * oR)) / 2) - r) / count);
+        this->rgb.G += static_cast<Colour>((sqrt(((g * g) + (oG * oG)) / 2) - g) / count);
+        this->rgb.B += static_cast<Colour>((sqrt(((b * b) + (oB * oB)) / 2) - b) / count);
         ++count;
     }
 };
