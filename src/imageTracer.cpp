@@ -22,7 +22,7 @@ struct RGB {
     RGB(const Colour r, const Colour g, const Colour b) : R(r), G(g), B(b) {}
 
     static inline Colour biggestDifference(const RGB& rgb) {
-        return max(max(rgb.R, rgb.G), rgb.B) - min(min(rgb.R, rgb.G), rgb.B);
+        return abs(static_cast<int>(max(max(rgb.R, rgb.G), rgb.B)) - min(min(rgb.R, rgb.G), rgb.B));
     }
 
     inline double getDifference(const RGB& rgb) const {
