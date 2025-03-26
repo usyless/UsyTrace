@@ -34,7 +34,7 @@ struct RGB {
     }
 
     bool operator==(const RGB& rgb) const {
-        return R == rgb.R && G == rgb.G&& B == rgb.B;
+        return R == rgb.R && G == rgb.G && B == rgb.B;
     }
 
     bool operator<(const RGB& rgb) const {
@@ -145,7 +145,7 @@ inline void checkPixel(const uint32_t x, const uint32_t y, const RGBTools& basel
 }
 
 void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& trace, const ImageData* imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
-    vector<uint32_t>&& yValues{};
+    vector<uint32_t> yValues{};
     uint32_t currJump = 0;
     const uint32_t maxHeight = imageData->height - 1;
     for (const auto width = imageData->width; startX >= 0 && startX < width; startX += step) {
@@ -176,12 +176,12 @@ struct Trace {
     Trace(const frTrace& trace) : trace(trace) {}
 
     vector<pair<uint32_t, uint32_t>> clean() const {
-        vector<pair<uint32_t, uint32_t>>&& simplifiedTrace{};
+        vector<pair<uint32_t, uint32_t>> simplifiedTrace{};
         if (!trace.empty()) {
             if (trace.size() > 2) {
                 auto iter = trace.begin();
                 simplifiedTrace.emplace_back(iter->first, iter->second);
-                vector<uint32_t>&& identity{};
+                vector<uint32_t> identity{};
                 const auto& end = trace.end();
                 for(++iter; iter != end; ++iter) {
                     identity.clear();
@@ -339,7 +339,7 @@ struct TraceHistory {
 };
 
 RGB getBackgroundColour(const ImageData* imageData) {
-    map<RGB, uint32_t>&& colours{};
+    map<RGB, uint32_t> colours{};
     const auto mY = imageData->height, mX = imageData->width;
     const long xJump = max<uint32_t>(1, mX / 100), yJump = max<uint32_t>(1, mY / 100);
 
@@ -470,7 +470,7 @@ void invertImage(ImageData* data) {
 }
 
 set<uint32_t> detectLines(const ImageData* imageData, const string&& direction, const uint32_t tolerance) {
-    set<uint32_t>&& lines{};
+    set<uint32_t> lines{};
     uint32_t length, otherDirection;
     function<bool(uint32_t, uint32_t)> comparator;
     if(direction == "X") { // vertical line, representing x axis
@@ -485,7 +485,7 @@ set<uint32_t> detectLines(const ImageData* imageData, const string&& direction, 
     const auto upperBound = static_cast<uint32_t>(otherDirection * 0.7), lowerBound = static_cast<uint32_t>(otherDirection * 0.3);
     const auto bound = (upperBound - lowerBound) - static_cast<uint32_t>(0.9 * (upperBound - lowerBound));
     
-    vector<uint32_t>&& valid{};
+    vector<uint32_t> valid{};
     for (uint32_t pos = 0; pos < length; ++pos) {
         auto failedCount = 0;
         for (auto j = lowerBound; j <= upperBound; ++j) if (comparator(pos, j) && ++failedCount > bound) break;
@@ -569,7 +569,7 @@ struct Image {
         PPOStep = exportData.PPOStep, logMaxFR = exportData.logMaxFR;
         auto str = ExportString{exportData.delim};
 
-        vector<pair<double, double>>&& FRxSPL{};
+        vector<pair<double, double>> FRxSPL{};
         const auto& clean = traceHistory.getLatest()->clean();
         for (const auto& [x, y] : clean) {
             FRxSPL.emplace_back(pow(10, (x - FRBottomPixel) * FRRatio + logFRBottomValue), (y - SPLBottomPixel) * SPLRatio + SPLBottomValue);
