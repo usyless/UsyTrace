@@ -41,12 +41,8 @@ struct RGB {
         return R < rgb.R || G < rgb.G || B < rgb.B;
     }
 
-    uint32_t sum() const {
+    inline uint32_t sum() const {
         return R + G + B;
-    }
-
-    string toString() const {
-        return to_string(R) + ", " + to_string(G) + ", " + to_string(B);
     }
 
     inline int toBin() const {
