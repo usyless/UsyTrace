@@ -144,7 +144,7 @@ inline void checkPixel(const uint32_t x, const uint32_t y, const RGBTools& basel
     if (const auto yVal = max<uint32_t>(0, min(maxHeight, y)); baselineColour.withinTolerance(imageData->getRGB(x, yVal))) yValues.push_back(yVal);
 }
 
-void traceFor(uint32_t startX, uint32_t startY, const uint32_t step, frTrace& trace, const ImageData* imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
+void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& trace, const ImageData* imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
     vector<uint32_t>&& yValues{};
     uint32_t currJump = 0;
     const uint32_t maxHeight = imageData->height - 1;
@@ -386,7 +386,7 @@ Trace* getPotentialTrace(const ImageData* imageData, TraceData traceData, const 
         traceData.x = middleX;
         traceData.y = bestY;
         const auto newTrace = trace->newTrace(imageData, traceData, true);
-        delete trace; // prevent memory leak i guess
+        delete trace;
         trace = newTrace;
     }
     return trace;
