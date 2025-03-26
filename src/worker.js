@@ -12,7 +12,7 @@ const srcMap = new Map();
 const api = {
     create_buffer: Module["_create_buffer"], // ["cwrap"]("create_buffer", "number", ["number", "number"]),
     setCurrent: (src) => Module["_setCurrent"](srcMap.get(src)), // Module["cwrap"]("setCurrent", "", ["number"]),
-    addImage: (src, ...args) => srcMap.set(src, Module["_addImage"](...args)), // Module["cwrap"]("addImage", "", ["number", "number", "number"]),
+    addImage: (src, buf, width, height) => srcMap.set(src, Module["_addImage"](buf, width, height)), // Module["cwrap"]("addImage", "", ["number", "number", "number"]),
     removeImage: (src) => {
         Module["_removeImage"](srcMap.get(src));
         srcMap.delete(src);
