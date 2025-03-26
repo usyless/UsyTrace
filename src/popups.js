@@ -66,13 +66,12 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
             type: 'keydown',
             listener: (e) => {
                 if (e.key.toLowerCase() === 'escape') center_div.click();
-            },
-            args: {once: true}
+            }
         })
 
         for (const listener of listeners) {
             eventListeners.push(listener);
-            listener.target.addEventListener(listener.type, listener.listener, listener.args ?? {});
+            listener.target.addEventListener(listener.type, listener.listener);
         }
 
         if (onclose != null) onclosefuncs.push(onclose);
