@@ -1,4 +1,4 @@
-const cacheName = 'v48';
+const cacheName = 'v49';
 
 contentToCache = [
     './favicon.ico',
@@ -6,21 +6,14 @@ contentToCache = [
 
     './',
     './index.html',
-
-    './popup.css',
-    './shared.css',
-    './main.css',
-    './tutorial.css',
-
+    './main.min.css',
     './main.min.js',
 
     './a.out.wasm',
     './a.out.js',
     './usytrace.webmanifest',
 
-    './assets/fonts/open-sans-latin-400-normal.woff',
     './assets/fonts/open-sans-latin-400-normal.woff2',
-    './assets/fonts/open-sans-latin-700-normal.woff',
     './assets/fonts/open-sans-latin-700-normal.woff2',
 ].map((c) => `${c}?version=${cacheName}`);
 

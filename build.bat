@@ -50,7 +50,7 @@ if "%DEBUG_MODE%"=="true" (
             --compilation_level ADVANCED ^
             --js state.js main.js popups.js tutorial.js about.js updater.js ^
             --js_output_file main.min.js
-    call node ../minify-css.js --in-css shared.css main.css popup.css tutorial.css
+    call node ../minify-css.js --in-css main.css popup.css tutorial.css shared.css
 )
 
 :: exit from src directory

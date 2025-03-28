@@ -4,4 +4,4 @@
 a.out.js
 a.out.wasm
 build_config.txt
-*.min.js
+*.min.*
