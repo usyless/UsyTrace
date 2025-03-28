@@ -19,18 +19,18 @@ jobs:
         ref: main
         persist-credentials: false
 
-    - name: Check if imageTracer.cpp changed
+    - name: Check if recompile needed
       uses: dorny/paths-filter@v3
       id: changes
       with:
         working-directory: usytrace
         filters: |
-          imageTracer:
+          recompile:
             - 'src/imageTracer.cpp'
             - 'src/worker.js'
 
     - name: Set up Emscripten
-      if: steps.changes.outputs.imageTracer == 'true'
+      if: steps.changes.outputs.recompile == 'true'
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
@@ -38,8 +38,8 @@ jobs:
         ./emsdk install 4.0.5
         ./emsdk activate 4.0.5
 
-    - name: Build WASM
-      if: steps.changes.outputs.imageTracer == 'true'
+    - name: Compile WASM and worker js
+      if: steps.changes.outputs.recompile == 'true'
       run: |
         source ./emsdk/emsdk_env.sh
         cd ./usytrace/src
