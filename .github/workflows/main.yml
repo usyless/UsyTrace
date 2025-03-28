@@ -43,6 +43,7 @@ jobs:
         source ./emsdk/emsdk_env.sh
         cd ./usytrace/src
         emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -sMEMORY64=0 -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto -g0 -fno-exceptions --closure 1 --post-js worker.js
+        rm -f imageTracer.cpp
 
     - name: Minify js
       run: |
@@ -51,6 +52,13 @@ jobs:
         echo "JAVA_HOME=${{ env.JAVA_HOME_21_X64 }}" >> $GITHUB_ENV
         
         java -jar "$EMSDK/upstream/emscripten/node_modules/google-closure-compiler-java/compiler.jar" --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 --compilation_level ADVANCED --js state.js main.js popups.js tutorial.js about.js updater.js --js_output_file main.min.js
+        rm -f about.js
+        rm -f main.js
+        rm -f worker.js
+        rm -f updater.js
+        rm -f tutorial.js
+        rm -f popups.js
+        rm -f state.js
 
     - name: Minify css
       run: |
@@ -71,14 +79,6 @@ jobs:
       run: |
         cp -rf usytrace/src/* usyless.github.io/trace/
         cd usyless.github.io/trace
-        rm -f imageTracer.cpp
-        rm -f about.js
-        rm -f main.js
-        rm -f worker.js
-        rm -f updater.js
-        rm -f tutorial.js
-        rm -f popups.js
-        rm -f state.js
     
     - name: Commit and push
       working-directory: usyless.github.io
