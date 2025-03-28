@@ -44,7 +44,6 @@ jobs:
         source ./emsdk/emsdk_env.sh
         cd ./usytrace/src
         emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -sMEMORY64=0 -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto -g0 -fno-exceptions --closure 1 --post-js worker.js
-        rm -f imageTracer.cpp
 
     - name: Minify js
       working-directory: usytrace/src
@@ -57,7 +56,6 @@ jobs:
         
         rm -f about.js
         rm -f main.js
-        rm -f worker.js
         rm -f updater.js
         rm -f tutorial.js
         rm -f popups.js
@@ -81,6 +79,8 @@ jobs:
       run: |
         cp -rf usytrace/src/* usyless.github.io/trace/
         cd usyless.github.io/trace
+        rm -f imageTracer.cpp
+        rm -f worker.js
     
     - name: Commit and push
       working-directory: usyless.github.io
