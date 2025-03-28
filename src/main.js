@@ -561,7 +561,8 @@ document.getElementById('editImage').addEventListener('click', () => {
         elem.append(header, edit_buttons, img_wrapper);
         img_wrapper.append(img);
         img_wrapper.classList.add('cropWrapper');
-        header.textContent = 'Crop/Edit Image';
+        img.draggable = false;
+        header.textContent = 'Edit Image';
         edit_buttons.appendChild(invert_button);
         invert_button.textContent = 'Invert';
         invert_button.classList.add('standardButton');
