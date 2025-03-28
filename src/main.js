@@ -738,7 +738,7 @@ window.addEventListener('resize', () => {
         /** @export */
         point: worker.addPoint
     }
-    image.addEventListener('click', (e) => {
+    image.addEventListener('pointerup', (e) => {
         if (CURRENT_MODE != null) {
             const m = image.getMouseCoords(e);
             callbacks[CURRENT_MODE]?.(m["xRel"] * sizeRatio, m["yRel"] * sizeRatio);
