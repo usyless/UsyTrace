@@ -30,6 +30,7 @@ jobs:
             - 'src/worker.js'
 
     - name: Set up Emscripten
+      if: steps.changes.outputs.imageTracer == 'true'
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
@@ -46,12 +47,14 @@ jobs:
         rm -f imageTracer.cpp
 
     - name: Minify js
+      working-directory: usytrace/src
       run: |
-        source ./emsdk/emsdk_env.sh
-        cd ./usytrace/src
-        echo "JAVA_HOME=${{ env.JAVA_HOME_21_X64 }}" >> $GITHUB_ENV
+        npx google-closure-compiler \
+            --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 \
+            --compilation_level ADVANCED \
+            --js state.js main.js popups.js tutorial.js about.js updater.js \
+            --js_output_file main.min.js
         
-        java -jar "$EMSDK/upstream/emscripten/node_modules/google-closure-compiler-java/compiler.jar" --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 --compilation_level ADVANCED --js state.js main.js popups.js tutorial.js about.js updater.js --js_output_file main.min.js
         rm -f about.js
         rm -f main.js
         rm -f worker.js
@@ -61,9 +64,8 @@ jobs:
         rm -f state.js
 
     - name: Minify css
+      working-directory: usytrace/src
       run: |
-        source ./emsdk/emsdk_env.sh
-        cd ./usytrace/src
         node ../minify-css.js --in-css main.css popup.css tutorial.css shared.css --delete
 
     - name: Checkout github pages repo
