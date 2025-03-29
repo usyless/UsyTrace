@@ -49,7 +49,8 @@ minifiedCss = minifiedCss
     .replace(/[\r\n]/gm, '')
     .replaceAll('    ', '')
     .replaceAll(' {', '{')
-    .replaceAll(': ', ':');
+    .replaceAll(': ', ':')
+    .replaceAll(';}', '}');
 
 fs.writeFileSync(outName, minifiedCss, 'utf8');
 console.log(`Successfully minified css into "${outName}".`);
