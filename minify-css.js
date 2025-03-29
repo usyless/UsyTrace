@@ -2,6 +2,11 @@ const fs = require('fs');
 
 const args = process.argv.slice(2), argsLength = args.length;
 
+const error = (...m) => {
+    console.error(...m);
+    process.exit(1);
+}
+
 if (argsLength === 0) {
     console.log(`Enter input files using --in-css file1 file2 file3
 Enter output file with --out-css fileName
@@ -22,14 +27,16 @@ for (let i = 0; i < argsLength; ++i) {
         --i; // move back on the last one
     } else if (args[i] === '--out-css') {
         if (++i < argsLength && !isArgument(args[i])) outName = args[i];
-        else console.error('No name specified for --out-css');
+        else error('No name specified for --out-css');
     } else if (args[i] === '--delete') {
         deleteAfter = true;
     } else {
-        console.error(`Unrecognised argument: ${args[i]}`);
-        process.exit(1);
+        error(`Unrecognised argument: ${args[i]}`);
     }
 }
+
+if (files.length === 0) error('No input files found, use --in-css');
+if (!outName) error('Invalid name specified for output');
 
 let minifiedCss = '';
 
@@ -37,12 +44,9 @@ for (const filename of files) {
     try {
         minifiedCss += fs.readFileSync(filename, 'utf8') + "\n";
     } catch (e) {
-        console.error(`Error reading file ${filename}:`, e.message);
-        process.exit(1);
+        error(`Error reading file ${filename}:`, e.message);
     }
 }
-
-if (deleteAfter) for (const filename of files) fs.unlinkSync(filename);
 
 // remove most whitespace
 minifiedCss = minifiedCss
@@ -55,3 +59,8 @@ minifiedCss = minifiedCss
 
 fs.writeFileSync(outName, minifiedCss, 'utf8');
 console.log(`Successfully minified css into "${outName}".`);
+
+if (deleteAfter) {
+    console.log('Deleting minified files');
+    for (const filename of files) fs.unlinkSync(filename);
+}
