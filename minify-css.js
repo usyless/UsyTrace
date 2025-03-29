@@ -31,26 +31,27 @@ for (let i = 0; i < argsLength; ++i) {
     }
 }
 
-const importRegex = /^@import.*(?:;|[\r\n])/gm;
-
 let minifiedCss = '';
 
 for (const filename of files) {
     try {
-        minifiedCss += fs.readFileSync(filename, 'utf8').replace(importRegex, '') + "\n";
-        if (deleteAfter) fs.unlinkSync(filename);
+        minifiedCss += fs.readFileSync(filename, 'utf8') + "\n";
     } catch (e) {
-        console.log(`Error reading file ${filename}:`, e.message);
+        console.error(`Error reading file ${filename}:`, e.message);
+        process.exit(1);
     }
 }
 
+if (deleteAfter) for (const filename of files) fs.unlinkSync(filename);
+
 // remove most whitespace
 minifiedCss = minifiedCss
-    .replace(/[\r\n]/gm, '')
-    .replaceAll('    ', '')
-    .replaceAll(' {', '{')
-    .replaceAll(': ', ':')
-    .replaceAll(';}', '}');
+    .replace(/^@import.*(?:;|[\r\n])/gm, '') // remove @import
+    .replace(/[\r\n]/gm, '') // remove newlines
+    .replaceAll('    ', '') // remove indentation
+    .replaceAll(' {', '{') // remove extra space
+    .replaceAll(': ', ':') // remove extra space
+    .replaceAll(';}', '}'); // remove final semicolon
 
 fs.writeFileSync(outName, minifiedCss, 'utf8');
 console.log(`Successfully minified css into "${outName}".`);
