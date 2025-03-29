@@ -3,7 +3,7 @@ const fs = require('fs');
 const args = process.argv.slice(2), argsLength = args.length;
 
 const error = (...m) => {
-    console.error(...m);
+    console.error('Minify CSS:', ...m);
     process.exit(1);
 }
 
