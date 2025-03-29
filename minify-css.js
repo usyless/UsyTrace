@@ -18,21 +18,27 @@ const files = [];
 let outName = 'main.min.css';
 let deleteAfter = false;
 
-const validArguments = ['--in-css', '--out-css', '--delete'];
-const isArgument = (arg) => validArguments.includes(arg);
-for (let i = 0; i < argsLength; ++i) {
-    if (args[i] === '--in-css') {
-        ++i;
+const isArgument = (arg) => arg.startsWith('--');
+const argMap = { // return next arguments index
+    '--in-css': (i) => { // receive first values index
         while (i < argsLength && !isArgument(args[i])) files.push(args[i++]);
-        --i; // move back on the last one
-    } else if (args[i] === '--out-css') {
-        if (++i < argsLength && !isArgument(args[i])) outName = args[i];
-        else error('No name specified for --out-css');
-    } else if (args[i] === '--delete') {
+        return i;
+    },
+    '--out-css': (i) => {
+        if (i < argsLength && !isArgument(args[i])) {
+            outName = args[i];
+            return ++i;
+        } else error('No name specified for --out-css');
+    },
+    '--delete': () => {
         deleteAfter = true;
-    } else {
-        error(`Unrecognised argument: ${args[i]}`);
     }
+}
+
+for (let i = 0; i < argsLength;) {
+    const f = argMap[args[i]];
+    if (f) i = f(++i) ?? i;
+    else error(`Unrecognised argument: ${args[i]}`);
 }
 
 if (files.length === 0) error('No input files found, use --in-css');
@@ -48,7 +54,6 @@ for (const filename of files) {
     }
 }
 
-// remove most whitespace
 minifiedCss = minifiedCss
     .replace(/^@import.*(?:;|[\r\n])/gm, '') // remove @import
     .replace(/[\r\n]/gm, '') // remove newlines
