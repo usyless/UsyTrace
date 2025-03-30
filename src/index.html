@@ -35,47 +35,47 @@
             <b>Load from files</b>
         </button>
         <div class="sidebarSection">
-            <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled>Auto Trace</button>
-            <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled>Select Path</button>
-            <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" title="Click to add a point to the trace, will stack on top of previous trace (p)" data-disabled>Add Point</button>
+            <button id="autoPath" class="standardButton" title="Attempts to trace one of the lines on the image (a)" data-disabled disabled>Auto Trace</button>
+            <button id="selectPath" class="standardButton" data-default="Select Path" data-active="Stop Selecting" data-mode="path" title="Click to trace line from a point, will stack on top of previous trace (t)" data-disabled disabled>Select Path</button>
+            <button id="selectPoint" class="standardButton" data-default="Add Point" data-active="Stop Adding Points" data-mode="point" title="Click to add a point to the trace, will stack on top of previous trace (p)" data-disabled disabled>Add Point</button>
             <div class="break"></div>
-            <button id="smoothTrace" class="standardButton" title="Apply smoothing to the current trace (s)" data-disabled>Smooth Trace</button>
+            <button id="smoothTrace" class="standardButton" title="Apply smoothing to the current trace (s)" data-disabled disabled>Smooth Trace</button>
             <div class="break"></div>
             <div id="traceHistoryControl">
-                <button id="undo" class="standardButton" title="Undo the previous action done to the trace (Ctrl + z)" data-disabled>Undo</button>
-                <button id="redo" class="standardButton" title="Redo the previous actionm done to the trace (Ctrl + Shift + z)" data-disabled>Redo</button>
+                <button id="undo" class="standardButton" title="Undo the previous action done to the trace (Ctrl + z)" data-disabled disabled>Undo</button>
+                <button id="redo" class="standardButton" title="Redo the previous actionm done to the trace (Ctrl + Shift + z)" data-disabled disabled>Redo</button>
             </div>
-            <button id="eraseRegion" class="standardButton" data-default="Erase Region" data-active="Stop Erasing" data-mode="erase" title="Erases the selected region on the trace, drag a box to select (e)" data-disabled>Erase Region</button>
-            <button id="clearPath" class="standardButton" title="Clears the current trace, can be undone (Backspace)" data-disabled>Clear Path</button>
+            <button id="eraseRegion" class="standardButton" data-default="Erase Region" data-active="Stop Erasing" data-mode="erase" title="Erases the selected region on the trace, drag a box to select (e)" data-disabled disabled>Erase Region</button>
+            <button id="clearPath" class="standardButton" title="Clears the current trace, can be undone (Backspace)" data-disabled disabled>Clear Path</button>
         </div>
         <div class="sidebarSection" id="buttonSection">
-            <button id="export" class="standardButton" title="Exports the current trace, make sure to have all SPL and FR values filled in" data-disabled>Export Trace</button>
+            <button id="export" class="standardButton" title="Exports the current trace, make sure to have all SPL and FR values filled in" data-disabled disabled>Export Trace</button>
             <label for="SPLHigher" title="Y value of the upper horizontal line">Higher SPL (dB)</label>
             <input type="number" id="SPLHigher" title="Y value of the upper horizontal line"/>
             <div class="moveButtons" data-for="yHigh">
-                <button class="standardButton" data-direction="1" data-disabled>▼</button>
-                <button class="standardButton" data-direction="-1" data-disabled>▲</button>
+                <button class="standardButton" data-direction="1" data-disabled disabled>▼</button>
+                <button class="standardButton" data-direction="-1" data-disabled disabled>▲</button>
             </div>
 
             <label for="SPLLower" title="Y value of the lower horizontal line">Lower SPL (dB)</label>
             <input type="number" id="SPLLower" title="Y value of the lower horizontal line"/>
             <div class="moveButtons" data-for="yLow">
-                <button class="standardButton" data-direction="1" data-disabled>▼</button>
-                <button class="standardButton" data-direction="-1" data-disabled>▲</button>
+                <button class="standardButton" data-direction="1" data-disabled disabled>▼</button>
+                <button class="standardButton" data-direction="-1" data-disabled disabled>▲</button>
             </div>
 
             <label for="FRHigher" title="X value of the right-most vertical line">Higher Frequency (Hz)</label>
             <input type="number" id="FRHigher" title="X value of the right-most vertical line"/>
             <div class="moveButtons" data-for="xHigh">
-                <button class="standardButton" data-direction="-1" data-disabled>◀</button>
-                <button class="standardButton" data-direction="1" data-disabled>▶</button>
+                <button class="standardButton" data-direction="-1" data-disabled disabled>◀</button>
+                <button class="standardButton" data-direction="1" data-disabled disabled>▶</button>
             </div>
 
             <label for="FRLower" title="X value of the left-most vertical line">Lower Frequency (Hz)</label>
             <input type="number" id="FRLower" min="0" title="X value of the left-most vertical line"/>
             <div class="moveButtons" data-for="xLow">
-                <button class="standardButton" data-direction="-1" data-disabled>◀</button>
-                <button class="standardButton" data-direction="1" data-disabled>▶</button>
+                <button class="standardButton" data-direction="-1" data-disabled disabled>◀</button>
+                <button class="standardButton" data-direction="1" data-disabled disabled>▶</button>
             </div>
             <div>
                 <label for="snapToLines">Buttons snap to axis</label>
