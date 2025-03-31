@@ -91,7 +91,7 @@ const typeMap = {
 
     /** @export */
     snapLine: (data) => {
-        data["line"]["position"] = api.snap(parseInt(data["line"]["position"]), data["line"]["direction"] === "x" ? 1 : 0, parseInt(data["direction"], 10));
+        data["line"]["position"] = api.snap(parseInt(data["line"]["position"], 10), data["line"]["direction"] === "x" ? 1 : 0, parseInt(data["direction"], 10));
         return data;
     },
 
