@@ -225,9 +225,12 @@ struct Trace {
     }
 
     // Gaussian smoothing
-    Trace* smooth(const int windowSize, const double sigma) {
+    Trace* smooth(int windowSize, const double sigma) {
         frTrace newTrace{};
         const double multi = -0.5 / (sigma * sigma);
+        if (windowSize % 2 == 0) {
+            ++windowSize;
+        }
         if (trace.size() > windowSize) {
             int halfWindow = windowSize / 2;
 
