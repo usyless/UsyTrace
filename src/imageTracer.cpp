@@ -142,7 +142,7 @@ struct ExportString {
 struct Trace {
     const frTrace trace;
 
-    Trace() : trace(std::move(frTrace{})) {}
+    Trace() {}
     Trace(const frTrace& trace) : trace(trace) {}
 
     vector<pair<uint32_t, uint32_t>> clean() const {
