@@ -152,14 +152,14 @@ struct Trace {
                 auto iter = trace.begin();
                 simplifiedTrace.emplace_back(iter->first, iter->second);
                 vector<uint32_t> identity{};
-                const auto& end = trace.end();
+                const auto end = trace.end();
                 for(++iter; iter != end; ++iter) {
                     identity.clear();
+                    auto previousKey = iter->first;
                     const auto previousValue = iter->second;
                     do {
                         identity.emplace_back(iter->first);
-                        ++iter;
-                    } while(iter != end && iter->second == previousValue);
+                    } while(++iter != end && iter->second == previousValue && iter->first == ++previousKey);
                     --iter;
                     if (identity.size() == 1) simplifiedTrace.emplace_back(identity[0], previousValue);
                     else simplifiedTrace.emplace_back(reduce(identity.begin(), identity.end()) / identity.size(), previousValue);
