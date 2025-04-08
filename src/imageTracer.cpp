@@ -251,7 +251,8 @@ struct Trace {
     }
 
     inline Trace* standardSmooth(int width) {
-        return smooth(static_cast<int>(width) / 100, 1.5);
+        const int windowSize = max(width / 150, 2);
+        return smooth(windowSize, static_cast<double>(windowSize) / 2.0);
     }
 
     Trace* eraseRegion(uint32_t begin, uint32_t end) {
@@ -616,8 +617,7 @@ struct Image {
     }
 
     inline string smoothTrace() {
-        const int windowSize = max(static_cast<int>(imageData->width) / 100, 2);
-        return traceHistory.add(traceHistory.getLatest()->smooth(windowSize, static_cast<double>(windowSize) / 2.0))->toSVG();
+        return traceHistory.add(traceHistory.getLatest()->standardSmooth(imageData->width))->toSVG();
     }
 
     ~Image() {
