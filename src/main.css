@@ -318,3 +318,20 @@ input[type="number"]:focus-visible, select:focus-visible {
 .inverted {
     filter: invert(1);
 }
+
+.exportBox {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    row-gap: var(--spacing-largest);
+}
+
+input[type="text"] {
+    width: 100%;
+    height: 100%;
+    background-color: var(--primary);
+    outline: none;
+    border: var(--border-width) solid var(--tertiary);
+    text-align: left;
+}

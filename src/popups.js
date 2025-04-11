@@ -34,21 +34,22 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
 
         let buttons_div;
 
-        if (buttons != null) {
-            buttons_div = buttons;
-        } else {
+        if (typeof buttons === 'string' || buttons == null) {
             buttons_div = document.createElement('div');
             buttons_div.classList.add('popupButtons');
             const ok_button = document.createElement('button');
             ok_button.classList.add('standardButton');
-            ok_button.textContent = 'Ok';
+            ok_button.textContent = buttons ?? 'Ok';
 
             buttons_div.appendChild(ok_button);
 
             ok_button.addEventListener('click', () => {
+                const value = content.serialise?.();
                 clearPopups();
-                resolve(true);
+                resolve(value ?? true);
             });
+        } else {
+            buttons_div = buttons;
         }
         inner_div.append(...innerContent, buttons_div);
 

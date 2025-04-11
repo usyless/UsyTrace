@@ -260,13 +260,28 @@ const worker = {
                             type: "text/plain;charset=utf-8"
                         }));
                     a.href = url;
-                    a.download = "trace.txt";
-                    document.body.appendChild(a);
-                    a.click();
+
+                    const content = document.createElement('div'),
+                        inner = document.createElement('div'),
+                        input = document.createElement('input');
+                    inner.textContent = "Input file name";
+                    input.value = "trace";
+                    input.type = 'text';
+                    input.classList.add('sidebarSection');
+                    content.append(inner, input);
+                    content.classList.add('exportBox');
+                    content.serialise = () => input.value;
+
+                    createPopup(content, {buttons: "Save Trace"}).then((r) => {
+                        if (r) {
+                            a.download = r ?? "trace.txt";
+                            a.click();
+                        }
+                        URL.revokeObjectURL(url);
+                    });
                     setTimeout(() => {
-                        document.body.removeChild(a);
-                        window.URL.revokeObjectURL(url);
-                    }, 0);
+                        input.focus();
+                    }, 50);
                     break;
                 }
                 case 'error': {
