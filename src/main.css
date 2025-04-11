@@ -93,28 +93,12 @@ body {
     overflow-x: hidden;
 }
 
-#sidebar > :first-child h1 {
+#sidebar > :first-child * {
     margin: 0;
 }
 
 #sidebar > :first-child {
     margin-bottom: var(--spacing-larger);
-}
-
-@media(max-width: 800px) {
-    #sidebar > :first-child {
-        background-image: url("./favicon.svg");
-        background-repeat: no-repeat;
-        background-position: center;
-        background-size: 50px;
-        height: 70px;
-        max-height: 70px;
-        flex-shrink: 0;
-
-        h1 {
-            display: none;
-        }
-    }
 }
 
 #sidebar h3 {
@@ -334,4 +318,26 @@ input[type="text"] {
     outline: none;
     border: var(--border-width) solid var(--tertiary);
     text-align: left;
+}
+
+#title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    column-gap: var(--spacing);
+
+    img {
+        height: 32px;
+    }
+
+    @media(max-width: 800px) {
+        h2 {
+            display: none;
+        }
+
+        img {
+            height: 50px;
+        }
+    }
 }
