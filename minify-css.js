@@ -54,13 +54,32 @@ for (const filename of files) {
     }
 }
 
+// replace all variables with minified ones
+const nameGen = (function* () {
+    const chars = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+    let length = 1;
+
+    while (true) {
+        for (const ch of chars) yield ch.repeat(length);
+        length++;
+    }
+})();
+
+for (const variable of minifiedCss.match(/--.*?:/g).sort((a, b) => b.length - a.length)) {
+    minifiedCss = minifiedCss.replaceAll(variable.slice(0, -1), `--${nameGen.next().value}`);
+}
+
 minifiedCss = minifiedCss
     .replace(/^@import.*(?:;|[\r\n])/gm, '') // remove @import
     .replace(/[\r\n]/gm, '') // remove newlines
     .replaceAll('    ', '') // remove indentation
     .replaceAll(' {', '{') // remove extra space
     .replaceAll(': ', ':') // remove extra space
-    .replaceAll(';}', '}'); // remove final semicolon
+    .replaceAll(';}', '}') // remove final semicolon
+    .replaceAll(', ', ',') // remove extra space
+    .replace(/\/\*[\s\S]*?\*\//g, '') // remove comments
+    .replaceAll(' > ', '>') // remove space
+    .replaceAll('> ', '>') // remove space
 
 fs.writeFileSync(outName, minifiedCss, 'utf8');
 console.log(`Successfully minified css into "${outName}".`);
