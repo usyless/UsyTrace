@@ -264,7 +264,7 @@ const worker = {
                     const content = document.createElement('div'),
                         inner = document.createElement('div'),
                         input = document.createElement('input');
-                    inner.textContent = "Input file name";
+                    inner.textContent = "Export file name";
                     input.value = "trace";
                     input.type = 'text';
                     input.classList.add('sidebarSection');
