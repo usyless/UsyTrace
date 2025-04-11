@@ -98,6 +98,21 @@ const lines = {
             line.setAttribute(`${otherDir}2`, sizeAttr);
         }
         lines.initialiseTextPosition();
+    },
+    fixPositioning: () => {
+        // need to make sure snapped lines aren't bad
+        if (lines.getPosition(lines.lines["xHigh"]) < width * 0.2) {
+            lines.setPosition(lines.lines["xHigh"], width);
+        }
+        if (lines.getPosition(lines.lines["xLow"]) > width * 0.8) {
+            lines.setPosition(lines.lines["xLow"], 0);
+        }
+        if (lines.getPosition(lines.lines["yHigh"]) > height * 0.8) {
+            lines.setPosition(lines.lines["yHigh"], 0);
+        }
+        if (lines.getPosition(lines.lines["yLow"]) < height * 0.2) {
+            lines.setPosition(lines.lines["yLow"], height);
+        }
     }
 }
 lines.lineArray = [lines.lines["xHigh"], lines.lines["xLow"], lines.lines["yHigh"], lines.lines["yLow"]];
@@ -300,7 +315,10 @@ const worker = {
                 default: {
                     if (image.src === data["src"]) {
                         if (type === 'getPixelColour') glass.setColour(data["pixelColour"]);
-                        else if (type === 'snapLine') lines.setPosition(lines.lines[data["line"]["name"]], data["line"]["position"]);
+                        else if (type === 'snapLine') {
+                            lines.setPosition(lines.lines[data["line"]["name"]], data["line"]["position"]);
+                            if (data["final"]) lines.fixPositioning();
+                        }
                         else {
                             graphs.setTracePath(data["svg"]);
                             waitingOverlay.removeOverlays();
@@ -441,7 +459,7 @@ const worker = {
             colourTolerance: preferences.colourTolerance()
         });
     },
-    snapLine: (line, direction) => {
+    snapLine: (line, direction, final = false) => {
         worker.postMessage({
             type: 'snapLine',
             /** @export */
@@ -454,7 +472,9 @@ const worker = {
                 direction: line.dataset["direction"]
             },
             /** @export */
-            direction
+            direction,
+            /** @export */
+            final
         });
     },
     getPixelColour: (x, y) => worker.postMessage({
@@ -808,7 +828,7 @@ image.addEventListener('load', () => {
         worker.snapLine(lines.lines["xHigh"], -1);
         worker.snapLine(lines.lines["xLow"], 1);
         worker.snapLine(lines.lines["yHigh"], 1);
-        worker.snapLine(lines.lines["yLow"], -1);
+        worker.snapLine(lines.lines["yLow"], -1, true);
         worker.autoTrace();
         imageData.initial = false;
     } else {
