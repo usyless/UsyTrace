@@ -280,7 +280,7 @@ const worker = {
                         inner = document.createElement('div'),
                         input = document.createElement('input');
                     inner.textContent = "Export file name";
-                    input.value = "trace";
+                    input.placeholder = "trace";
                     input.type = 'text';
                     input.classList.add('sidebarSection');
                     content.append(inner, input);
@@ -289,7 +289,7 @@ const worker = {
 
                     createPopup(content, {buttons: "Save Trace"}).then((r) => {
                         if (r) {
-                            a.download = r ?? "trace.txt";
+                            a.download = r || "trace.txt";
                             a.click();
                         }
                         URL.revokeObjectURL(url);
