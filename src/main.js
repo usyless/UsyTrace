@@ -524,8 +524,9 @@ const fileInput = document.getElementById('fileInput');
 
 const imageQueue = {
     elem: document.getElementById('imageQueueInner'),
+    currentlySelected: () => imageQueue.elem.querySelectorAll('img[class="selectedImage"]'),
     removeSelectedImage: () => {
-        for (const i of imageQueue.elem.querySelectorAll('img[class="selectedImage"]')) i.classList.remove('selectedImage');
+        for (const i of imageQueue.currentlySelected()) i.classList.remove('selectedImage');
     },
     deleteImage: (img) => {
         imageMap.delete(img.src);
@@ -837,6 +838,13 @@ image.addEventListener('load', () => {
         worker.getCurrentPath();
     }
     lines.updateLineWidth();
+});
+
+image.addEventListener('error', () => {
+    if (image.isValid()) {
+        for (const img of imageQueue.currentlySelected()) imageQueue.deleteImage(img);
+        createPopup("Error loading this image, it may be malformed");
+    }
 });
 
 { // keybindings
