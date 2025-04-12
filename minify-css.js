@@ -71,7 +71,7 @@ const nameGen = (function* () {
     }
 })();
 
-for (const variable of minifiedCss.match(/--.*?:/g).sort((a, b) => b.length - a.length)) {
+for (const variable of Array.from(new Set(minifiedCss.match(/--.*?:/g))).sort((a, b) => b.length - a.length)) {
     minifiedCss = minifiedCss.replaceAll(variable.slice(0, -1), `--${nameGen.next().value}`);
 }
 
