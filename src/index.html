@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UsyTrace</title>
     <meta content="Trace frequency responses from images." name="description">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; script-src 'self' 'unsafe-inline';">
     <meta property="og:title" content="UsyTrace">
     <meta property="og:description" content="Online Frequency Response Tracing">
     <meta property="og:url" content="https://usyless.uk/trace/">
@@ -15,6 +16,20 @@
     <meta name="keywords" content="usy, frequency response, frequency response trace, frequency response tracing, trace frequency response, trace graph">
     <link rel="manifest" href="./usytrace.webmanifest"/>
     <link rel="stylesheet" href="./main.min.css">
+    <script>
+        try {
+            // for some reason
+            // document.documentElement.classList.add(`theme-${window.localStorage.getItem('theme') ?? window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'}`);
+            // is broken on firefox
+            let theme = window.localStorage.getItem('theme');
+            if (!theme) {
+                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            document.documentElement.classList.add(`theme-${theme}`);
+        } catch {
+            document.documentElement.classList.add('theme-dark');
+        }
+    </script>
 </head>
 <body>
 <div id="main">

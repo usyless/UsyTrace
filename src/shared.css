@@ -18,6 +18,15 @@
     --border-width: 3px;
 }
 
+html.theme-light {
+    --primary: #fff;
+    --secondary: #f2f2f2;
+    --tertiary: #eaeaea;
+    --quaternary: #ddd;
+    --text-primary: #202020;
+    --disabled: #b9b9b9;
+}
+
 /* open-sans-latin-400-normal */
 @font-face {
     font-family: 'Open Sans';

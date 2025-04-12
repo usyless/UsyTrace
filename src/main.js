@@ -909,6 +909,15 @@ image.addEventListener('error', () => {
     });
 }
 
+document.getElementById('title').addEventListener('click', () => {
+    const current = document.documentElement.classList.contains('theme-dark') ? 'dark' : 'light';
+    const newTheme = current === 'dark' ? 'light' : 'dark';
+
+    document.documentElement.classList.remove(`theme-${current}`);
+    document.documentElement.classList.add(`theme-${newTheme}`);
+    window.localStorage.setItem('theme', newTheme);
+});
+
 // Helper Functions
 function multiEventListener(events, target, callback) {
     for (const ev of Array.isArray(events) ? events : [events]) target.addEventListener(ev, callback);
