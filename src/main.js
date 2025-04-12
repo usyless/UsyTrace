@@ -288,7 +288,7 @@ const worker = {
                     content.serialise = () => input.value;
 
                     createPopup(content, {buttons: "Save Trace"}).then((r) => {
-                        if (r != null) {
+                        if (r !== false) {
                             a.download = r || "trace.txt";
                             a.click();
                         }
