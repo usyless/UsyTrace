@@ -92,9 +92,9 @@ const lines = {
         lines.lines["yLow"].nextElementSibling.setAttribute('x', (width / 2).toString());
     },
     initialise: () => {
-        for (const name in lines.lines) {
-            const line = lines.lines[name], [otherDir, sizeAttr] = line.dataset["direction"] === 'x' ? ['y', height] : ['x', width];
-            line.setAttribute(`${otherDir}1`, 0);
+        for (const line of lines.lineArray) {
+            const [otherDir, sizeAttr] = line.dataset["direction"] === 'x' ? ['y', height] : ['x', width];
+            line.setAttribute(`${otherDir}1`, "0");
             line.setAttribute(`${otherDir}2`, sizeAttr);
         }
         lines.initialiseTextPosition();
