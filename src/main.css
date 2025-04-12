@@ -225,7 +225,12 @@ input[type="number"]:focus-visible, select:focus-visible {
     max-height: var(--image-queue-bar-height);
     width: 100%;
     display: flex;
-    column-gap: var(--spacing-smaller);
+    justify-content: space-between;
+
+    > div {
+        display: flex;
+        column-gap: var(--spacing-smaller);
+    }
 }
 
 #imageQueueOuter {

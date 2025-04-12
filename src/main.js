@@ -909,14 +909,27 @@ image.addEventListener('error', () => {
     });
 }
 
-document.getElementById('title').addEventListener('click', () => {
+// theme stuff
+document.getElementById('themeSwitch').addEventListener('click', () => {
     const current = document.documentElement.classList.contains('theme-dark') ? 'dark' : 'light';
     const newTheme = current === 'dark' ? 'light' : 'dark';
+
+    if (newTheme === 'dark') {
+        document.getElementById('themeSwitch').textContent = '☀️';
+    } else {
+        document.getElementById('themeSwitch').textContent = '🌑';
+    }
 
     document.documentElement.classList.remove(`theme-${current}`);
     document.documentElement.classList.add(`theme-${newTheme}`);
     window.localStorage.setItem('theme', newTheme);
 });
+// fix theme button
+if (document.documentElement.classList.contains('theme-dark')) {
+    document.getElementById('themeSwitch').textContent = '☀️';
+} else {
+    document.getElementById('themeSwitch').textContent = '🌑';
+}
 
 // Helper Functions
 function multiEventListener(events, target, callback) {
