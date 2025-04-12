@@ -48,10 +48,8 @@ set "DO_JS=false"
 set "DO_CSS=false"
 
 for %%i in (%*) do (
-    if "%%i"=="--wasm-debug" (
+    if "%%i"=="--debug" (
         set "DEBUG_MODE=true"
-        set "COMPILE_ALL=false"
-        set "DO_WASM=true"
     ) else if "%%i"=="--js" (
         set "COMPILE_ALL=false"
         set "DO_JS=true"
