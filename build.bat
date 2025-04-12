@@ -106,7 +106,7 @@ call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\c
 exit /b
 
 :buildWasm
-if "%DEBUG_MODE%"=="true" (
+if "!DEBUG_MODE!"=="true" (
     echo Compiling debug wasm
     echo.
     call emcc !EMCC_SHARED_PARAMETERS! -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING
