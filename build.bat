@@ -26,11 +26,16 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Check if the --debug argument is present
+:: Check arguments
 set "DEBUG_MODE=false"
+set "NO_COMPILE=false"
 for %%i in (%*) do (
     if "%%i"=="--debug" (
         set "DEBUG_MODE=true"
+    ) else (
+    if "%%i"=="--no-compile" (
+        set "NO_COMPILE=true"
+    )
     )
 )
 
@@ -41,32 +46,34 @@ echo.
 echo Building
 echo.
 
+:: sMEMORY_GROWTH_LINEAR_STEP = 48 * 1024 * 1024
+:: sINITIAL_HEAP = 96 * 1024 * 1024
 set "SHARED_PARAMETERS=-O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sFILESYSTEM=0 -sENVIRONMENT=worker -sMEMORY64=0 -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto --closure 1 --post-js worker.js"
 
-if "%DEBUG_MODE%"=="true" (
-    echo Making debug version
-    echo.
-    :: sMEMORY_GROWTH_LINEAR_STEP = 48 * 1024 * 1024
-    :: sINITIAL_HEAP = 96 * 1024 * 1024
-    call emcc imageTracer.cpp %SHARED_PARAMETERS% -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING
-    call :buildJsCss
+if "%NO_COMPILE%"=="false" (
+    if "%DEBUG_MODE%"=="true" (
+        echo Compiling debug wasm
+        echo.
+        call emcc imageTracer.cpp %SHARED_PARAMETERS% -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING
+    ) else (
+        echo Compiling release wasm
+        echo.
+        call emcc imageTracer.cpp %SHARED_PARAMETERS% -sASSERTIONS=0 -g0 -fno-exceptions
+    )
 ) else (
-    call emcc imageTracer.cpp %SHARED_PARAMETERS% -sASSERTIONS=0 -g0 -fno-exceptions
-    call :buildJsCss
+    echo Skipping wasm compilation
+    echo.
 )
 
-:: exit from src directory
-popd
-
-echo Build Finished
-pause
-exit
-
-:buildJsCss
 call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\compiler.exe" ^
         --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ^
         --compilation_level ADVANCED ^
         --js state.js main.js popups.js tutorial.js about.js updater.js ^
         --js_output_file main.min.js
 call node ../minify-css.js --in-css main.css popup.css tutorial.css shared.css
-exit /b
+
+:: exit from src directory
+popd
+
+echo Build Finished
+pause
