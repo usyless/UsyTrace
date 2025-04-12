@@ -346,3 +346,7 @@ input[type="text"] {
         }
     }
 }
+
+.theme-transition, .theme-transition * {
+    transition: 200ms ease-in-out !important;
+}

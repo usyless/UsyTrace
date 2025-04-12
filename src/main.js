@@ -919,10 +919,13 @@ document.getElementById('themeSwitch').addEventListener('click', () => {
     } else {
         document.getElementById('themeSwitch').textContent = '🌑';
     }
-
+    document.documentElement.classList.add('theme-transition');
     document.documentElement.classList.remove(`theme-${current}`);
     document.documentElement.classList.add(`theme-${newTheme}`);
     window.localStorage.setItem('theme', newTheme);
+    setTimeout(() => {
+        document.documentElement.classList.remove('theme-transition');
+    }, 200);
 });
 // fix theme button
 if (document.documentElement.classList.contains('theme-dark')) {
