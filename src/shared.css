@@ -1,10 +1,10 @@
 :root {
-    --primary: #1e1f22;
-    --secondary: #2b2d30;
-    --tertiary: #3d3f42;
-    --quaternary: #4c4d53;
-    --text-primary: #b6b6b6;
-    --disabled: #686868;
+    --primary: #121313;
+    --secondary: #1d1e20;
+    --tertiary: #2f3135;
+    --quaternary: #3d3e44;
+    --text-primary: #dfdfdf;
+    --disabled: #4d4d4d;
 
     --radius-smaller: 5px;
     --radius: 10px;
