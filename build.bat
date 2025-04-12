@@ -22,7 +22,6 @@ if exist "%EMSCRIPTEN_CONFIG_FILE%" (
 call emcc --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo Error: emcc unavailable, create a %EMSCRIPTEN_CONFIG_FILE% file and add the path of your emsdk_env.bat file.
-    pause
     exit /b 1
 )
 
@@ -76,4 +75,3 @@ call node ../minify-css.js --in-css main.css popup.css tutorial.css shared.css
 popd
 
 echo Build Finished
-pause
