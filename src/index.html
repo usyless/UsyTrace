@@ -20,11 +20,15 @@
             // for some reason
             // document.documentElement.classList.add(`theme-${window.localStorage.getItem('theme') ?? window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'}`);
             // is broken on firefox
-            let theme = window.localStorage.getItem('theme');
-            if (!theme) {
-                theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const themeChange = () => {
+                let theme = window.localStorage.getItem('theme');
+                if (!theme) {
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.classList.add(`theme-${theme}`);
             }
-            document.documentElement.classList.add(`theme-${theme}`);
+            window.addEventListener('themeChange', themeChange);
+            themeChange();
         } catch {
             document.documentElement.classList.add('theme-dark');
         }
@@ -172,7 +176,7 @@
                     <button id="removeImage" class="standardButton altButton" title="Delete the currently selected image (Delete)">Remove</button>
                     <button id="editImage" class="standardButton altButton" title="Edit the currently selected image (Ctrl + e)">Edit</button>
                 </div>
-                <button id="themeSwitch" class="standardButton altButton" title="Change Theme">☀️</button>
+                <button id="themeSwitch" class="standardButton altButton" title="Change Theme">🎨</button>
             </div>
             <div id="imageQueueOuter">
                 <div id="imageQueueInner"></div>

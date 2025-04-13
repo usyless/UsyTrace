@@ -224,3 +224,24 @@
         transform: translateZ(-35px);
     }
 }
+
+.themePopup {
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+
+    .themePopupInner {
+        display: flex;
+        flex-direction: column;
+        row-gap: var(--spacing);
+        overflow-y: scroll;
+
+        h3 {
+            margin: var(--spacing);
+        }
+
+        *:last-child {
+            margin-bottom: var(--spacing);
+        }
+    }
+}

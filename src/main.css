@@ -353,6 +353,6 @@ input[type="text"] {
     }
 }
 
-.theme-transition, .theme-transition * {
+.transition-theme, .transition-theme * {
     transition: 200ms ease-in-out !important;
 }

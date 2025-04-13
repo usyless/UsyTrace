@@ -1,50 +1,55 @@
+import { createPopup, clearPopups } from "./popups.js";
+
 const themes = {
     /** @export */
-    dark: {
-        icon: '🌑',
-        next: 'light'
-    },
+    default: '➡️💻 Follow system',
     /** @export */
-    light: {
-        icon: '☀️',
-        next: 'funky'
-    },
+    dark: '🌑 Default dark',
     /** @export */
-    funky: {
-        icon: '💻',
-        next: 'dark'
-    }
+    light: '☀️ Default light',
+    /** @export */
+    "solarized-dark": '🟦 Solarized dark',
+    /** @export */
+    "solarized-light": '🍨 Solarized light'
 }
-
-const nextTheme = (theme) => themes[theme.next];
 
 let timer;
-document.getElementById('themeSwitch').addEventListener('click', () => {
+const switchToTheme = (theme) => {
+    for (const c of Array.from(document.documentElement.classList)) {
+        if (c.startsWith('theme-')) document.documentElement.classList.remove(c);
+    }
+
     clearTimeout(timer);
-
-    let currTheme;
-    for (const c of document.documentElement.classList) {
-        if (c.startsWith('theme-')) {
-            currTheme = c.replaceAll('theme-', '');
-            if (themes[currTheme]) break;
-        }
-    }
-
-    const curr = themes[currTheme];
-    document.getElementById('themeSwitch').textContent = nextTheme(curr).icon;
-
-    document.documentElement.classList.add('theme-transition');
-    document.documentElement.classList.remove(`theme-${currTheme}`);
-    document.documentElement.classList.add(`theme-${curr.next}`);
-    window.localStorage.setItem('theme', curr.next);
+    document.documentElement.classList.add('transition-theme');
     timer = setTimeout(() => {
-        document.documentElement.classList.remove('theme-transition');
+        document.documentElement.classList.remove('transition-theme');
     }, 200);
-});
 
-for (const c of document.documentElement.classList) {
-    if (c.startsWith('theme-')) {
-        document.getElementById('themeSwitch').textContent = themes[c.replaceAll('theme-', '')].icon;
-        break;
-    }
+    if (theme === 'default') window.localStorage.removeItem('theme');
+    else window.localStorage.setItem('theme', theme);
+
+    window.dispatchEvent(new CustomEvent('themeChange'));
 }
+
+document.getElementById('themeSwitch').addEventListener('click', () => {
+    const inner = document.createElement('div');
+    inner.classList.add('themePopupInner');
+    const title = document.createElement('h3');
+    title.textContent = 'Theme';
+    inner.appendChild(title);
+    for (const theme in themes) {
+        const t = document.createElement('button');
+        t.classList.add('standardButton');
+        t.textContent = themes[theme];
+        t.dataset["theme"] = theme;
+        inner.appendChild(t);
+    }
+    inner.addEventListener('click', (e) => {
+        const theme = e.target.closest("[data-theme]")?.dataset?.["theme"];
+        if (theme) {
+            switchToTheme(theme);
+            clearPopups();
+        }
+    });
+    createPopup(inner, {buttons: "Exit", classes: ["themePopup"]});
+});
