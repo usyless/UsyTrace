@@ -32,9 +32,10 @@ const switchToTheme = (theme) => {
 }
 
 document.getElementById('themeSwitch').addEventListener('click', () => {
-    const inner = document.createElement('div');
+    const inner = document.createElement('div'),
+        title = document.createElement('h3');
+
     inner.classList.add('themePopupInner');
-    const title = document.createElement('h3');
     title.textContent = 'Theme';
     inner.appendChild(title);
     for (const theme in themes) {
