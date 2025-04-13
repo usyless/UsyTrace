@@ -248,8 +248,7 @@ const worker = {
                 case 'exportTrace': {
                     const a = document.createElement("a"),
                         url = URL.createObjectURL(new Blob([data["export"]], {
-                            /** @export */
-                            type: "text/plain;charset=utf-8"
+                            /** @export */ type: "text/plain;charset=utf-8"
                         }));
                     a.href = url;
 
