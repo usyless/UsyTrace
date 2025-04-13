@@ -56,7 +56,7 @@ document.getElementById("about").addEventListener('click', () => {
             }, 100);
         };
         logoWrapper.addEventListener('pointerleave', reset);
-        logoWrapper.addEventListener('dragstart', (e) => e.preventDefault());
+        // logoWrapper.addEventListener('dragstart', (e) => e.preventDefault());
     }
 
     const innerWrapper = document.createElement('div');

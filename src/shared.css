@@ -27,6 +27,15 @@ html.theme-light {
     --disabled: #b9b9b9;
 }
 
+html.theme-funky {
+    --primary: #0a2929;
+    --secondary: #1a3a2f;
+    --tertiary: #2e4405;
+    --quaternary: #404423;
+    --text-primary: #d0d0d0;
+    --disabled: #31734b;
+}
+
 /* open-sans-latin-400-normal */
 @font-face {
     font-family: 'Open Sans';

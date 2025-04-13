@@ -51,7 +51,7 @@ jobs:
         npx google-closure-compiler \
             --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 \
             --compilation_level ADVANCED \
-            --js state.js main.js popups.js tutorial.js about.js updater.js \
+            --js state.js main.js popups.js tutorial.js about.js updater.js themes.js \
             --js_output_file main.min.js
         
         rm -f about.js
@@ -60,6 +60,7 @@ jobs:
         rm -f tutorial.js
         rm -f popups.js
         rm -f state.js
+        rm -f themes.js
 
     - name: Minify css
       working-directory: usytrace/src
