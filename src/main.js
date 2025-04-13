@@ -204,17 +204,17 @@ const buttons = {
 { // Handling modes with buttons
     const MODE_BUTTON_IDS = ['selectPath', 'selectPoint', 'eraseRegion'];
     const ENABLE_CALLBACK = {
-        /** @export */ 'path': lines.hideLines,
-        /** @export */ 'point': lines.hideLines,
-        /** @export */ 'erase': () => {
+        /** @export */ path: lines.hideLines,
+        /** @export */ point: lines.hideLines,
+        /** @export */ erase: () => {
             lines.hideLines();
             erasing.show();
         }
     }
     const DISABLE_CALLBACK = {
-        /** @export */ 'path': lines.showLines,
-        /** @export */ 'point': lines.showLines,
-        /** @export */ 'erase': () => {
+        /** @export */ path: lines.showLines,
+        /** @export */ point: lines.showLines,
+        /** @export */ erase: () => {
             erasing.hide();
             lines.showLines();
         }
