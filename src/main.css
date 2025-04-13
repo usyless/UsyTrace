@@ -113,8 +113,8 @@ body {
     display: flex;
     flex-direction: column;
     row-gap: var(--spacing);
-    align-items: center;
-    justify-content: center;
+    align-items: stretch;
+    justify-content: stretch;
     width: 100%;
 }
 
@@ -263,7 +263,12 @@ input[type="number"]:focus-visible, select:focus-visible {
     row-gap: var(--spacing);
     column-gap: var(--spacing);
 
-    justify-content: center;
+    justify-content: stretch;
+    align-items: stretch;
+
+    button {
+        flex: 1;
+    }
 }
 
 #glassBackground {
