@@ -27,6 +27,9 @@ html.theme-light {
     --disabled: #b9b9b9;
 }
 
+/* Solarized themes by Ethan Schoonover */
+/* https://ethanschoonover.com/solarized/ */
+
 html.theme-solarized-dark {
     --primary: #002b36;/* base03 */
     --secondary: #073642;/* base02 */
