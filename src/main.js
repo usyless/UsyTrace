@@ -5,27 +5,18 @@ import { state } from "./state.js";
 
 // Defaults
 const defaults = {
-    /** @export */
-    FRHigher: 20000,
-    /** @export */
-    FRLower: 20,
+    /** @export */ FRHigher: 20000,
+    /** @export */ FRLower: 20,
 
-    /** @export */
-    colourTolerance: 67,
+    /** @export */ colourTolerance: 67,
 
-    /** @export */
-    PPO: 48,
-    /** @export */
-    delimitation: "tab",
-    /** @export */
-    lowFRExport: 20,
-    /** @export */
-    highFRExport: 20000,
+    /** @export */ PPO: 48,
+    /** @export */ delimitation: "tab",
+    /** @export */ lowFRExport: 20,
+    /** @export */ highFRExport: 20000,
 
-    /** @export */
-    SPLHigher: "",
-    /** @export */
-    SPLLower: ""
+    /** @export */ SPLHigher: "",
+    /** @export */ SPLLower: ""
 }
 const MAGNIFICATION = 3;
 document.getElementById('restoreDefault').addEventListener('click', () => {
@@ -58,14 +49,10 @@ const waitingOverlay = {
 const lines = {
     parent: document.getElementById('lines'),
     lines: {
-        /** @export */
-        xHigh: document.getElementById('xHigh'),
-        /** @export */
-        xLow: document.getElementById('xLow'),
-        /** @export */
-        yHigh: document.getElementById('yHigh'),
-        /** @export */
-        yLow: document.getElementById('yLow'),
+        /** @export */ xHigh: document.getElementById('xHigh'),
+        /** @export */ xLow: document.getElementById('xLow'),
+        /** @export */ yHigh: document.getElementById('yHigh'),
+        /** @export */ yLow: document.getElementById('yLow'),
     },
     updateLinePosition: (line, position) => {
         const attr = line.dataset["direction"];
@@ -156,14 +143,10 @@ const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
     const r = image.getBoundingClientRect(), x = e.clientX, y = e.clientY;
     return {
-        /** @export */
-        x,
-        /** @export */
-        y,
-        /** @export */
-        xRel: x - r.left,
-        /** @export */
-        yRel: y - r.top
+        /** @export */ x,
+        /** @export */ y,
+        /** @export */ xRel: x - r.left,
+        /** @export */ yRel: y - r.top
     }
 }
 image.isValid = () => image.src.startsWith('blob:');
@@ -221,23 +204,17 @@ const buttons = {
 { // Handling modes with buttons
     const MODE_BUTTON_IDS = ['selectPath', 'selectPoint', 'eraseRegion'];
     const ENABLE_CALLBACK = {
-        /** @export */
-        'path': lines.hideLines,
-        /** @export */
-        'point': lines.hideLines,
-        /** @export */
-        'erase': () => {
+        /** @export */ 'path': lines.hideLines,
+        /** @export */ 'point': lines.hideLines,
+        /** @export */ 'erase': () => {
             lines.hideLines();
             erasing.show();
         }
     }
     const DISABLE_CALLBACK = {
-        /** @export */
-        'path': lines.showLines,
-        /** @export */
-        'point': lines.showLines,
-        /** @export */
-        'erase': () => {
+        /** @export */ 'path': lines.showLines,
+        /** @export */ 'point': lines.showLines,
+        /** @export */ 'erase': () => {
             erasing.hide();
             lines.showLines();
         }
@@ -323,8 +300,7 @@ const worker = {
                             graphs.setTracePath(data["svg"]);
                             waitingOverlay.removeOverlays();
                             worker.postMessage({
-                                /** @export */
-                                type: 'getHistoryStatus'
+                                /** @export */ type: 'getHistoryStatus'
                             });
                         }
                         break;
@@ -335,18 +311,14 @@ const worker = {
         return w;
     })(),
     postMessage: (data) => image.isValid() && worker.worker.postMessage({
-        /** @export */
-        src: image.src, ...data
+        /** @export */ src: image.src, ...data
     }),
     setCurrent: () => worker.postMessage({
-        /** @export */
-        type: 'setCurrent'
+        /** @export */ type: 'setCurrent'
     }),
     removeImage: (src) => worker.postMessage({
-        /** @export */
-        type: 'removeImage',
-        /** @export */
-        src: src
+        /** @export */ type: 'removeImage',
+        /** @export */ src: src
     }),
     addImage: (width, height) => {
         const processing_canvas = document.createElement("canvas"),
@@ -356,138 +328,93 @@ const worker = {
         processing_context.drawImage(image, 0, 0);
         const imageData = processing_context.getImageData(0, 0, width, height);
         worker.worker.postMessage({
-            /** @export */
-            src: image.src, // use postMessage directly to pass buffer properly
-            /** @export */
-            type: 'setData',
-            /** @export */
-            data: imageData.data,
-            /** @export */
-            width,
-            /** @export */
-            height
+            /** @export */ src: image.src, // use postMessage directly to pass buffer properly
+            /** @export */ type: 'setData',
+            /** @export */ data: imageData.data,
+            /** @export */ width,
+            /** @export */ height
         }, [imageData.data.buffer]);
     },
     clearTrace: () => worker.postMessage({
-        /** @export */
-        type: 'clearTrace'
+        /** @export */ type: 'clearTrace'
     }),
     undoTrace: () => worker.postMessage({
-        /** @export */
-        type: 'undoTrace'
+        /** @export */ type: 'undoTrace'
     }),
     redoTrace: () => worker.postMessage({
-        /** @export */
-        type: 'redoTrace'
+        /** @export */ type: 'redoTrace'
     }),
     eraseRegion: (begin, end) => worker.postMessage({
-        /** @export */
-        type: 'eraseRegion',
-        /** @export */
-        begin,
-        /** @export */
-        end
+        /** @export */ type: 'eraseRegion',
+        /** @export */ begin,
+        /** @export */ end
     }),
     smoothTrace: () => worker.postMessage({
-        /** @export */
-        type: 'smoothTrace'
+        /** @export */ type: 'smoothTrace'
     }),
     exportTrace: () => {
         const hasNullOrEmpty = (obj) =>
             Object.values(obj).some(v => (v && typeof v === 'object') ? hasNullOrEmpty(v) : v == null || v === '');
 
         const data = {
-            /** @export */
-            type: 'exportTrace',
-            /** @export */
-            PPO: preferences.PPO(),
-            /** @export */
-            delim: preferences.delimitation(),
-            /** @export */
-            lowFR: preferences.lowFRExport(),
-            /** @export */
-            highFR: preferences.highFRExport(),
-            /** @export */
-            SPL: {
-                /** @export */
-                top: preferences.SPLHigher(),
-                /** @export */
-                topPixel: lines.getPosition(lines.lines["yHigh"]),
-                /** @export */
-                bottom: preferences.SPLLower(),
-                /** @export */
-                bottomPixel: lines.getPosition(lines.lines["yLow"])
+            /** @export */ type: 'exportTrace',
+            /** @export */ PPO: preferences.PPO(),
+            /** @export */ delim: preferences.delimitation(),
+            /** @export */ lowFR: preferences.lowFRExport(),
+            /** @export */ highFR: preferences.highFRExport(),
+            /** @export */ SPL: {
+                /** @export */ top: preferences.SPLHigher(),
+                /** @export */ topPixel: lines.getPosition(lines.lines["yHigh"]),
+                /** @export */ bottom: preferences.SPLLower(),
+                /** @export */ bottomPixel: lines.getPosition(lines.lines["yLow"])
             },
-            /** @export */
-            FR: {
-                /** @export */
-                top: preferences.FRHigher(),
-                /** @export */
-                topPixel: lines.getPosition(lines.lines["xHigh"]),
-                /** @export */
-                bottom: preferences.FRLower(),
-                /** @export */
-                bottomPixel: lines.getPosition(lines.lines["xLow"]),
+            /** @export */ FR: {
+                /** @export */ top: preferences.FRHigher(),
+                /** @export */ topPixel: lines.getPosition(lines.lines["xHigh"]),
+                /** @export */ bottom: preferences.FRLower(),
+                /** @export */ bottomPixel: lines.getPosition(lines.lines["xLow"]),
             }
         }
         if (hasNullOrEmpty(data)) createPopup("Please fill in all required values to export (SPL and FR values)");
         else worker.postMessage(data);
     },
     addPoint: (x, y) => worker.postMessage({
-        /** @export */
-        type: 'addPoint',
-        /** @export */
-        x,
-        /** @export */
-        y
+        /** @export */ type: 'addPoint',
+        /** @export */ x,
+        /** @export */ y
     }),
     autoTrace: () => {
         worker.postMessage({
-            /** @export */
-            type: 'autoTrace', colourTolerance: preferences.colourTolerance()
+            /** @export */ type: 'autoTrace', colourTolerance: preferences.colourTolerance()
         });
     },
     trace: (x, y) => {
         worker.postMessage({
-            /** @export */
-            type: 'trace',
-            /** @export */
-            x,
-            /** @export */
-            y,
-            /** @export */
-            colourTolerance: preferences.colourTolerance()
+            /** @export */ type: 'trace',
+            /** @export */ x,
+            /** @export */ y,
+            /** @export */ colourTolerance: preferences.colourTolerance()
         });
     },
     snapLine: (line, direction, final = false) => {
         worker.postMessage({
-            type: 'snapLine',
-            /** @export */
-            line: {
-                /** @export */
-                name: line.id,
-                /** @export */
-                position: lines.getPosition(line),
-                /** @export */
-                direction: line.dataset["direction"]
+            /** @export */ type: 'snapLine',
+            /** @export */ line: {
+                /** @export */ name: line.id,
+                /** @export */ position: lines.getPosition(line),
+                /** @export */ direction: line.dataset["direction"]
             },
-            /** @export */
-            direction,
-            /** @export */
-            final
+            /** @export */ direction,
+            /** @export */ final
         });
     },
     getPixelColour: (x, y) => worker.postMessage({
-        /** @export */
-        type: 'getPixelColour',
-        /** @export */
-        x,
-        /** @export */
-        y
+        /** @export */ type: 'getPixelColour',
+        /** @export */ x,
+        /** @export */ y
     }),
     getCurrentPath: () => worker.postMessage({
-        /** @export */
-        type: 'getCurrentPath'
+        /** @export */ type: 'getCurrentPath'
     })
 }
 
@@ -717,10 +644,8 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
     lines.parent.addEventListener('pointerdown', (e) => {
         const m = getCoords(e);
         const sizes = {
-            /** @export */
-            x: width * 0.02,
-            /** @export */
-            y: height * 0.02
+            /** @export */ x: width * 0.02,
+            /** @export */ y: height * 0.02
         }
         for (const line of lines.lineArray) line.offset = m[`${line.dataset["direction"]}Rel`] * sizeRatio - lines.getPosition(line);
         const closest = lines.lineArray.reduce((acc, curr) => Math.abs(curr.offset) < Math.abs(acc.offset) ? curr : acc, lines.lineArray[0]);
@@ -769,10 +694,8 @@ window.addEventListener('resize', () => {
 
 { // Image click handling
     const callbacks = {
-        /** @export */
-        path: worker.trace,
-        /** @export */
-        point: worker.addPoint
+        /** @export */ path: worker.trace,
+        /** @export */ point: worker.addPoint
     }
     image.addEventListener('pointerup', (e) => {
         if (CURRENT_MODE != null) {
@@ -850,44 +773,26 @@ image.addEventListener('error', () => {
 { // keybindings
     const pointerDown = new PointerEvent('pointerdown', {bubbles: true}), pointerUp = new PointerEvent('pointerup', {bubbles: true});
     const keydownMap = {
-        /** @export */
-        'z': (e) => e.ctrlKey && document.getElementById(e.shiftKey ? 'redo' : 'undo').click(),
-        /** @export */
-        'a': () => document.getElementById('autoPath').click(),
-        /** @export */
-        't': () => document.getElementById('selectPath').click(),
-        /** @export */
-        'p': () => document.getElementById('selectPoint').click(),
-        /** @export */
-        'h': () => document.getElementById('toggleImageQueue').click(),
-        /** @export */
-        's': (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
-        /** @export */
-        'e': (e) => document.getElementById(e.ctrlKey ? 'editImage' : 'eraseRegion').click(),
-        /** @export */
-        'enter': () => document.getElementById('fileInputButton').click(),
-        /** @export */
-        'delete': () => document.getElementById('removeImage').click(),
-        /** @export */
-        'backspace': () => document.getElementById('clearPath').click(),
-        /** @export */
-        'arrowup': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
-        /** @export */
-        'arrowdown': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
-        /** @export */
-        'arrowleft': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
-        /** @export */
-        'arrowright': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
+        /** @export */ z: (e) => e.ctrlKey && document.getElementById(e.shiftKey ? 'redo' : 'undo').click(),
+        /** @export */ a: () => document.getElementById('autoPath').click(),
+        /** @export */ t: () => document.getElementById('selectPath').click(),
+        /** @export */ p: () => document.getElementById('selectPoint').click(),
+        /** @export */ h: () => document.getElementById('toggleImageQueue').click(),
+        /** @export */ s: (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
+        /** @export */ e: (e) => document.getElementById(e.ctrlKey ? 'editImage' : 'eraseRegion').click(),
+        /** @export */ enter: () => document.getElementById('fileInputButton').click(),
+        /** @export */ delete: () => document.getElementById('removeImage').click(),
+        /** @export */ backspace: () => document.getElementById('clearPath').click(),
+        /** @export */ arrowup: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
+        /** @export */ arrowdown: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
+        /** @export */ arrowleft: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
+        /** @export */ arrowright: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
     };
     const keyupMap = {
-        /** @export */
-        'arrowup': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
-        /** @export */
-        'arrowdown': (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
-        /** @export */
-        'arrowleft': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
-        /** @export */
-        'arrowright': (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
+        /** @export */ arrowup: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
+        /** @export */ arrowdown: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
+        /** @export */ arrowleft: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
+        /** @export */ arrowright: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
     };
     document.addEventListener('keydown', (e) => {
         if (state.keyBindsEnabled) {

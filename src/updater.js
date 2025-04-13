@@ -12,8 +12,7 @@ if ("serviceWorker" in navigator && !["localhost", "127.0.0.1"].includes(locatio
                         const b = document.getElementById('updateAvailable');
                         b.addEventListener('click', () => {
                             installingWorker.postMessage({
-                                /** @export */
-                                action: 'skipWaiting'
+                                /** @export */ action: 'skipWaiting'
                             });
                         });
                         b.classList.remove('hidden');

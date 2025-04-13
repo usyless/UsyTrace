@@ -38,43 +38,31 @@ const defaultTraceResponse = (data, response) => {
 }
 
 const typeMap = {
-    /** @export */
-    setCurrent: (data) => api.setCurrent(data["src"]),
-    /** @export */
-    removeImage: (data) => api.removeImage(data["src"]),
-    /** @export */
-    setData: (data) => {
+    /** @export */ setCurrent: (data) => api.setCurrent(data["src"]),
+    /** @export */ removeImage: (data) => api.removeImage(data["src"]),
+    /** @export */ setData: (data) => {
         const p = api.create_buffer(parseInt(data["width"], 10), parseInt(data["height"], 10));
         Module["HEAPU8"]["set"](data["data"], p);
         api.addImage(data["src"], p, parseInt(data["width"], 10), parseInt(data["height"], 10));
         return {
-            /** @export */
-            src: data["src"],
-            /** @export */
-            type: data["type"]
+            /** @export */ src: data["src"],
+            /** @export */ type: data["type"]
         };
     },
-    /** @export */
-    getHistoryStatus: (data) => {
+    /** @export */ getHistoryStatus: (data) => {
         const value = api.historyStatus();
         data["undo"] = Boolean((value & 2) >> 1);
         data["redo"] = Boolean(value & 1);
         return data;
     },
 
-    /** @export */
-    clearTrace: (data) => defaultTraceResponse(data, api.clear()),
-    /** @export */
-    undoTrace: (data) => defaultTraceResponse(data, api.undo()),
-    /** @export */
-    redoTrace: (data) => defaultTraceResponse(data, api.redo()),
-    /** @export */
-    eraseRegion: (data) => defaultTraceResponse(data, api.eraseRegion(parseInt(data["begin"], 10), parseInt(data["end"], 10))),
-    /** @export */
-    smoothTrace: (data) => defaultTraceResponse(data, api.smoothTrace()),
+    /** @export */ clearTrace: (data) => defaultTraceResponse(data, api.clear()),
+    /** @export */ undoTrace: (data) => defaultTraceResponse(data, api.undo()),
+    /** @export */ redoTrace: (data) => defaultTraceResponse(data, api.redo()),
+    /** @export */ eraseRegion: (data) => defaultTraceResponse(data, api.eraseRegion(parseInt(data["begin"], 10), parseInt(data["end"], 10))),
+    /** @export */ smoothTrace: (data) => defaultTraceResponse(data, api.smoothTrace()),
 
-    /** @export */
-    exportTrace: (data) => {
+    /** @export */ exportTrace: (data) => {
         data["export"] = api.exportTrace(parseInt(data["PPO"], 10), data["delim"] === "tab" ? 1 : 0,
             parseFloat(data["lowFR"]), parseFloat(data["highFR"]), parseFloat(data["SPL"]["top"]), parseFloat(data["SPL"]["topPixel"]),
             parseFloat(data["SPL"]["bottom"]), parseFloat(data["SPL"]["bottomPixel"]), parseFloat(data["FR"]["top"]),
@@ -82,27 +70,21 @@ const typeMap = {
         return data;
     },
 
-    /** @export */
-    addPoint: (data) => defaultTraceResponse(data, api.point(parseInt(data["x"], 10), parseInt(data["y"], 10))),
-    /** @export */
-    autoTrace: (data) => defaultTraceResponse(data, api.auto(parseInt(data["colourTolerance"], 10))),
-    /** @export */
-    trace: (data) => defaultTraceResponse(data, api.trace(parseInt(data["x"], 10), parseInt(data["y"], 10), parseInt(data["colourTolerance"], 10))),
+    /** @export */ addPoint: (data) => defaultTraceResponse(data, api.point(parseInt(data["x"], 10), parseInt(data["y"], 10))),
+    /** @export */ autoTrace: (data) => defaultTraceResponse(data, api.auto(parseInt(data["colourTolerance"], 10))),
+    /** @export */ trace: (data) => defaultTraceResponse(data, api.trace(parseInt(data["x"], 10), parseInt(data["y"], 10), parseInt(data["colourTolerance"], 10))),
 
-    /** @export */
-    snapLine: (data) => {
+    /** @export */ snapLine: (data) => {
         data["line"]["position"] = api.snap(parseInt(data["line"]["position"], 10), data["line"]["direction"] === "x" ? 1 : 0, parseInt(data["direction"], 10));
         return data;
     },
 
-    /** @export */
-    getPixelColour: (data) => {
+    /** @export */ getPixelColour: (data) => {
         const value = api.getPixelColour(parseInt(data["x"], 10), parseInt(data["y"], 10));
         data["pixelColour"] = `${value >> 16}, ${(value >> 8) & 255}, ${value & 255}`;
         return data;
     },
-    /** @export */
-    getCurrentPath: (data) => defaultTraceResponse(data, api.getCurrentPath())
+    /** @export */ getCurrentPath: (data) => defaultTraceResponse(data, api.getCurrentPath())
 }
 
 let initialised = false;
@@ -116,10 +98,8 @@ const messageListener = (e) => {
         } catch (err) {
             console.error(err["message"]);
             r = {
-                /** @export */
-                type: 'error',
-                /** @export */
-                message: 'Out of memory, please refresh the site. (You must have loaded a LOT of images at once)'
+                /** @export */ type: 'error',
+                /** @export */ message: 'Out of memory, please refresh the site. (You must have loaded a LOT of images at once)'
             }
         }
         if (r) postMessage(r);

@@ -1,16 +1,11 @@
 import { createPopup, clearPopups } from "./popups.js";
 
 const themes = {
-    /** @export */
-    default: '➡️💻 Follow system',
-    /** @export */
-    dark: '🌑 Default dark',
-    /** @export */
-    light: '☀️ Default light',
-    /** @export */
-    "solarized-dark": '🟦 Solarized dark',
-    /** @export */
-    "solarized-light": '🍨 Solarized light'
+    /** @export */ default: '➡️💻 Follow system',
+    /** @export */ dark: '🌑 Default dark',
+    /** @export */ light: '☀️ Default light',
+    /** @export */ "solarized-dark": '🟦 Solarized dark',
+    /** @export */ "solarized-light": '🍨 Solarized light'
 }
 
 let timer;
