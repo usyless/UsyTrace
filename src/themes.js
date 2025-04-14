@@ -64,9 +64,9 @@ themeSwitchButton.addEventListener('click', () => {
         classes: ["themePopup"],
         beforeRender: (e) => {
             e.classList.remove('blur');
-            const rect = themeSwitchButton.getBoundingClientRect();
-            e.firstElementChild.style.bottom = (window.innerHeight - rect.bottom) + 'px';
-            e.firstElementChild.style.right = (window.innerWidth - rect.right) + 'px';
+            const {bottom, right} = themeSwitchButton.getBoundingClientRect();
+            e.firstElementChild.style.bottom = (window.innerHeight - bottom) + 'px';
+            e.firstElementChild.style.right = (window.innerWidth - right) + 'px';
         }
     });
 });
