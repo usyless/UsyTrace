@@ -230,6 +230,11 @@
     display: flex;
     flex-direction: column;
 
+    &:not(.themePopup > .themePopup) {
+        position: absolute;
+        border-bottom-right-radius: 0;
+    }
+
     .themePopupInner {
         display: flex;
         flex-direction: column;

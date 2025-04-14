@@ -64,8 +64,6 @@ themeSwitchButton.addEventListener('click', () => {
         classes: ["themePopup"],
         beforeRender: (e) => {
             e.classList.remove('blur');
-            e.firstElementChild.style.position = 'absolute';
-            e.firstElementChild.style.borderBottomRightRadius = '0';
             const rect = themeSwitchButton.getBoundingClientRect();
             e.firstElementChild.style.bottom = (window.innerHeight - rect.bottom) + 'px';
             e.firstElementChild.style.right = (window.innerWidth - rect.right) + 'px';
