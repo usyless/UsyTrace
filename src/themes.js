@@ -65,8 +65,8 @@ themeSwitchButton.addEventListener('click', () => {
         beforeRender: (e) => {
             e.classList.remove('blur');
             const {bottom, right} = themeSwitchButton.getBoundingClientRect();
-            e.firstElementChild.style.bottom = (window.innerHeight - bottom) + 'px';
-            e.firstElementChild.style.right = (window.innerWidth - right) + 'px';
+            e.firstElementChild.style.setProperty('--yOffset', `${window.innerHeight - bottom}px`);
+            e.firstElementChild.style.setProperty('--xOffset', `${window.innerWidth - right}px`);
         }
     });
 });

@@ -229,6 +229,9 @@
     overflow-y: hidden;
     display: flex;
     flex-direction: column;
+    max-height: calc(min(400px, 100vh - var(--yOffset, 0px)));
+    bottom: var(--yOffset, 0px);
+    right: var(--xOffset, 0px);
 
     &:not(.themePopup > .themePopup) {
         position: absolute;
