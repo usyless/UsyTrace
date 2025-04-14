@@ -233,6 +233,8 @@
     &:not(.themePopup > .themePopup) {
         position: absolute;
         border-bottom-right-radius: 0;
+        border-top-right-radius: 0;
+        animation: slide-in-theme 0.25s ease-in-out both;
     }
 
     .themePopupInner {
@@ -252,5 +254,16 @@
         .active {
             background-color: var(--quaternary);
         }
+    }
+}
+
+@keyframes slide-in-theme {
+    from {
+        opacity: 0;
+        transform: translateX(200px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
 }
