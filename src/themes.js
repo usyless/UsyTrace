@@ -8,6 +8,12 @@ const themes = {
     /** @export */ "solarized-light": '🍨 Solarized light'
 }
 
+const currentTheme = () => {
+    for (const c of document.documentElement.classList) {
+        if (c.startsWith('theme-')) return c.replaceAll('theme-', '');
+    }
+}
+
 let timer;
 const switchToTheme = (theme) => {
     for (const c of Array.from(document.documentElement.classList)) {
@@ -39,6 +45,11 @@ document.getElementById('themeSwitch').addEventListener('click', () => {
         t.textContent = themes[theme];
         t.dataset["theme"] = theme;
         inner.appendChild(t);
+    }
+    const curr = inner.querySelector(`[data-theme="${currentTheme()}"]`);
+    if (curr) {
+        curr.classList.add('active');
+        curr.textContent += ' - current';
     }
     inner.addEventListener('click', (e) => {
         const theme = e.target.closest("[data-theme]")?.dataset?.["theme"];

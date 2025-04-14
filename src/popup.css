@@ -243,5 +243,9 @@
         *:last-child {
             margin-bottom: var(--spacing);
         }
+
+        .active {
+            background-color: var(--quaternary);
+        }
     }
 }

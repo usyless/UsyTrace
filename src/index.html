@@ -23,7 +23,7 @@
             const themeChange = () => {
                 let theme = window.localStorage.getItem('theme');
                 if (!theme) {
-                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'default' : 'light';
                 }
                 document.documentElement.classList.add(`theme-${theme}`);
             }
