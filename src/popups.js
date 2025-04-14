@@ -5,7 +5,7 @@ import { state } from "./state.js";
 const eventListeners = [];
 const onclosefuncs = [];
 
-export async function createPopup(content, {listeners = [], buttons, classes = [], onclose} = {}) {
+export async function createPopup(content, {listeners = [], buttons, classes = [], onclose, beforeRender} = {}) {
     clearPopups();
     state.disableKeyBinds();
     return new Promise((resolve) => {
@@ -76,6 +76,7 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
         }
 
         if (onclose != null) onclosefuncs.push(onclose);
+        beforeRender?.(center_div);
         document.body.appendChild(center_div);
     });
 }

@@ -32,7 +32,8 @@ const switchToTheme = (theme) => {
     window.dispatchEvent(new CustomEvent('themeChange'));
 }
 
-document.getElementById('themeSwitch').addEventListener('click', () => {
+const themeSwitchButton = document.getElementById('themeSwitch');
+themeSwitchButton.addEventListener('click', () => {
     const inner = document.createElement('div'),
         title = document.createElement('h3');
 
@@ -58,5 +59,16 @@ document.getElementById('themeSwitch').addEventListener('click', () => {
             clearPopups();
         }
     });
-    createPopup(inner, {buttons: "Exit", classes: ["themePopup"]});
+    createPopup(inner, {
+        buttons: "Exit",
+        classes: ["themePopup"],
+        beforeRender: (e) => {
+            e.classList.remove('blur');
+            e.firstElementChild.style.position = 'absolute';
+            e.firstElementChild.style.borderBottomRightRadius = '0';
+            const rect = themeSwitchButton.getBoundingClientRect();
+            e.firstElementChild.style.bottom = (window.innerHeight - rect.bottom) + 'px';
+            e.firstElementChild.style.right = (window.innerWidth - rect.right) + 'px';
+        }
+    });
 });
