@@ -5,8 +5,8 @@ import { state } from "./state.js";
 const eventListeners = [];
 const onclosefuncs = [];
 
-export async function createPopup(content, {listeners = [], buttons, classes = [], onclose, beforeRender} = {}) {
-    clearPopups();
+export async function createPopup(content, {listeners = [], buttons, classes = [], onclose, beforeRender, overlay} = {}) {
+    if (!overlay) clearPopups();
     state.disableKeyBinds();
     return new Promise((resolve) => {
         const center_div = document.createElement('div'),
@@ -45,7 +45,8 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
 
             ok_button.addEventListener('click', () => {
                 const value = content.serialise?.();
-                clearPopups();
+                if (overlay) clearPopups(null, center_div);
+                else clearPopups()
                 resolve(value ?? true);
             });
         } else {
@@ -55,7 +56,8 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
 
         center_div.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
-                clearPopups();
+                if (overlay) clearPopups(null, center_div);
+                else clearPopups()
                 resolve(false);
             }
         });
@@ -81,11 +83,14 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
     });
 }
 
-export function clearPopups() {
-    state.enableKeyBinds();
-    for (const listener of eventListeners) listener.target?.removeEventListener?.(listener.type, listener.listener);
-    for (const f of onclosefuncs) f();
-    onclosefuncs.length = 0;
-    eventListeners.length = 0;
-    document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
+export function clearPopups(_ = null, specific = null) {
+    if (specific) specific.remove(); // dont use other stuff if using specific
+    else {
+        state.enableKeyBinds();
+        for (const listener of eventListeners) listener.target?.removeEventListener?.(listener.type, listener.listener);
+        for (const f of onclosefuncs) f();
+        onclosefuncs.length = 0;
+        eventListeners.length = 0;
+        document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
+    }
 }

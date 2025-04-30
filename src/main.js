@@ -516,7 +516,6 @@ document.getElementById('editImage').addEventListener('click', () => {
         const elem = document.createElement('div'),
             header = document.createElement('h3'),
             edit_buttons = document.createElement('div'),
-            invert_button = document.createElement('button'),
             img_wrapper = document.createElement('div'),
             img = document.createElement('img');
         elem.id = 'editContainer';
@@ -525,12 +524,86 @@ document.getElementById('editImage').addEventListener('click', () => {
         img_wrapper.classList.add('cropWrapper');
         img.draggable = false;
         header.textContent = 'Edit Image';
-        edit_buttons.appendChild(invert_button);
-        invert_button.textContent = 'Invert';
-        invert_button.classList.add('standardButton');
         img.src = image.src;
 
-        invert_button.addEventListener('click', () => img.classList.toggle('inverted'));
+        const activeFilters = new Set();
+        // safari check
+        const safari = !('filter' in CanvasRenderingContext2D.prototype),
+            filters = !safari ? {
+            /** @export */ Invert: {
+                property: 'invert',
+                default: 1,
+                unit: '',
+            },
+            // /** @export */ Blur: 'blur(1px)', would need to normalise this wrt image size
+            /** @export */ Brightness: {
+                property: 'brightness',
+                default: 120,
+                unit: '%',
+                description: 'Enter value for brightness in %',
+                validate: (v) => Math.max(0, v)
+            },
+            /** @export */ Contrast: {
+                property: 'contrast',
+                default: 120,
+                unit: '%',
+                description: 'Enter value for contrast in %',
+                validate: (v) => Math.max(0, v)
+            },
+            /** @export */ Saturate: {
+                property: 'saturate',
+                default: 120,
+                unit: '%',
+                description: 'Enter value for saturation in %',
+                validate: (v) => Math.max(0, v)
+            },
+            /** @export */ Hue: {
+                property: 'hue-rotate',
+                default: 5,
+                unit: 'deg',
+                description: 'Enter value for hue rotation in degrees',
+                validate: (v) => Math.abs(v) % 360
+            },
+        } : {
+            /** @export */ Invert: 'invert(1)'
+        };
+
+        const removeFilter = (filter) => {
+            img.style.filter = img.style.filter.replaceAll(new RegExp(`${filter}\\(.*\\)`, 'g'), '');
+        }
+        for (const filter in filters) {
+            const button = document.createElement('button');
+            button.textContent = filter;
+            button.classList.add('standardButton');
+            edit_buttons.appendChild(button);
+            const f = filters[filter];
+            button.addEventListener('click', () => {
+                if (activeFilters.has(filter)) {
+                    activeFilters.delete(filter);
+                    removeFilter(f.property);
+                } else {
+                    if (f.validate) {
+                        const input = document.createElement('input');
+                        input.value = f.default;
+                        input.type = 'number';
+                        const things = [document.createTextNode(f.description), input];
+                        things.serialise = () => input.value;
+                        createPopup(things, {overlay: true}).then((v) => {
+                            if (v !== false && Number.isFinite(Number(v))) {
+                                v = f.validate(v);
+                                activeFilters.add(filter);
+                                img.style.filter += `${f.property}(${v}${f.unit})`;
+                            } else {
+                                createPopup('Invalid value.', {overlay: true});
+                            }
+                        });
+                    } else {
+                        activeFilters.add(filter);
+                        img.style.filter += `${f.property}(${f.default}${f.unit})`;
+                    }
+                }
+            });
+        }
 
         const buttons = document.createElement('div');
         buttons.classList.add('popupButtons');
@@ -546,9 +619,14 @@ document.getElementById('editImage').addEventListener('click', () => {
                 ctx = canvas.getContext('2d');
             canvas.width = width;
             canvas.height = height;
+
+            if (!safari) ctx.filter = img.style.filter;
             ctx.drawImage(img, 0, 0);
 
-            if (img.classList.contains('inverted')) {
+            if (safari) {
+                // should only fire for safari, which does not support 2d context filter
+                // i ain't implementing the other filters :serioussssly:
+                console.log("Using fallback invert mode");
                 const imageData = ctx.getImageData(0, 0, width, height),
                     data = imageData.data, l = data.length;
                 for (let i = 0; i < l; i += 4) {

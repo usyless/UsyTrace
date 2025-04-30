@@ -1,4 +1,4 @@
-const cacheName = 'v64';
+const cacheName = 'v65';
 
 contentToCache = [
     './favicon.ico',

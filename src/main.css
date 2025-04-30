@@ -290,7 +290,8 @@ input[type="number"]:focus-visible, select:focus-visible {
 
     > div:first-of-type {
         display: flex;
-        column-gap: var(--spacing);
+        gap: var(--spacing);
+        flex-wrap: wrap;
     }
 
     h3 {
