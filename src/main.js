@@ -584,10 +584,10 @@ document.getElementById('editImage').addEventListener('click', () => {
                 } else {
                     if (f.validate) {
                         const input = document.createElement('input');
-                        input.value = f.default;
+                        input.placeholder = f.default;
                         input.type = 'number';
                         const things = [document.createTextNode(f.description), input];
-                        things.serialise = () => input.value;
+                        things.serialise = () => input.value || f.default;
                         createPopup(things, {overlay: true}).then((v) => {
                             if (v !== false && Number.isFinite(Number(v))) {
                                 v = f.validate(v);
