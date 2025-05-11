@@ -268,7 +268,7 @@ const worker = {
                             a.download = r || "trace.txt";
                             a.click();
                         }
-                        URL.revokeObjectURL(url);
+                        setTimeout(URL.revokeObjectURL, 1000, url);
                     });
                     setTimeout(() => {
                         input.focus();
