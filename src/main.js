@@ -1,6 +1,6 @@
 'use strict';
 
-import { createPopup, clearPopups} from "./popups.js";
+import { createPopup, clearPopups, currentOk } from "./popups.js";
 import { state } from "./state.js";
 
 // Defaults
@@ -263,7 +263,13 @@ const worker = {
                     content.classList.add('exportBox');
                     content.serialise = () => input.value;
 
-                    createPopup(content, {buttons: "Save Trace"}).then((r) => {
+                    createPopup(content, {buttons: "Save Trace", listeners: [
+                            {
+                                target: document, type: 'keydown', listener: (e) => {
+                                    if (e.key.toLowerCase() === 'enter') currentOk.click();
+                                }
+                            }
+                        ]}).then((r) => {
                         if (r !== false) {
                             a.download = r || "trace.txt";
                             a.click();

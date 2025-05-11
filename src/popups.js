@@ -5,6 +5,8 @@ import { state } from "./state.js";
 const eventListeners = [];
 const onclosefuncs = [];
 
+export let currentOk;
+
 export async function createPopup(content, {listeners = [], buttons, classes = [], onclose, beforeRender, overlay} = {}) {
     if (!overlay) clearPopups();
     state.disableKeyBinds();
@@ -49,6 +51,7 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
                 else clearPopups()
                 resolve(value ?? true);
             });
+            currentOk = ok_button;
         } else {
             buttons_div = buttons;
         }
