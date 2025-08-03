@@ -172,9 +172,9 @@ struct Trace {
 
     string toSVG() const {
         string svg;
-        if (const auto& res = clean(); !res.empty()) {
+        if (const auto res = clean(); !res.empty()) {
             auto iter = res.begin();
-            const auto& end = res.end();
+            const auto end = res.end();
             if (res.size() == 1) {
                 svg += "M" + to_string(iter->first) + " " + to_string(iter->second) + "q2 0 2 2t-2 2-2-2 2-2";
             } else {
@@ -260,7 +260,7 @@ struct Trace {
 
     Trace* eraseRegion(uint32_t begin, uint32_t end) {
         auto newTrace = map{trace};
-        const auto& higher = newTrace.upper_bound(end);
+        const auto higher = newTrace.upper_bound(end);
         for (auto lower = newTrace.lower_bound(begin); lower != higher;) lower = newTrace.erase(lower);
         return new Trace{newTrace};
     }
@@ -570,13 +570,12 @@ struct Image {
         auto str = ExportString{exportData.delim};
 
         vector<pair<double, double>> FRxSPL{};
-        const auto& clean = traceHistory.getLatest()->clean();
-        for (const auto& [x, y] : clean) {
+        for (const auto& [x, y] : traceHistory.getLatest()->clean()) {
             FRxSPL.emplace_back(pow(10, (x - FRBottomPixel) * FRRatio + logFRBottomValue), (y - SPLBottomPixel) * SPLRatio + SPLBottomValue);
         }
 
         if(!FRxSPL.empty()) {
-            const auto& interp = contiguousLinearInterpolation(FRxSPL);
+            const auto interp = contiguousLinearInterpolation(FRxSPL);
             uint32_t pos = 0;
             for(auto v = exportData.logMinFR; ; v += PPOStep) {
                 const auto freq = pow(10, v);
