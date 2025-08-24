@@ -40,7 +40,7 @@
 
 # Compiling Instructions
 1. Download and install [emscripten](https://emscripten.org/)
-2. Make sure to install `3.1.74`, newer versions perform worse with tracing (this will be fixed eventually)
+2. Install the latest version, or `4.0.5` if the latest one does not work (this is the latest I have tested)
 3. Compile with build.bat, or for linux, follow the compiling commands in .github/workflows/main.yml
 
 ### Info/Extras
@@ -49,3 +49,4 @@
 - Set max memory with -sMAXIMUM_MEMORY=size in bytes (2gb by default, >2gb has performance penalty afaik)
 - To use c++20 features: -std=c++20
 - Pass -msimd128 to auto add SIMD, seems to make no noticeable performance difference for now
+
