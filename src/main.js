@@ -667,6 +667,7 @@ fileInput.loadFiles = (files) => {
         });
     }
     else createPopup("Invalid image/file(s) added!");
+    fileInput.value = ''; // reset value of input to allow re-input of the same item in chromium
 }
 fileInput.addEventListener('change', (e) => {
     fileInput.loadFiles(e.target.files);
