@@ -25,18 +25,17 @@ self.addEventListener('install', (e) => {
 });
 
 self.addEventListener('activate', e => {
-    e.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cn => {
-                    if (cn !== cacheName) {
-                        return caches.delete(cn);
-                    }
-                })
-            );
-        })
-    );
-    return self.clients.claim();
+    e.waitUntil((async () => {
+        const cacheNames = await caches.keys();
+        await Promise.allSettled(
+            cacheNames.map(cn => {
+                if (cn !== cacheName) {
+                    return caches.delete(cn);
+                }
+            })
+        );
+        await self.clients.claim();
+    })());
 });
 
 self.addEventListener('fetch', (e) => {
