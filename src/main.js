@@ -251,6 +251,8 @@ const worker = {
                             /** @export */ type: "text/plain;charset=utf-8"
                         }));
                     a.href = url;
+                    a.classList.add('hidden');
+                    document.body.appendChild(a);
 
                     const content = document.createElement('div'),
                         inner = document.createElement('div'),
@@ -274,7 +276,10 @@ const worker = {
                             a.download = r || "trace.txt";
                             a.click();
                         }
-                        URL.revokeObjectURL(url);
+                        setTimeout(() => {
+                            URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                        }, 5000);
                     });
                     setTimeout(() => {
                         input.focus();
