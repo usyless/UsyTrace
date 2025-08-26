@@ -60,6 +60,7 @@ for (const filename of files) {
     }
 }
 
+// this might cause issues: such as when trying to set variables used outside of var() through js
 // replace all variables with minified ones
 const nameGen = (function* () {
     const chars = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
