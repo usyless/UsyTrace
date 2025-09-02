@@ -1,5 +1,7 @@
 const messageQueue = [];
-const onLoad = () => {
+self.onmessage = (e) => messageQueue.push(e);
+
+Module['onRuntimeInitialized'] = () => {
     const decode = TextDecoder.prototype.decode.bind(new TextDecoder('utf-8'));
     const readStringFromMemory = (ptr) => {
         const str = decode(new Uint8Array(HEAPU8.buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1]));
@@ -106,5 +108,3 @@ const onLoad = () => {
     for (const e of messageQueue) messageListener(e);
     messageQueue.length = 0;
 };
-
-self.onmessage = (e) => messageQueue.push(e);

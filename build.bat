@@ -5,7 +5,7 @@ set EMSCRIPTEN_CONFIG_FILE=build_config.txt
 
 :: sMEMORY_GROWTH_LINEAR_STEP = 48 * 1024 * 1024
 :: sINITIAL_HEAP = 96 * 1024 * 1024
-set "EMCC_SHARED_PARAMETERS=imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sFILESYSTEM=0 -sENVIRONMENT=worker -sMEMORY64=0 -sSTRICT_JS -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto --closure 1 --post-js worker.js"
+set "EMCC_SHARED_PARAMETERS=imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sFILESYSTEM=0 -sENVIRONMENT=worker -sINCOMING_MODULE_JS_API=onRuntimeInitialized -sEXPORTED_RUNTIME_METHODS=[] -sMEMORY64=0 -sSTRICT_JS -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto --closure 1 --pre-js worker.js"
 
 set "MINIFIED_JS_FILES=state.js main.js popups.js tutorial.js about.js updater.js themes.js"
 

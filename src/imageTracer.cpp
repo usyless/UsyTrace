@@ -727,7 +727,3 @@ extern "C" {
         return stringReturn(currentImage->getPath());
     }
 }
-
-int main() {
-    EM_ASM( onLoad() );
-}
