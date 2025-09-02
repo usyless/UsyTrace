@@ -31,7 +31,7 @@ Module['onRuntimeInitialized'] = () => {
         auto: stringReturn(Module["_autoTrace"]),
         export: stringReturn(Module["_exportTrace"]),
         snap: Module["_snap"],
-        pixelColor: Module["_getPixelColour"],
+        pixelColour: Module["_getPixelColour"],
         currentPath: stringReturn(Module["_getCurrentPath"]),
     }
 
@@ -83,7 +83,7 @@ Module['onRuntimeInitialized'] = () => {
         },
 
         /** @export */ getPixelColour: (data) => {
-            const value = api.pixelColor(parseInt(data["x"], 10), parseInt(data["y"], 10));
+            const value = api.pixelColour(parseInt(data["x"], 10), parseInt(data["y"], 10));
             data["pixelColour"] = `${value >> 16}, ${(value >> 8) & 255}, ${value & 255}`;
             return data;
         },
