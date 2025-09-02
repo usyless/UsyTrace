@@ -239,7 +239,7 @@ const buttons = {
 
 const worker = {
     worker: (() => {
-        const w = new Worker("./a.out.js");
+        const w = new Worker("./a.out.js", {type: 'module'});
         w.onmessage = (data) => {
             data = data["data"];
             const type = data["type"];
