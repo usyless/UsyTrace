@@ -39,15 +39,15 @@ const onLoad = () => {
     }
 
     const typeMap = {
-        /** @export */ setCurrent: (data) => api.setCurrent_(data["src"]),
-        /** @export */ removeImage: (data) => api.removeImage_(data["src"]),
-        /** @export */ setData: (data) => {
-            const p = api.create_buffer(parseInt(data["width"], 10), parseInt(data["height"], 10));
-            HEAPU8.set(data["data"], p);
-            api.addImage_(data["src"], p, parseInt(data["width"], 10), parseInt(data["height"], 10));
+        /** @export */ setCurrent: ({src}) => api.setCurrent_(src),
+        /** @export */ removeImage: ({src}) => api.removeImage_(src),
+        /** @export */ setData: ({src, type, width, height, data}) => {
+            const p = api.create_buffer(parseInt(width, 10), parseInt(height, 10));
+            HEAPU8.set(data, p);
+            api.addImage_(src, p, parseInt(width, 10), parseInt(height, 10));
             return {
-                /** @export */ src: data["src"],
-                /** @export */ type: data["type"]
+                /** @export */ src,
+                /** @export */ type
             };
         },
         /** @export */ getHistoryStatus: (data) => {
@@ -88,11 +88,10 @@ const onLoad = () => {
         /** @export */ getCurrentPath: (data) => defaultTraceResponse(data, api.currentPath())
     }
 
-    const messageListener = (e) => {
-        e = e["data"];
+    const messageListener = ({data}) => {
         let r;
         try {
-            r = typeMap[e["type"]](e);
+            r = typeMap[data["type"]](data);
         } catch (err) {
             console.error(err["message"]);
             r = {
