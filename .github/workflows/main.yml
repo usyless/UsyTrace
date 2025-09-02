@@ -43,7 +43,7 @@ jobs:
       run: |
         source ./emsdk/emsdk_env.sh
         cd ./usytrace/src
-        emcc imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -sMEMORY64=0 -sINCOMING_MODULE_JS_API=onRuntimeInitialized -sEXPORTED_RUNTIME_METHODS=[] -sSTRICT_JS -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto -g0 -fno-exceptions --closure 1 --pre-js worker.js -s
+        em++ imageTracer.cpp -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sASSERTIONS=0 -sFILESYSTEM=0 -sENVIRONMENT=worker -sMEMORY64=0 -sINCOMING_MODULE_JS_API=onRuntimeInitialized -sEXPORTED_RUNTIME_METHODS=[] -sSTRICT --no-entry -sSTRICT_JS -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto -g0 -fno-exceptions --closure 1 --pre-js worker.js -s
 
     - name: Minify js
       working-directory: usytrace/src
