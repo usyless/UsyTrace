@@ -5,3 +5,9 @@ a.out.js
 a.out.wasm
 build_config.txt
 *.min.*
+/build
+/.cache
+compile_commands.json
+open-vscode.bat
+CmakeLists.txt
+.clangd

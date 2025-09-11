@@ -1,15 +1,21 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <iterator>
 #include <map>
 #include <numeric>
 #include <stack>
 #include <vector>
-#include <emscripten.h>
 #include <string.h>
 #include <set>
 #include <cstdint>
 #include <string>
+
+#ifdef __EMSCRIPTEN__
+    #include <emscripten.h>
+#else
+    #define EMSCRIPTEN_KEEPALIVE __attribute__((used))
+#endif
 
 using namespace std;
 
