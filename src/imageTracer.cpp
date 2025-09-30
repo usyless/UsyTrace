@@ -430,30 +430,31 @@ void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
     auto outputDataX = outX->data;
     auto outputDataY = outY->data;
 
-    int yFilter[3][3] = {
+    static constexpr int yFilter[3][3] = {
         {-1, -2, -1},
         { 0,  0,  0},
         { 1,  2,  1}
     };
 
-    int xFilter[3][3] = {
+    static constexpr int xFilter[3][3] = {
         {-1,  0,  1},
         {-2,  0,  2},
         {-1,  0,  1}
     };
 
     for (size_t y = 1; y < heightBound; ++y) {
-        size_t origY = y * maxWidthOrig, outY = y * maxWidthOut;
+        size_t origY = y * maxWidthOrig, 
+                outY = y * maxWidthOut;
         for (size_t x = 1; x < widthBound; ++x) {
             int Xsum = 0, Ysum = 0;
             size_t origX = x * 4; // 4 channels assumed
 
             for (int k = -1; k <= 1; ++k) {
                 size_t yPos = origY + (k * maxWidthOrig) + origX;
-                auto knX = xFilter[k + 1];
-                auto knY = yFilter[k + 1];
+                const auto knX = xFilter[k + 1];
+                const auto knY = yFilter[k + 1];
                 for (int l = -1; l <= 1; ++l) {
-                    size_t pos = yPos + (l * 4); // 4 channels assumed
+                    const size_t pos = yPos + (l * 4); // 4 channels assumed
                     int knnX = knX[l + 1], knnY = knY[l + 1];
                     int sum = data[pos] + data[pos + 1] + data[pos + 2];
 
@@ -462,7 +463,7 @@ void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
                 }
             }
 
-            size_t pos = outY + x; // 1 channel assumed
+            const size_t pos = outY + x; // 1 channel assumed
             outputDataX[pos] = static_cast<Colour>(max(0, min(Xsum * 2 / 3, 255)));
             outputDataY[pos] = static_cast<Colour>(max(0, min(Ysum * 2 / 3, 255)));
         }
