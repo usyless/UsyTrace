@@ -64,7 +64,7 @@ struct ImageData {
 
     inline RGB getRGB(const uint32_t x, const uint32_t y) const {
         const auto pos = (y * width + x) * channels;
-        return RGB{data[pos], data[pos + 1], data[pos + 2]};
+        return {data[pos], data[pos + 1], data[pos + 2]};
     }
 
     inline Colour getR(const uint32_t x, const uint32_t y) const {

@@ -273,6 +273,7 @@ const worker = {
                             }
                         ]}).then((r) => {
                         if (r !== false) {
+                            if (!(r?.endsWith(".txt"))) r += ".txt";
                             a.download = r || "trace.txt";
                             a.click();
                         }
