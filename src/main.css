@@ -5,6 +5,27 @@
     --image-queue-bar-height: 22px;
 }
 
+@view-transition {
+    navigation: auto;
+}
+
+#usytrace-logo {
+    view-transition-name: usytrace-logo;
+}
+
+#usytrace-text {
+    view-transition-name: usytrace-text;
+}
+
+#title {
+    view-transition-name: usytrace-box;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    left: 0;
+}
+
 * {
     user-select: none;
     color: var(--text-primary);
