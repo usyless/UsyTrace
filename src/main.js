@@ -21,7 +21,7 @@ const defaults = {
 const MAGNIFICATION = 3;
 document.getElementById('restoreDefault').addEventListener('click', () => {
     resetToDefault();
-    createPopup("Restored settings to default");
+    void createPopup("Restored settings to default");
 });
 function resetToDefault() {
     for (const val in defaults) document.getElementById(val).value = defaults[val];
@@ -386,7 +386,7 @@ const worker = {
                 /** @export */ bottomPixel: lines.getPosition(lines.lines["xLow"]),
             }
         }
-        if (hasNullOrEmpty(data)) createPopup("Please fill in all required values to export (SPL and FR values)");
+        if (hasNullOrEmpty(data)) void createPopup("Please fill in all required values to export (SPL and FR values)");
         else worker.postMessage(data);
     },
     addPoint: (x, y) => worker.postMessage({
@@ -606,7 +606,7 @@ document.getElementById('editImage').addEventListener('click', () => {
                                 activeFilters.add(filter);
                                 img.style.filter += `${f.property}(${v}${f.unit})`;
                             } else {
-                                createPopup('Invalid value.', {overlay: true});
+                                void createPopup('Invalid value.', {overlay: true});
                             }
                         });
                     } else {
@@ -655,8 +655,8 @@ document.getElementById('editImage').addEventListener('click', () => {
                 clearPopups();
             })
         }, {once: true});
-        createPopup(elem, {buttons});
-    } else createPopup('No valid image selected');
+        void createPopup(elem, {buttons});
+    } else void createPopup('No valid image selected');
 });
 
 // Initialise the page
@@ -672,7 +672,7 @@ fileInput.loadFiles = (files) => {
             imageQueue.addImage(file, index === lastId);
         });
     }
-    else createPopup("Invalid image/file(s) added!");
+    else void createPopup("Invalid image/file(s) added!");
     fileInput.value = ''; // reset value of input to allow re-input of the same item in chromium
 }
 fileInput.addEventListener('change', (e) => {
@@ -856,7 +856,7 @@ image.addEventListener('load', () => {
 image.addEventListener('error', () => {
     if (image.isValid()) {
         for (const img of imageQueue.currentlySelected()) imageQueue.deleteImage(img);
-        createPopup("Error loading this image, it may be malformed");
+        void createPopup("Error loading this image, it may be malformed");
     }
 });
 
