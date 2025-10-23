@@ -5,6 +5,15 @@
     --image-queue-bar-height: 22px;
 }
 
+@view-transition {
+    navigation: auto;
+}
+
+::view-transition-old(*),
+::view-transition-new(*) {
+    left: 0;
+}
+
 #usytrace-logo {
     view-transition-name: usytrace-logo;
 }
