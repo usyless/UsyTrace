@@ -3,13 +3,7 @@ setlocal enabledelayedexpansion
 
 set EMSCRIPTEN_CONFIG_FILE=build_config.txt
 
-set "MINIFIED_JS_FILES=state.js main.js popups.js tutorial.js about.js updater.js themes.js"
-
-set "MINIFIED_CSS_FILES=main.css popup.css tutorial.css shared.css"
-
 set EMSDK_QUIET=1
-
-set "OUTPUT_DIR=../dist"
 
 :: working directory as directory of script itself
 cd /d "%~dp0"
@@ -31,9 +25,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Enter src directory
-pushd src
-
 echo.
 echo Building
 echo.
@@ -44,6 +35,7 @@ set "COMPILE_ALL=true"
 set "DO_WASM=false"
 set "DO_JS=false"
 set "DO_CSS=false"
+set "DO_DIST=false"
 
 for %%i in (%*) do (
     if "%%i"=="--debug" (
@@ -57,27 +49,32 @@ for %%i in (%*) do (
     ) else if "%%i"=="--wasm" (
         set "COMPILE_ALL=false"
         set "DO_WASM=true"
+    ) else if "%%i"=="--dist" (
+        set "COMPILE_ALL=false"
+        set "DO_DIST=true"
     )
 )
 
-if "%COMPILE_ALL%"=="true" (
-    call :buildWasm
-    call :buildJs
-    call :buildCss
+if "!COMPILE_ALL!"=="true" (
+    if "!DEBUG_MODE!"=="true" (
+        call npm run build:debug
+    ) else (
+        call npm run build
+    )
 ) else (
-    if "%DO_WASM%"=="true" (
+    if "!DO_WASM!"=="true" (
         call :buildWasm
     )
-    if "%DO_JS%"=="true" (
+    if "!DO_JS!"=="true" (
         call :buildJs
     )
-    if "%DO_CSS%"=="true" (
+    if "!DO_CSS!"=="true" (
         call :buildCss
     )
+    if "!DO_DIST!"=="true" (
+        call :buildDist
+    )
 )
-
-:: Exit src directory
-popd
 
 echo Build Finished
 
@@ -88,33 +85,29 @@ exit /b
 :buildCss
 echo Minifying css
 echo.
-call node ../minify-css.js --in-css !MINIFIED_CSS_FILES! --out-css "%OUTPUT_DIR%/main.min.css"
+call npm run build:css
 exit /b
 
 :buildJs
 echo Compiling js
 echo.
-call npx -y google-closure-compiler ^
-        --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ^
-        --compilation_level ADVANCED ^
-        --js !MINIFIED_JS_FILES! ^
-        --js_output_file "%OUTPUT_DIR%/main.min.js"
+call npm run build:js
+exit /b
+
+:buildDist
+echo Compiling static
+echo.
+call npm run build:dist
 exit /b
 
 :buildWasm
-cd ..
-mkdir build 2>nul
-cd build
 if "!DEBUG_MODE!"=="true" (
     echo Compiling debug wasm
     echo.
-    call emcmake cmake -DCMAKE_BUILD_TYPE=Debug ..
-    call cmake --build . --config Debug
+    call npm run build:wasm:debug
 ) else (
     echo Compiling release wasm
     echo.
-    call emcmake cmake -DCMAKE_BUILD_TYPE=Release ..
-    call cmake --build . --config Release
+    call npm run build:wasm
 )
-cd ../src
 exit /b

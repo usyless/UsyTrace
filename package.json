@@ -7,6 +7,7 @@
     "build:debug": "node build.js --debug",
 
     "build:wasm": "node build.js --wasm",
+    "build:wasm:debug": "node build.js --wasm --debug",
     "build:js": "node build.js --js",
     "build:css": "node build.js --css",
     "build:dist": "node build.js --dist"
