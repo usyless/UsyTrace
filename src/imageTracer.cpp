@@ -186,7 +186,7 @@ struct Trace {
                 svg += "M";
                 for (; iter != end; ++iter) {
                     const std::string first{*number_to_string_view_positive(iter->first)};
-                    svg += concat_strings(first, " ", *number_to_string_view_positive(iter->second));
+                    svg += concat_strings(first, " ", *number_to_string_view_positive(iter->second), " ");
                 }
                 if (svg.size() > 1) svg.pop_back();
             }
