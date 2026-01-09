@@ -55,20 +55,12 @@ jobs:
             --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 \
             --compilation_level ADVANCED \
             --js state.js main.js popups.js tutorial.js about.js updater.js themes.js \
-            --js_output_file main.min.js
-        
-        rm -f about.js
-        rm -f main.js
-        rm -f updater.js
-        rm -f tutorial.js
-        rm -f popups.js
-        rm -f state.js
-        rm -f themes.js
+            --js_output_file ../dist/main.min.js
 
     - name: Minify css
       working-directory: usytrace/src
       run: |
-        node ../minify-css.js --in-css main.css popup.css tutorial.css shared.css --delete
+        node ../minify-css.js --in-css main.css popup.css tutorial.css shared.css --out-css ../dist/main.min.css
 
     - name: Checkout github pages repo
       uses: actions/checkout@v4
@@ -81,10 +73,8 @@ jobs:
 
     - name: Move built files to pages repo
       run: |
-        cp -rf usytrace/src/* usyless.github.io/trace/
-        cd usyless.github.io/trace
-        rm -f imageTracer.cpp
-        rm -f worker.js
+        rm usyless.github.io/trace/*
+        cp -rf usytrace/dist/* usyless.github.io/trace/
     
     - name: Commit and push
       working-directory: usyless.github.io

@@ -25,19 +25,6 @@ add_executable(UsyTrace
 
 set_target_properties(UsyTrace PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/dist)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/dist)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/dist)
-
-foreach(OUTPUTCONFIG IN LISTS CMAKE_CONFIGURATION_TYPES)
-    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG_UPPER)
-
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${PROJECT_SOURCE_DIR}/dist)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${PROJECT_SOURCE_DIR}/dist)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG_UPPER} ${PROJECT_SOURCE_DIR}/dist)
-endforeach()
-
-
 target_compile_options(UsyTrace PRIVATE
     -sMEMORY64=0
     -sSTRICT
@@ -81,4 +68,38 @@ target_link_options(UsyTrace PRIVATE
         --no-entry
         -s
     >
+)
+
+add_custom_command(TARGET UsyTrace POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/dist
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_BINARY_DIR}/UsyTrace.js
+        ${PROJECT_SOURCE_DIR}/dist/UsyTrace.js
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_CURRENT_BINARY_DIR}/UsyTrace.wasm
+        ${PROJECT_SOURCE_DIR}/dist/UsyTrace.wasm
+
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${PROJECT_SOURCE_DIR}/src/assets
+        ${PROJECT_SOURCE_DIR}/dist/assets
+    
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/src/favicon.ico
+        ${PROJECT_SOURCE_DIR}/dist/favicon.ico
+    
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/src/favicon.svg
+        ${PROJECT_SOURCE_DIR}/dist/favicon.svg
+    
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/src/index.html
+        ${PROJECT_SOURCE_DIR}/dist/index.html
+
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/src/service-worker.js
+        ${PROJECT_SOURCE_DIR}/dist/service-worker.js
+
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${PROJECT_SOURCE_DIR}/src/usytrace.webmanifest
+        ${PROJECT_SOURCE_DIR}/dist/usytrace.webmanifest
 )

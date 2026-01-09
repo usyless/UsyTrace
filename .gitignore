@@ -10,3 +10,4 @@ build_config.txt
 compile_commands.json
 open-vscode.bat
 .clangd
+/dist

@@ -7,6 +7,8 @@ set "MINIFIED_CSS_FILES=main.css popup.css tutorial.css shared.css"
 
 set EMSDK_QUIET=1
 
+set "OUTPUT_DIR=../dist"
+
 :: working directory as directory of script itself
 cd /d "%~dp0"
 
@@ -84,7 +86,7 @@ exit /b
 :buildCss
 echo Minifying css
 echo.
-call node ../minify-css.js --in-css !MINIFIED_CSS_FILES!
+call node ../minify-css.js --in-css !MINIFIED_CSS_FILES! --out-css "%OUTPUT_DIR%/main.min.css"
 exit /b
 
 :buildJs
@@ -94,7 +96,7 @@ call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\c
         --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ^
         --compilation_level ADVANCED ^
         --js !MINIFIED_JS_FILES! ^
-        --js_output_file main.min.js
+        --js_output_file "%OUTPUT_DIR%/main.min.js"
 exit /b
 
 :buildWasm
