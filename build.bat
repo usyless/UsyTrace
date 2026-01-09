@@ -76,38 +76,26 @@ if "!COMPILE_ALL!"=="true" (
     )
 )
 
-echo Build Finished
-
 exit /b
 
 :: functions
 
 :buildCss
-echo Minifying css
-echo.
 call npm run build:css
 exit /b
 
 :buildJs
-echo Compiling js
-echo.
 call npm run build:js
 exit /b
 
 :buildDist
-echo Compiling static
-echo.
 call npm run build:dist
 exit /b
 
 :buildWasm
 if "!DEBUG_MODE!"=="true" (
-    echo Compiling debug wasm
-    echo.
     call npm run build:wasm:debug
 ) else (
-    echo Compiling release wasm
-    echo.
     call npm run build:wasm
 )
 exit /b
