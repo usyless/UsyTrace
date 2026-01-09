@@ -1,6 +1,17 @@
 {
   "name": "uk.usyless.usytrace",
   "version": "v1.0",
+  "description": "browser based frequency response tracer",
+  "homepage": "https://github.com/usyless/UsyTrace",
+  "bugs": {
+    "url": "https://github.com/usyless/UsyTrace/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/usyless/UsyTrace.git"
+  },
+  "license": "AGPL-3.0",
+  "author": "usy",
   "type": "module",
   "scripts": {
     "build": "node build.js",
