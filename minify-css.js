@@ -4,7 +4,7 @@ Don't use this on CSS not written in a way that this isn't made for as it'll pro
 This does unnecessarily minify variable names, I don't know why either.
 */
 
-const fs = require('fs');
+import fs from "node:fs"
 
 const args = process.argv.slice(2), argsLength = args.length;
 

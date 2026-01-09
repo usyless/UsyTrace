@@ -4,6 +4,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
+import { chdir } from 'node:process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,11 +36,6 @@ const OUTPUT_DIR = `../${DIST_DIR}`;
 function run(cmd, options = {}) {
     console.log(`> ${cmd}`);
     execSync(cmd, { stdio: "inherit", ...options });
-}
-
-function chdir(dir) {
-    console.log(`Changing directory to: ${dir}`);
-    process.chdir(dir);
 }
 
 async function mkdir(dir) {
