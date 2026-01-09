@@ -625,12 +625,12 @@ struct Image {
 
 Image* currentImage = nullptr;
 
-inline void** stringReturn(const std::string& str) {
+inline void** stringReturn(const std::string_view str) {
     const auto size = str.size();
     void** ret = new void*[2];
     ret[0] = new char[size];
     ret[1] = reinterpret_cast<void*>(size); // cursed
-    memcpy(ret[0], str.c_str(), size);
+    memcpy(ret[0], str.data(), size);
     return ret;
 }
 
