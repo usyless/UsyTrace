@@ -153,10 +153,10 @@ struct ExportString {
 
 struct Trace {
     const frTrace trace;
-    const ImageData* imageData;
+    const ImageData& imageData;
 
-    Trace(const ImageData* data) : imageData(data) {}
-    Trace(const ImageData* data, frTrace&& _trace) : trace(std::move(_trace)), imageData(data) {}
+    Trace(const ImageData& data) : imageData(data) {}
+    Trace(const ImageData& data, frTrace&& _trace) : trace(std::move(_trace)), imageData(data) {}
 
     std::vector<std::pair<uint32_t, uint32_t>> clean() const {
         std::vector<std::pair<uint32_t, uint32_t>> simplifiedTrace{};
@@ -204,24 +204,24 @@ struct Trace {
         return svg;
     }
 
-    static void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& trace, const ImageData* imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
+    static void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& trace, const ImageData& imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
         std::vector<uint32_t> yValues{};
         uint32_t currJump = 0;
-        const uint32_t maxHeight = imageData->height - 1;
-        for (const auto width = imageData->width; startX >= 0 && startX < width; startX += step) {
+        const uint32_t maxHeight = imageData.height - 1;
+        for (const auto width = imageData.width; startX >= 0 && startX < width; startX += step) {
             yValues.clear();
             auto max = static_cast<int>((maxLineHeight + (currJump * 2)) / 2);
             auto low = (max > startY) ? -static_cast<int>(startY) : -max;
             if (startY + max > maxHeight) max = maxHeight - startY;
             for (; low <= max; ++low) {
                 const auto y = startY + low;
-                if (colour.withinTolerance(imageData->getRGB(startX, y))) yValues.emplace_back(y);
+                if (colour.withinTolerance(imageData.getRGB(startX, y))) yValues.emplace_back(y);
             }
             if (!yValues.empty()) {
                 currJump = 0;
                 startY = yValues[yValues.size() / 2]; // is sorted already
                 trace[startX] = startY;
-                RGB newRGB = imageData->getRGB(startX, startY);
+                RGB newRGB = imageData.getRGB(startX, startY);
                 if (colour.withinTolerance(newRGB)) colour.addToAverage(newRGB);
                 continue;
             }
@@ -231,9 +231,9 @@ struct Trace {
     }
 
     Trace newTrace(const TraceData& traceData, const bool traceLeft=false) const {
-        const auto maxLineHeight = std::max<uint32_t>(0, imageData->height / 20);
-        const auto maxJump = std::max<uint32_t>(0, imageData->width / 50);
-        auto baselineColour = RGBTools(imageData->getRGB(traceData.x, traceData.y), traceData.colourTolerance);
+        const auto maxLineHeight = std::max<uint32_t>(0, imageData.height / 20);
+        const auto maxJump = std::max<uint32_t>(0, imageData.width / 50);
+        auto baselineColour = RGBTools(imageData.getRGB(traceData.x, traceData.y), traceData.colourTolerance);
 
         frTrace newTrace{trace};
         newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
@@ -303,9 +303,9 @@ struct Trace {
 struct TraceHistory {
     std::stack<Trace> history;
     std::stack<Trace> future;
-    const ImageData* imageData;
+    const ImageData& imageData;
 
-    TraceHistory(const ImageData* data) : imageData(data) {
+    TraceHistory(const ImageData& data) : imageData(data) {
         history.emplace(Trace{data});
     }
 
@@ -373,15 +373,15 @@ std::function<double(double)> contiguousLinearInterpolation(const std::vector<st
     };
 }
 
-Trace getPotentialTrace(const ImageData* imageData, TraceData traceData, const std::function<uint32_t(RGB)>& differenceFunc) {
+Trace getPotentialTrace(const ImageData& imageData, TraceData traceData, const std::function<uint32_t(RGB)>& differenceFunc) {
     auto bestY = 0, currentDiff = 0;
-    const auto middleX = imageData->width / 2;
-    const auto yRange = imageData->height / 5;
-    const auto middleY = imageData->height / 2;
+    const auto middleX = imageData.width / 2;
+    const auto yRange = imageData.height / 5;
+    const auto middleY = imageData.height / 2;
     auto y = middleY - yRange;
 
     for(const auto endY = middleY + yRange; y <= endY; ++y) {
-        if (const auto diff = differenceFunc(imageData->getRGB(middleX, y)); diff >= std::max(10, currentDiff)) {
+        if (const auto diff = differenceFunc(imageData.getRGB(middleX, y)); diff >= std::max(10, currentDiff)) {
             bestY = y;
             currentDiff = diff;
         }
@@ -395,11 +395,11 @@ Trace getPotentialTrace(const ImageData* imageData, TraceData traceData, const s
     return {imageData};
 }
 
-void padOutputData(const ImageData* original, ImageData* output) {
-    const auto width = original->width, height = original->height;
-    const auto maxWidthOrig = width * original->channels, maxWidthOut = width * output->channels;
-    const auto data = original->data;
-    auto outputData = output->data;
+void padOutputData(const ImageData& original, ImageData& output) {
+    const auto width = original.width, height = original.height;
+    const auto maxWidthOrig = width * original.channels, maxWidthOut = width * output.channels;
+    const auto data = original.data;
+    auto outputData = output.data;
     // CAN ONLY TAKE 3x3 KERNELS FOR NOW DUE TO THIS
     // also cant just copy memory as input is 4 channels, output is 1
     // Copy top and bottom rows
@@ -420,12 +420,12 @@ void padOutputData(const ImageData* original, ImageData* output) {
     }
 }
 
-void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
-    const auto widthBound = original->width - 1, heightBound = original->height - 1;
-    const auto maxWidthOrig = original->width * original->channels, maxWidthOut = original->width * outX->channels;
-    const auto data = original->data;
-    auto outputDataX = outX->data;
-    auto outputDataY = outY->data;
+void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
+    const auto widthBound = original.width - 1, heightBound = original.height - 1;
+    const auto maxWidthOrig = original.width * original.channels, maxWidthOut = original.width * outX.channels;
+    const auto data = original.data;
+    auto outputDataX = outX.data;
+    auto outputDataY = outY.data;
 
     static constexpr int yFilter[3][3] = {
         {-1, -2, -1},
@@ -467,24 +467,23 @@ void applySobel(const ImageData* original, ImageData* outX, ImageData* outY) {
     }
 }
 
-void invertImage(ImageData* data) {
-    const size_t maxSize = data->getMaxPos();
-    const auto d = data->data;
-    for (size_t pos = 0; pos < maxSize; ++pos) d[pos] = 255 - d[pos];
+void invertImage(const ImageData& data) {
+    const size_t maxSize = data.getMaxPos();
+    for (size_t pos = 0; pos < maxSize; ++pos) data.data[pos] = 255 - data.data[pos];
 }
 
-std::set<uint32_t> detectLines(const ImageData* imageData, const std::string&& direction, const uint32_t tolerance) {
+std::set<uint32_t> detectLines(const ImageData& imageData, const std::string&& direction, const uint32_t tolerance) {
     std::set<uint32_t> lines{};
     uint32_t length, otherDirection;
     std::function<bool(uint32_t, uint32_t)> comparator;
     if(direction == "X") { // vertical line, representing x axis
-        length = imageData->width;
-        otherDirection = imageData->height;
-        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t x, const uint32_t y) { return data->getR(x, y) < tolerance; };
+        length = imageData.width;
+        otherDirection = imageData.height;
+        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t x, const uint32_t y) { return data.getR(x, y) < tolerance; };
     } else {
-        length = imageData->height;
-        otherDirection = imageData->width;
-        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t y, const uint32_t x) { return data->getR(x, y) < tolerance; };
+        length = imageData.height;
+        otherDirection = imageData.width;
+        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t y, const uint32_t x) { return data.getR(x, y) < tolerance; };
     }
     const auto upperBound = static_cast<uint32_t>(otherDirection * 0.7), lowerBound = static_cast<uint32_t>(otherDirection * 0.3);
     const auto bound = (upperBound - lowerBound) - static_cast<uint32_t>(0.9 * (upperBound - lowerBound));
@@ -503,31 +502,32 @@ std::set<uint32_t> detectLines(const ImageData* imageData, const std::string&& d
 }
 
 struct Image {
-    ImageData* imageData;
+    ImageData imageData;
     TraceHistory traceHistory;
     RGBTools backgroundColour = RGBTools{RGB{0,0,0}, 0};
     std::set<uint32_t> vLines;
     std::set<uint32_t> hLines;
 
-    Image(ImageData* imageData) : traceHistory(imageData) {
-        const auto darkMode = (imageData->getBackgroundColour().sum() / 3) < 127;
+    Image(ImageData&& _imageData) : imageData(std::move(_imageData)), traceHistory(imageData) {
+        const auto darkMode = (imageData.getBackgroundColour().sum() / 3) < 127;
         if (darkMode) invertImage(imageData);
 
-        auto* filteredDataX = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * sizeof(Colour))), imageData->width, imageData->height, 1};
+        {
+        auto filteredDataX = ImageData{static_cast<Colour*>(malloc((imageData.width) * (imageData.height) * sizeof(Colour))), imageData.width, imageData.height, 1};
         padOutputData(imageData, filteredDataX);
-        auto* filteredDataY = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * sizeof(Colour))), imageData->width, imageData->height, 1};
+        {
+        auto filteredDataY = ImageData{static_cast<Colour*>(malloc((imageData.width) * (imageData.height) * sizeof(Colour))), imageData.width, imageData.height, 1};
         padOutputData(imageData, filteredDataY);
 
         applySobel(imageData, filteredDataX, filteredDataY);
         hLines = detectLines(filteredDataY, "Y", 20);
-        delete filteredDataY;
+        }
         vLines = detectLines(filteredDataX, "X", 20);
-        delete filteredDataX;
+        }
 
         if (darkMode) invertImage(imageData);
 
-        this->imageData = imageData;
-        this->backgroundColour = RGBTools{imageData->getBackgroundColour(), 10};
+        this->backgroundColour = RGBTools{imageData.getBackgroundColour(), 10};
     }
 
     inline std::string trace(const TraceData&& traceData) {
@@ -554,9 +554,9 @@ struct Image {
         auto traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         auto traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour.rgb] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
         if (traceOne.size() > traceTwo.size()) {
-            traceHistory.add(traceOne.standardSmooth(static_cast<int>(imageData->width)));
+            traceHistory.add(traceOne.standardSmooth(static_cast<int>(imageData.width)));
         } else {
-            traceHistory.add(traceTwo.standardSmooth(static_cast<int>(imageData->width)));
+            traceHistory.add(traceTwo.standardSmooth(static_cast<int>(imageData.width)));
         }
         return traceHistory.getLatest().toSVG();
     }
@@ -595,7 +595,7 @@ struct Image {
     }
 
     inline RGB getPixelColour(const uint32_t x, const uint32_t y) const {
-        return imageData->getRGB(x, y);
+        return imageData.getRGB(x, y);
     }
 
     inline std::string getPath() const {
@@ -615,11 +615,7 @@ struct Image {
     }
 
     inline std::string smoothTrace() {
-        return traceHistory.add(traceHistory.getLatest().standardSmooth(imageData->width)).toSVG();
-    }
-
-    ~Image() {
-        delete imageData;
+        return traceHistory.add(traceHistory.getLatest().standardSmooth(imageData.width)).toSVG();
     }
 };
 
@@ -652,7 +648,7 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE void* addImage(Colour* data, const uint32_t width, const uint32_t height) {
         // Images come in with 4 channels (RGBA)
-        auto ptr = new Image{new ImageData{data, width, height, 4}};
+        auto ptr = new Image{ImageData{data, width, height, 4}};
         currentImage = ptr;
         return ptr;
     }
