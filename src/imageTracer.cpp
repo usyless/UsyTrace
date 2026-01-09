@@ -1,6 +1,5 @@
 #include <algorithm>
 #include <cmath>
-#include <format>
 #include <functional>
 #include <iterator>
 #include <map>
@@ -11,6 +10,7 @@
 #include <set>
 #include <cstdint>
 #include <string>
+#include <usylibpp/strings.hpp>
 
 #ifdef __EMSCRIPTEN__
     #include <emscripten.h>
@@ -124,15 +124,17 @@ struct ExportData {
 // delim 1 = tab, else = space
 struct ExportString {
     std::string data;
-    char delim = ' ';
+    std::string delim{" "};
 
     explicit ExportString(const int delim = 1) {
-        if (delim == 1) this->delim = '\t';
-        data = std::format("* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz){}SPL(dB)", this->delim);
+        using namespace usylibpp::strings;
+        if (delim == 1) this->delim = "\t";
+        data = concat_strings("* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz)", this->delim, "SPL(dB)");
     }
 
     void addData(auto&& freq, auto&& spl) {
-        data += std::format("\n{}{}{}", freq, delim, spl);
+        using namespace usylibpp::strings;
+        data += concat_strings("\n", std::to_string(freq), delim, std::to_string(spl));
     }
 
     std::string getData() const {
@@ -176,11 +178,16 @@ struct Trace {
         if (const auto res = clean(); !res.empty()) {
             auto iter = res.begin();
             const auto end = res.end();
+            using namespace usylibpp::strings;
             if (res.size() == 1) {
-                svg += std::format("M{} {}q2 0 2 2t-2 2-2-2 2-2", iter->first, iter->second);
+                const std::string first{*number_to_string_view_positive(iter->first)};
+                svg += concat_strings("M", first, " ", *number_to_string_view_positive(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
             } else {
                 svg += "M";
-                for (; iter != end; ++iter) svg += std::format("{} {} ", iter->first, iter->second);
+                for (; iter != end; ++iter) {
+                    const std::string first{*number_to_string_view_positive(iter->first)};
+                    svg += concat_strings(first, " ", *number_to_string_view_positive(iter->second));
+                }
                 if (svg.size() > 1) svg.pop_back();
             }
         }

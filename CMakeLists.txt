@@ -23,8 +23,22 @@ add_executable(usytrace
     ${PROJECT_SOURCE_DIR}/src/imageTracer.cpp
 )
 
+include(FetchContent)
+
+FetchContent_Declare(
+    usylibpp
+    GIT_REPOSITORY https://github.com/usyless/usylibpp.git
+    GIT_TAG main
+    GIT_SHALLOW TRUE
+)
+
+FetchContent_MakeAvailable(usylibpp)
+
+target_link_libraries(usytrace PRIVATE usylibpp::usylibpp)
+
 set_target_properties(usytrace PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
+# If you want to make a compile_commands.json from this, comment out from here
 target_compile_options(usytrace PRIVATE
     -sMEMORY64=0
     -sSTRICT
@@ -69,6 +83,7 @@ target_link_options(usytrace PRIVATE
         -s
     >
 )
+# To here
 
 add_custom_command(TARGET usytrace POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/dist
