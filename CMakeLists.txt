@@ -78,28 +78,4 @@ add_custom_command(TARGET UsyTrace POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_CURRENT_BINARY_DIR}/UsyTrace.wasm
         ${PROJECT_SOURCE_DIR}/dist/UsyTrace.wasm
-
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${PROJECT_SOURCE_DIR}/src/assets
-        ${PROJECT_SOURCE_DIR}/dist/assets
-    
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${PROJECT_SOURCE_DIR}/src/favicon.ico
-        ${PROJECT_SOURCE_DIR}/dist/favicon.ico
-    
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${PROJECT_SOURCE_DIR}/src/favicon.svg
-        ${PROJECT_SOURCE_DIR}/dist/favicon.svg
-    
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${PROJECT_SOURCE_DIR}/src/index.html
-        ${PROJECT_SOURCE_DIR}/dist/index.html
-
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${PROJECT_SOURCE_DIR}/src/service-worker.js
-        ${PROJECT_SOURCE_DIR}/dist/service-worker.js
-
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${PROJECT_SOURCE_DIR}/src/usytrace.webmanifest
-        ${PROJECT_SOURCE_DIR}/dist/usytrace.webmanifest
 )

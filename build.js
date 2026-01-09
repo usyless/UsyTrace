@@ -44,7 +44,7 @@ function chdir(dir) {
 
 async function mkdir(dir) {
     try {
-        await fs.mkdir(path.dirname(dir), { recursive: true });
+        await fs.mkdir(dir, { recursive: true });
     } catch {
         // ignore if exists
     }
