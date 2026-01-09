@@ -53,8 +53,8 @@ async function buildDist() {
     const _cwd = cwd();
 
     await Promise.all([
-        ...[DIST_DIRS.map(dir => fs.cp(path.join(_cwd, dir), path.join(DIST_DIR, path.basename(dir)), { recursive: true }))],
-        ...[DIST_FILES.map(file => fs.cp(path.join(_cwd, file), path.join(DIST_DIR, path.basename(file))))]
+        ...[DIST_DIRS.map(dir => fs.cp(path.join(_cwd, dir), path.join(DIST_DIR, path.basename(dir)), { recursive: true, force: true }))],
+        ...[DIST_FILES.map(file => fs.cp(path.join(_cwd, file), path.join(DIST_DIR, path.basename(file)), { force: true }))]
     ]);
 
     chdir("..");
