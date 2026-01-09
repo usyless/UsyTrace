@@ -98,6 +98,7 @@ call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\c
 exit /b
 
 :buildWasm
+cd ..
 mkdir build 2>nul
 cd build
 if "!DEBUG_MODE!"=="true" (
@@ -111,5 +112,5 @@ if "!DEBUG_MODE!"=="true" (
     call emcmake cmake -DCMAKE_BUILD_TYPE=Release ..
     call cmake --build . --config Release
 )
-cd ..
+cd ../src
 exit /b
