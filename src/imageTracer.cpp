@@ -74,6 +74,15 @@ struct ImageData {
         return width * height * channels;
     }
 
+    inline RGB getBackgroundColour() {
+        std::map<RGB, uint32_t> colours{};
+        const auto mY = height, mX = width;
+        const long xJump = std::max<uint32_t>(1, mX / 100), yJump = std::max<uint32_t>(1, mY / 100);
+
+        for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[getRGB(x, y)];
+        return std::max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
+    }
+
     ~ImageData() {
         free(data);
     }
@@ -342,15 +351,6 @@ struct TraceHistory {
     }
 };
 
-RGB getBackgroundColour(const ImageData* imageData) {
-    std::map<RGB, uint32_t> colours{};
-    const auto mY = imageData->height, mX = imageData->width;
-    const long xJump = std::max<uint32_t>(1, mX / 100), yJump = std::max<uint32_t>(1, mY / 100);
-
-    for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[imageData->getRGB(x, y)];
-    return std::max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
-}
-
 std::function<double(double)> contiguousLinearInterpolation(const std::vector<std::pair<double, double>>& FRxSPL) {
     const auto firstF = FRxSPL.front().first, lastF = FRxSPL.back().first,
     firstV = FRxSPL.front().second, lastV = FRxSPL.back().second;
@@ -510,7 +510,7 @@ struct Image {
     std::set<uint32_t> hLines;
 
     Image(ImageData* imageData) : traceHistory(imageData) {
-        const auto darkMode = getBackgroundColour(imageData).sum() / 3 < 127;
+        const auto darkMode = (imageData->getBackgroundColour().sum() / 3) < 127;
         if (darkMode) invertImage(imageData);
 
         auto* filteredDataX = new ImageData{static_cast<Colour*>(malloc((imageData->width) * (imageData->height) * sizeof(Colour))), imageData->width, imageData->height, 1};
@@ -527,7 +527,7 @@ struct Image {
         if (darkMode) invertImage(imageData);
 
         this->imageData = imageData;
-        this->backgroundColour = RGBTools{getBackgroundColour(imageData), 10};
+        this->backgroundColour = RGBTools{imageData->getBackgroundColour(), 10};
     }
 
     inline std::string trace(const TraceData&& traceData) {
