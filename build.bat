@@ -1,12 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set EMSCRIPTEN_CONFIG_FILE=build_config.txt
-
-:: sMEMORY_GROWTH_LINEAR_STEP = 48 * 1024 * 1024
-:: sINITIAL_HEAP = 96 * 1024 * 1024
-set "EMCC_SHARED_PARAMETERS=imageTracer.cpp -std=c++20 -O3 -sWASM=1 -sALLOW_MEMORY_GROWTH=1 -sINITIAL_HEAP=100663296 -sFILESYSTEM=0 -sENVIRONMENT=worker -sINCOMING_MODULE_JS_API=onRuntimeInitialized -sEXPORTED_RUNTIME_METHODS=[] -sMEMORY64=0 -sSTRICT --no-entry -sSTRICT_JS -sMEMORY_GROWTH_LINEAR_STEP=50331648 -fno-rtti -flto --closure 1 --pre-js worker.js"
-
 set "MINIFIED_JS_FILES=state.js main.js popups.js tutorial.js about.js updater.js themes.js"
 
 set "MINIFIED_CSS_FILES=main.css popup.css tutorial.css shared.css"
@@ -104,13 +98,18 @@ call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\c
 exit /b
 
 :buildWasm
+mkdir build 2>nul
+cd build
 if "!DEBUG_MODE!"=="true" (
     echo Compiling debug wasm
     echo.
-    call em++ !EMCC_SHARED_PARAMETERS! -sASSERTIONS=1 -sNO_DISABLE_EXCEPTION_CATCHING
+    call emcmake cmake -DCMAKE_BUILD_TYPE=Debug ..
+    call cmake --build . --config Debug
 ) else (
     echo Compiling release wasm
     echo.
-    call em++ !EMCC_SHARED_PARAMETERS! -sASSERTIONS=0 -g0 -fno-exceptions -s
+    call emcmake cmake -DCMAKE_BUILD_TYPE=Release ..
+    call cmake --build . --config Release
 )
+cd ..
 exit /b

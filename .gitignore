@@ -9,5 +9,4 @@ build_config.txt
 /.cache
 compile_commands.json
 open-vscode.bat
-CmakeLists.txt
 .clangd
