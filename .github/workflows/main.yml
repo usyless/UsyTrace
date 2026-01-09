@@ -70,8 +70,15 @@ jobs:
         persist-credentials: true
 
     - name: Move built files to pages repo
+      if: steps.changes.outputs.recompile == 'true'
       run: |
         rm usyless.github.io/trace/*
+        cp -rf usytrace/dist/* usyless.github.io/trace/
+
+    - name: Move built files to pages repo
+      if: steps.changes.outputs.recompile == 'false'
+      run: |
+        find usyless.github.io/trace -type f ! -name 'UsyTrace.js' ! -name 'UsyTrace.wasm' -delete
         cp -rf usytrace/dist/* usyless.github.io/trace/
     
     - name: Commit and push
