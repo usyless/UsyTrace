@@ -190,13 +190,13 @@ struct Trace {
             const auto end = res.end();
             using namespace usylibpp::strings;
             if (res.size() == 1) {
-                const std::string first{*number_to_string_view_positive(iter->first)};
-                svg += concat_strings("M", first, " ", *number_to_string_view_positive(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
+                const std::string first{*to_string_view(iter->first)};
+                svg += concat_strings("M", first, " ", *to_string_view(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
             } else {
                 svg += "M";
                 for (; iter != end; ++iter) {
-                    const std::string first{*number_to_string_view_positive(iter->first)};
-                    svg += concat_strings(first, " ", *number_to_string_view_positive(iter->second), " ");
+                    const std::string first{*to_string_view(iter->first)};
+                    svg += concat_strings(first, " ", *to_string_view(iter->second), " ");
                 }
                 if (svg.size() > 1) svg.pop_back();
             }
