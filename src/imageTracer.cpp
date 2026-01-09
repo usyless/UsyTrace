@@ -346,12 +346,13 @@ RGB getBackgroundColour(const ImageData* imageData) {
     return std::max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
 }
 
-std::function<double(double, uint32_t&)> contiguousLinearInterpolation(const std::vector<std::pair<double, double>>& FRxSPL) {
+std::function<double(double)> contiguousLinearInterpolation(const std::vector<std::pair<double, double>>& FRxSPL) {
     const auto firstF = FRxSPL.front().first, lastF = FRxSPL.back().first,
     firstV = FRxSPL.front().second, lastV = FRxSPL.back().second;
     const auto l = FRxSPL.size();
 
-    return [&FRxSPL, firstF, lastF, firstV, lastV, l] (const double freq, uint32_t& pos) {
+    uint32_t pos = 0;
+    return [&FRxSPL, firstF, lastF, firstV, lastV, l, pos] (const double freq) mutable {
         if (freq <= firstF) return firstV;
         if (freq >= lastF) return lastV;
         std::pair<double, double> lower, upper;
@@ -569,10 +570,9 @@ struct Image {
 
         if(!FRxSPL.empty()) {
             const auto interp = contiguousLinearInterpolation(FRxSPL);
-            uint32_t pos = 0;
             for(auto v = exportData.logMinFR; ; v += PPOStep) {
                 const auto freq = pow(10, v);
-                str.addData(freq, interp(freq, pos));
+                str.addData(freq, interp(freq));
                 if (v >= logMaxFR) break;
             }
         }
