@@ -278,8 +278,12 @@ struct Trace {
         return newTrace;
     }
 
-    size_t size() const {
+    size_t size() const noexcept {
         return trace.size();
+    }
+
+    bool empty() const noexcept {
+        return trace.empty();
     }
 };
 
@@ -300,7 +304,7 @@ struct TraceHistory {
     }
 
     const Trace& add(Trace&& trace) {
-        if (history.top().size() == 0 && trace.size() == 0) {
+        if (history.top().empty() && trace.empty()) {
             return history.top();
         }
         clearFuture();
