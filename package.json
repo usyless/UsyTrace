@@ -1,0 +1,14 @@
+{
+  "name": "uk.usyless.usytrace",
+  "version": "v1.0",
+  "type": "module",
+  "scripts": {
+    "build": "node build.js",
+    "build:debug": "node build.js --debug",
+
+    "build:wasm": "node build.js --wasm",
+    "build:js": "node build.js --js",
+    "build:css": "node build.js --css",
+    "build:dist": "node build.js --dist"
+  }
+}

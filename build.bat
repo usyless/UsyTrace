@@ -1,6 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
+set EMSCRIPTEN_CONFIG_FILE=build_config.txt
+
 set "MINIFIED_JS_FILES=state.js main.js popups.js tutorial.js about.js updater.js themes.js"
 
 set "MINIFIED_CSS_FILES=main.css popup.css tutorial.css shared.css"
@@ -92,7 +94,7 @@ exit /b
 :buildJs
 echo Compiling js
 echo.
-call "%EMSDK%\upstream\emscripten\node_modules\google-closure-compiler-windows\compiler.exe" ^
+call npx -y google-closure-compiler ^
         --language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ^
         --compilation_level ADVANCED ^
         --js !MINIFIED_JS_FILES! ^
