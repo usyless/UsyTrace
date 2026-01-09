@@ -124,15 +124,11 @@ struct ExportData {
 // delim 1 = tab, else = space
 struct ExportString {
     std::string data;
-    std::string delim;
+    char delim = ' ';
 
     explicit ExportString(const int delim = 1) {
-        if (delim == 1) {
-            this->delim = "\t";
-        } else {
-            this->delim = " ";
-        }
-        data = "* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz)" + this->delim + "SPL(dB)";
+        if (delim == 1) this->delim = '\t';
+        data = std::format("* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz){}SPL(dB)", this->delim);
     }
 
     void addData(auto&& freq, auto&& spl) {
