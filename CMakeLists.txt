@@ -1,7 +1,7 @@
 # cmake_minimum_required(VERSION 4.2)
 cmake_minimum_required(VERSION 3.20)
 
-project(UsyTrace LANGUAGES CXX)
+project(usytrace LANGUAGES CXX)
 
 
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY ON)
@@ -19,13 +19,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # set(CMAKE_RANLIB emranlib)
 
 
-add_executable(UsyTrace 
+add_executable(usytrace 
     ${PROJECT_SOURCE_DIR}/src/imageTracer.cpp
 )
 
-set_target_properties(UsyTrace PROPERTIES CXX_SCAN_FOR_MODULES OFF)
+set_target_properties(usytrace PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
-target_compile_options(UsyTrace PRIVATE
+target_compile_options(usytrace PRIVATE
     -sMEMORY64=0
     -sSTRICT
 
@@ -42,7 +42,7 @@ target_compile_options(UsyTrace PRIVATE
     >
 )
 
-target_link_options(UsyTrace PRIVATE
+target_link_options(usytrace PRIVATE
     --pre-js ${PROJECT_SOURCE_DIR}/src/worker.js
     -sSTRICT_JS
     -sMEMORY_GROWTH_LINEAR_STEP=50331648
@@ -70,12 +70,12 @@ target_link_options(UsyTrace PRIVATE
     >
 )
 
-add_custom_command(TARGET UsyTrace POST_BUILD
+add_custom_command(TARGET usytrace POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/dist
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_BINARY_DIR}/UsyTrace.js
-        ${PROJECT_SOURCE_DIR}/dist/UsyTrace.js
+        ${CMAKE_CURRENT_BINARY_DIR}/usytrace.js
+        ${PROJECT_SOURCE_DIR}/dist/usytrace.js
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_CURRENT_BINARY_DIR}/UsyTrace.wasm
-        ${PROJECT_SOURCE_DIR}/dist/UsyTrace.wasm
+        ${CMAKE_CURRENT_BINARY_DIR}/usytrace.wasm
+        ${PROJECT_SOURCE_DIR}/dist/usytrace.wasm
 )

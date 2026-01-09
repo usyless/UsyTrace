@@ -79,12 +79,12 @@ jobs:
       if: steps.changes.outputs.recompile == 'false'
       run: |
         mkdir usytrace_temp
-        cp usyless.github.io/trace/UsyTrace.js usytrace_temp/
-        cp usyless.github.io/trace/UsyTrace.wasm usytrace_temp/
+        cp usyless.github.io/trace/usytrace.js usytrace_temp/
+        cp usyless.github.io/trace/usytrace.wasm usytrace_temp/
 
         rm usyless.github.io/trace/*
-        cp usytrace_temp/UsyTrace.js usyless.github.io/trace/
-        cp usytrace_temp/UsyTrace.wasm usyless.github.io/trace/
+        cp usytrace_temp/usytrace.js usyless.github.io/trace/
+        cp usytrace_temp/usytrace.wasm usyless.github.io/trace/
 
         cp -rf usytrace/dist/* usyless.github.io/trace/
     

@@ -9,8 +9,8 @@ contentToCache = [
     './main.min.css',
     './main.min.js',
 
-    './UsyTrace.js',
-    './UsyTrace.wasm',
+    './usytrace.js',
+    './usytrace.wasm',
     './usytrace.webmanifest',
 
     './assets/fonts/open-sans-latin-400-normal.woff2',

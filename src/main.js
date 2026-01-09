@@ -239,7 +239,7 @@ const buttons = {
 
 const worker = {
     worker: (() => {
-        const w = new Worker("./UsyTrace.js", {type: 'module'});
+        const w = new Worker("./usytrace.js", {type: 'module'});
         w.onmessage = (data) => {
             data = data["data"];
             const type = data["type"];
