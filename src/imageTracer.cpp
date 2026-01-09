@@ -144,9 +144,10 @@ struct ExportString {
 
 struct Trace {
     const frTrace trace;
+    const ImageData* imageData;
 
-    Trace() {}
-    Trace(const frTrace& trace) : trace(trace) {}
+    Trace(const ImageData* data) : imageData(data) {}
+    Trace(const ImageData* data, frTrace&& _trace) : trace(std::move(_trace)), imageData(data) {}
 
     std::vector<std::pair<uint32_t, uint32_t>> clean() const {
         std::vector<std::pair<uint32_t, uint32_t>> simplifiedTrace{};
@@ -220,7 +221,7 @@ struct Trace {
         }
     }
 
-    Trace newTrace(const ImageData* imageData, const TraceData& traceData, const bool traceLeft=false) const {
+    Trace newTrace(const TraceData& traceData, const bool traceLeft=false) const {
         const auto maxLineHeight = std::max<uint32_t>(0, imageData->height / 20);
         const auto maxJump = std::max<uint32_t>(0, imageData->width / 50);
         auto baselineColour = RGBTools(imageData->getRGB(traceData.x, traceData.y), traceData.colourTolerance);
@@ -231,7 +232,7 @@ struct Trace {
         if (traceLeft) Trace::traceFor(traceData.x - 1, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
         Trace::traceFor(traceData.x, traceData.y, 1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
 
-        return newTrace;
+        return {imageData, std::move(newTrace)};
     }
 
     // Gaussian smoothing
@@ -260,7 +261,7 @@ struct Trace {
                 newTrace[it->first] = static_cast<uint32_t>(smoothed / sumWeights);
             }
         }
-        return newTrace;
+        return {imageData, std::move(newTrace)};
     }
 
     inline Trace standardSmooth(int width) const {
@@ -272,13 +273,13 @@ struct Trace {
         frTrace newTrace{trace};
         const auto higher = newTrace.upper_bound(end);
         for (auto lower = newTrace.lower_bound(begin); lower != higher;) lower = newTrace.erase(lower);
-        return newTrace;
+        return {imageData, std::move(newTrace)};
     }
 
     Trace addPoint(const TraceData& traceData) const {
         frTrace newTrace{trace};
         newTrace[traceData.x] = traceData.y;
-        return newTrace;
+        return {imageData, std::move(newTrace)};
     }
 
     size_t size() const noexcept {
@@ -293,9 +294,10 @@ struct Trace {
 struct TraceHistory {
     std::stack<Trace> history;
     std::stack<Trace> future;
+    const ImageData* imageData;
 
-    TraceHistory() {
-        history.emplace(Trace{});
+    TraceHistory(const ImageData* data) : imageData(data) {
+        history.emplace(Trace{data});
     }
 
     const Trace& getLatest() const {
@@ -388,9 +390,9 @@ Trace getPotentialTrace(const ImageData* imageData, TraceData traceData, const s
     if (bestY > 0) {
         traceData.x = middleX;
         traceData.y = bestY;
-        return Trace{}.newTrace(imageData, traceData, true);
+        return Trace{imageData}.newTrace(traceData, true);
     }
-    return {};
+    return {imageData};
 }
 
 void padOutputData(const ImageData* original, ImageData* output) {
@@ -507,7 +509,7 @@ struct Image {
     std::set<uint32_t> vLines;
     std::set<uint32_t> hLines;
 
-    Image(ImageData* imageData) {
+    Image(ImageData* imageData) : traceHistory(imageData) {
         const auto darkMode = getBackgroundColour(imageData).sum() / 3 < 127;
         if (darkMode) invertImage(imageData);
 
@@ -529,7 +531,7 @@ struct Image {
     }
 
     inline std::string trace(const TraceData&& traceData) {
-        return traceHistory.add(traceHistory.getLatest().newTrace(imageData, traceData)).toSVG();
+        return traceHistory.add(traceHistory.getLatest().newTrace(traceData)).toSVG();
     }
 
     inline std::string point(const TraceData&& traceData) {
@@ -601,7 +603,7 @@ struct Image {
     }
 
     void inline clear() {
-        traceHistory.add(Trace{});
+        traceHistory.add(Trace{imageData});
     }
 
     inline std::string eraseRegion(uint32_t begin, uint32_t end) {
