@@ -380,8 +380,7 @@ std::shared_ptr<Trace> getPotentialTrace(const ImageData* imageData, TraceData t
     if (bestY > 0) {
         traceData.x = middleX;
         traceData.y = bestY;
-        auto trace = std::make_shared<Trace>();
-        return trace->newTrace(imageData, traceData, true);
+        return std::make_shared<Trace>()->newTrace(imageData, traceData, true);
     }
     return std::make_shared<Trace>();
 }
