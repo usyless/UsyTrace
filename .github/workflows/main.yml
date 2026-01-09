@@ -78,14 +78,14 @@ jobs:
     - name: Move built files to pages repo
       if: steps.changes.outputs.recompile == 'false'
       run: |
-        mkdir usyless_github_io__trace_temp
-        cp usyless.github.io/trace/UsyTrace.js usyless_github_io__trace_temp/
-        cp usyless.github.io/trace/UsyTrace.wasm usyless_github_io__trace_temp/
+        mkdir usytrace_temp
+        cp usyless.github.io/trace/UsyTrace.js usytrace_temp/
+        cp usyless.github.io/trace/UsyTrace.wasm usytrace_temp/
 
         rm usyless.github.io/trace/*
-        cp usyless_github_io__trace_temp/UsyTrace.js usyless.github.io/trace/
-        cp usyless_github_io__trace_temp/UsyTrace.wasm usyless.github.io/trace/
-        
+        cp usytrace_temp/UsyTrace.js usyless.github.io/trace/
+        cp usytrace_temp/UsyTrace.wasm usyless.github.io/trace/
+
         cp -rf usytrace/dist/* usyless.github.io/trace/
     
     - name: Commit and push
