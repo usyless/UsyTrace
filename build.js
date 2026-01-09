@@ -4,7 +4,7 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
-import { chdir } from 'node:process';
+import { chdir, cwd } from 'node:process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -47,12 +47,14 @@ async function mkdir(dir) {
 }
 
 async function buildDist() {
-    console.log("\nMaking Dist\n");
+    console.log("\nMoving Static Files\n");
     chdir(SRC_DIR);
 
+    const _cwd = cwd();
+
     await Promise.all([
-        ...[DIST_DIRS.map(dir => fs.cp(dir, path.join(OUTPUT_DIR, path.basename(dir)), { recursive: true }))],
-        ...[DIST_FILES.map(file => fs.cp(file, path.join(OUTPUT_DIR, path.basename(file))))]
+        ...[DIST_DIRS.map(dir => fs.cp(path.join(_cwd, dir), path.join(DIST_DIR, path.basename(dir)), { recursive: true }))],
+        ...[DIST_FILES.map(file => fs.cp(path.join(_cwd, file), path.join(DIST_DIR, path.basename(file))))]
     ]);
 
     chdir("..");
