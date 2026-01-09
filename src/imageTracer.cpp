@@ -3,7 +3,6 @@
 #include <functional>
 #include <iterator>
 #include <map>
-#include <memory>
 #include <numeric>
 #include <stack>
 #include <vector>
@@ -218,21 +217,22 @@ struct Trace {
         }
     }
 
-    std::shared_ptr<Trace> newTrace(const ImageData* imageData, const TraceData& traceData, const bool traceLeft=false) const {
+    Trace newTrace(const ImageData* imageData, const TraceData& traceData, const bool traceLeft=false) const {
         const auto maxLineHeight = max<uint32_t>(0, imageData->height / 20);
         const auto maxJump = max<uint32_t>(0, imageData->width / 50);
         auto baselineColour = RGBTools(imageData->getRGB(traceData.x, traceData.y), traceData.colourTolerance);
-        auto newTrace = map{trace};
+
+        frTrace newTrace{trace};
         newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
 
         if (traceLeft) Trace::traceFor(traceData.x - 1, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
         Trace::traceFor(traceData.x, traceData.y, 1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
 
-        return std::make_shared<Trace>(newTrace);
+        return newTrace;
     }
 
     // Gaussian smoothing
-    std::shared_ptr<Trace> smooth(int windowSize, const double sigma) {
+    Trace smooth(int windowSize, const double sigma) const {
         frTrace newTrace{};
         const double multi = -0.5 / (sigma * sigma);
         if (windowSize % 2 == 0) {
@@ -257,25 +257,25 @@ struct Trace {
                 newTrace[it->first] = static_cast<uint32_t>(smoothed / sumWeights);
             }
         }
-        return std::make_shared<Trace>(newTrace);
+        return newTrace;
     }
 
-    inline std::shared_ptr<Trace> standardSmooth(int width) {
+    inline Trace standardSmooth(int width) const {
         const int windowSize = max(width / 150, 2);
         return smooth(windowSize, static_cast<double>(windowSize) / 2.0);
     }
 
-    std::shared_ptr<Trace> eraseRegion(uint32_t begin, uint32_t end) {
-        auto newTrace = map{trace};
+    Trace eraseRegion(uint32_t begin, uint32_t end) const {
+        frTrace newTrace{trace};
         const auto higher = newTrace.upper_bound(end);
         for (auto lower = newTrace.lower_bound(begin); lower != higher;) lower = newTrace.erase(lower);
-        return std::make_shared<Trace>(newTrace);
+        return newTrace;
     }
 
-    std::shared_ptr<Trace> addPoint(const TraceData& traceData) const {
-        auto newTrace = map{trace};
+    Trace addPoint(const TraceData& traceData) const {
+        frTrace newTrace{trace};
         newTrace[traceData.x] = traceData.y;
-        return std::make_shared<Trace>(newTrace);
+        return newTrace;
     }
 
     size_t size() const {
@@ -284,14 +284,14 @@ struct Trace {
 };
 
 struct TraceHistory {
-    stack<std::shared_ptr<Trace>> history;
-    stack<std::shared_ptr<Trace>> future;
+    stack<Trace> history;
+    stack<Trace> future;
 
     TraceHistory() {
-        history.emplace(std::make_shared<Trace>());
+        history.emplace(Trace{});
     }
 
-    std::shared_ptr<Trace> getLatest() const {
+    const Trace& getLatest() const {
         return history.top();
     }
 
@@ -299,26 +299,26 @@ struct TraceHistory {
         while (!future.empty()) future.pop();
     }
 
-    std::shared_ptr<Trace> add(std::shared_ptr<Trace> trace) {
-        if (history.top()->size() == 0 && trace->size() == 0) {
+    const Trace& add(Trace&& trace) {
+        if (history.top().size() == 0 && trace.size() == 0) {
             return history.top();
         }
         clearFuture();
-        history.emplace(trace);
-        return trace;
+        history.emplace(std::move(trace));
+        return history.top();
     }
 
-    std::shared_ptr<Trace> undo() {
+    const Trace& undo() {
         if (history.size() > 1) {
-            future.emplace(history.top());
+            future.emplace(std::move(history.top()));
             history.pop();
         }
         return history.top();
     }
 
-    std::shared_ptr<Trace> redo() {
+    const Trace& redo() {
         if (!future.empty()) {
-            history.emplace(future.top());
+            history.emplace(std::move(future.top()));
             future.pop();
         }
         return history.top();
@@ -363,7 +363,7 @@ function<double(double, uint32_t&)> contiguousLinearInterpolation(const vector<p
     };
 }
 
-std::shared_ptr<Trace> getPotentialTrace(const ImageData* imageData, TraceData traceData, const function<uint32_t(RGB)>& differenceFunc) {
+Trace getPotentialTrace(const ImageData* imageData, TraceData traceData, const function<uint32_t(RGB)>& differenceFunc) {
     auto bestY = 0, currentDiff = 0;
     const auto middleX = imageData->width / 2;
     const auto yRange = imageData->height / 5;
@@ -380,9 +380,9 @@ std::shared_ptr<Trace> getPotentialTrace(const ImageData* imageData, TraceData t
     if (bestY > 0) {
         traceData.x = middleX;
         traceData.y = bestY;
-        return std::make_shared<Trace>()->newTrace(imageData, traceData, true);
+        return Trace{}.newTrace(imageData, traceData, true);
     }
-    return std::make_shared<Trace>();
+    return {};
 }
 
 void padOutputData(const ImageData* original, ImageData* output) {
@@ -521,19 +521,19 @@ struct Image {
     }
 
     inline string trace(const TraceData&& traceData) {
-        return traceHistory.add(traceHistory.getLatest()->newTrace(imageData, traceData))->toSVG();
+        return traceHistory.add(traceHistory.getLatest().newTrace(imageData, traceData)).toSVG();
     }
 
     inline string point(const TraceData&& traceData) {
-        return traceHistory.add(traceHistory.getLatest()->addPoint(traceData))->toSVG();
+        return traceHistory.add(traceHistory.getLatest().addPoint(traceData)).toSVG();
     }
 
     inline string undo() {
-        return traceHistory.undo()->toSVG();
+        return traceHistory.undo().toSVG();
     }
 
     inline string redo() {
-        return traceHistory.redo()->toSVG();
+        return traceHistory.redo().toSVG();
     }
 
     inline int historyStatus() {
@@ -543,14 +543,12 @@ struct Image {
     string autoTrace(const TraceData&& traceData) {
         auto traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         auto traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour.rgb] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
-        std::shared_ptr<Trace> preferred = nullptr;
-        if (traceOne->size() > traceTwo->size()) {
-            preferred = std::move(traceOne);
+        if (traceOne.size() > traceTwo.size()) {
+            traceHistory.add(traceOne.standardSmooth(static_cast<int>(imageData->width)));
         } else {
-            preferred = std::move(traceTwo);
+            traceHistory.add(traceTwo.standardSmooth(static_cast<int>(imageData->width)));
         }
-        traceHistory.add(preferred->standardSmooth(static_cast<int>(imageData->width)));
-        return traceHistory.getLatest()->toSVG();
+        return traceHistory.getLatest().toSVG();
     }
 
     string exportTrace(const ExportData&& exportData) const {
@@ -561,7 +559,7 @@ struct Image {
         auto str = ExportString{exportData.delim};
 
         vector<pair<double, double>> FRxSPL{};
-        for (const auto& [x, y] : traceHistory.getLatest()->clean()) {
+        for (const auto& [x, y] : traceHistory.getLatest().clean()) {
             FRxSPL.emplace_back(pow(10, (x - FRBottomPixel) * FRRatio + logFRBottomValue), (y - SPLBottomPixel) * SPLRatio + SPLBottomValue);
         }
 
@@ -592,23 +590,23 @@ struct Image {
     }
 
     inline string getPath() const {
-        return traceHistory.getLatest()->toSVG();
+        return traceHistory.getLatest().toSVG();
     }
 
     void inline clear() {
-        traceHistory.add(std::make_shared<Trace>());
+        traceHistory.add(Trace{});
     }
 
     inline string eraseRegion(uint32_t begin, uint32_t end) {
-        auto result = traceHistory.getLatest()->eraseRegion(begin, end);
-        if (result->size() != traceHistory.getLatest()->size()) {
+        auto result = traceHistory.getLatest().eraseRegion(begin, end);
+        if (result.size() != traceHistory.getLatest().size()) {
             traceHistory.add(std::move(result));
         }
-        return traceHistory.getLatest()->toSVG();
+        return traceHistory.getLatest().toSVG();
     }
 
     inline string smoothTrace() {
-        return traceHistory.add(traceHistory.getLatest()->standardSmooth(imageData->width))->toSVG();
+        return traceHistory.add(traceHistory.getLatest().standardSmooth(imageData->width)).toSVG();
     }
 
     ~Image() {
