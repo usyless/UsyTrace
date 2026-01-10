@@ -57,7 +57,7 @@ if(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
     )
 
     target_link_options(usytrace PRIVATE
-        --pre-js ${PROJECT_SOURCE_DIR}/src/wasm/worker.js'
+        --pre-js "${PROJECT_SOURCE_DIR}/src/wasm/worker.js"
         --no-entry
 
         -sSTRICT_JS
