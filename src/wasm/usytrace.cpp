@@ -627,15 +627,16 @@ struct ReturnedString {
     inline static ReturnedString* make(std::string&& str);
 };
 
-Image* currentImage = nullptr;
-std::unique_ptr<ReturnedString> returnStr;
+namespace {
+    Image* currentImage = nullptr;
+    ReturnedString returnStr;
+}
 
 inline ReturnedString* ReturnedString::make(std::string&& str) {
-    returnStr = std::make_unique<ReturnedString>();
-    returnStr->_str = std::move(str);
-    returnStr->size = returnStr->_str.size();
-    returnStr->data = returnStr->_str.data();
-    return returnStr.get();
+    returnStr._str = std::move(str);
+    returnStr.size = returnStr._str.size();
+    returnStr.data = returnStr._str.data();
+    return &returnStr;
 }
 
 extern "C" {
