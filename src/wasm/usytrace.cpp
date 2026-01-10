@@ -472,7 +472,7 @@ void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
 
 void invertImage(const ImageData& data) {
     const size_t maxSize = data.getMaxPos();
-    for (size_t pos = 0; pos < maxSize; ++pos) data.data[pos] = 255 - data.data[pos];
+    for (size_t pos = 0; pos < maxSize; ++pos) data.data[pos] = ~data.data[pos];
 }
 
 template <bool vertical>
