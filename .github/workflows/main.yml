@@ -20,19 +20,19 @@ jobs:
         ref: main
         persist-credentials: false
 
-    - name: Check if recompile needed
-      uses: dorny/paths-filter@v3
-      id: changes
-      with:
-        working-directory: usytrace
-        filters: |
-          recompile:
-            - 'src/wasm/**'
-
-    # # Force re-compilation temporarily
-    # - name: Set recompile output
+    # - name: Check if recompile needed
+    #   uses: dorny/paths-filter@v3
     #   id: changes
-    #   run: echo "recompile=true" >> $GITHUB_OUTPUT
+    #   with:
+    #     working-directory: usytrace
+    #     filters: |
+    #       recompile:
+    #         - 'src/wasm/**'
+
+    # Force re-compilation temporarily
+    - name: Set recompile output
+      id: changes
+      run: echo "recompile=true" >> $GITHUB_OUTPUT
 
     - name: Set up Emscripten
       if: steps.changes.outputs.recompile == 'true'
