@@ -37,6 +37,14 @@ jobs:
         cd emsdk
         ./emsdk install 4.0.22
         ./emsdk activate 4.0.22
+    
+    - name: Install newer CMake version
+      if: steps.changes.outputs.recompile == 'true'
+      run: |
+        version=4.2.1
+        wget https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.sh
+        chmod +x cmake-${version}-linux-x86_64.sh
+        ./cmake-${version}-linux-x86_64.sh --skip-license --prefix=/usr/local
 
     - name: Compile WASM and worker js
       if: steps.changes.outputs.recompile == 'true'
