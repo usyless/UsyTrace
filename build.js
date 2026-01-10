@@ -92,13 +92,10 @@ async function buildWasm(debugMode) {
     await mkdir(BUILD_DIR);
     chdir(BUILD_DIR);
 
-    if (debugMode) {
-        run(`emcmake cmake -DCMAKE_BUILD_TYPE=Debug ..`);
-        run(`cmake --build . --config Debug`);
-    } else {
-        run(`emcmake cmake -DCMAKE_BUILD_TYPE=Release ..`);
-        run(`cmake --build . --config Release`);
-    }
+    const build_type = (debugMode) ? "Debug" : "Release";
+
+    run(`emcmake cmake -DCMAKE_BUILD_TYPE=${build_type} ..`);
+    run(`cmake --build . --config ${build_type}`);
 
     chdir("..");
 }
