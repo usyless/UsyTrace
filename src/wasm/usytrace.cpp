@@ -470,9 +470,12 @@ void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
     }
 }
 
+// assume 4 channels
 void invertImage(const ImageData& data) {
-    const size_t maxSize = data.getMaxPos();
-    for (size_t pos = 0; pos < maxSize; ++pos) data.data[pos] = ~data.data[pos];
+    const size_t pixelCount = static_cast<size_t>(data.width) * data.height;
+    auto* pixels = reinterpret_cast<uint32_t*>(data.data.get());
+
+    for (size_t i = 0; i < pixelCount; ++i) pixels[i] = ~pixels[i];
 }
 
 template <bool vertical>
