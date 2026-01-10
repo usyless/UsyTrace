@@ -28,6 +28,7 @@ jobs:
         filters: |
           recompile:
             - 'src/wasm/**'
+            - 'CMakeLists.txt'
 
     # # Force re-compilation temporarily
     # - name: Set recompile output
