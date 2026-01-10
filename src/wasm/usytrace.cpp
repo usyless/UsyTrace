@@ -475,11 +475,12 @@ void invertImage(const ImageData& data) {
     for (size_t pos = 0; pos < maxSize; ++pos) data.data[pos] = 255 - data.data[pos];
 }
 
-std::set<uint32_t> detectLines(const ImageData& imageData, const std::string&& direction, const uint32_t tolerance) {
+template <bool vertical>
+std::set<uint32_t> detectLines(const ImageData& imageData, const uint32_t tolerance) {
     std::set<uint32_t> lines{};
     uint32_t length, otherDirection;
     std::function<bool(uint32_t, uint32_t)> comparator;
-    if(direction == "X") { // vertical line, representing x axis
+    if constexpr (vertical) { // vertical line, representing x axis
         length = imageData.width;
         otherDirection = imageData.height;
         comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t x, const uint32_t y) { return data.getR(x, y) < tolerance; };
@@ -523,9 +524,9 @@ struct Image {
         padOutputData(imageData, filteredDataY);
 
         applySobel(imageData, filteredDataX, filteredDataY);
-        hLines = detectLines(filteredDataY, "Y", 20);
+        hLines = detectLines<false>(filteredDataY, 20);
         }
-        vLines = detectLines(filteredDataX, "X", 20);
+        vLines = detectLines<true>(filteredDataX, 20);
         }
 
         if (darkMode) invertImage(imageData);
