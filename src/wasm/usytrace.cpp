@@ -93,7 +93,7 @@ struct RGBTools {
     uint32_t tolerance;
     uint32_t count = 1;
 
-    RGBTools(const RGB rgb, const uint32_t tolerance) : rgb(rgb), tolerance(tolerance) {}
+    RGBTools(RGB rgb, const uint32_t tolerance) : rgb(std::move(rgb)), tolerance(tolerance) {}
 
     inline bool withinTolerance(const RGB& rgb) const {
         return this->rgb.getDifference(rgb) <= tolerance;
@@ -504,7 +504,7 @@ std::set<uint32_t> detectLines(const ImageData& imageData, const std::string&& d
 struct Image {
     ImageData imageData;
     TraceHistory traceHistory;
-    RGBTools backgroundColour = RGBTools{RGB{0,0,0}, 0};
+    RGBTools backgroundColour{RGB{0,0,0}, 0};
     std::set<uint32_t> vLines;
     std::set<uint32_t> hLines;
 
