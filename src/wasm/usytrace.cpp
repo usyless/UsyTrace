@@ -634,7 +634,7 @@ struct ReturnedString {
     std::string _str;
 
     inline static ReturnedString* make(std::string&& str);
-};
+} __attribute__((packed));
 
 namespace {
     Image* currentImage = nullptr;
