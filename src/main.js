@@ -246,14 +246,6 @@ const worker = {
 
             switch (type) {
                 case 'exportTrace': {
-                    const a = document.createElement("a"),
-                        url = URL.createObjectURL(new Blob([data["export"]], {
-                            /** @export */ type: "text/plain;charset=utf-8"
-                        }));
-                    a.href = url;
-                    a.classList.add('hidden');
-                    document.body.appendChild(a);
-
                     const content = document.createElement('div'),
                         inner = document.createElement('div'),
                         input = document.createElement('input');
@@ -273,14 +265,23 @@ const worker = {
                             }
                         ]}).then((r) => {
                         if (r !== false) {
-                            if (!(r?.endsWith(".txt"))) r += ".txt";
+                            const a = document.createElement("a"),
+                                url = URL.createObjectURL(new Blob([data["export"]], {
+                                    /** @export */ type: "text/plain;charset=utf-8"
+                                }));
+                            a.href = url;
+                            a.classList.add('hidden');
+                            document.body.appendChild(a);
+
+                            if (!(r?.endsWith(".txt")) && (r?.length > 0)) r += ".txt";
                             a.download = r || "trace.txt";
                             a.click();
+
+                            setTimeout(() => {
+                                URL.revokeObjectURL(url);
+                                document.body.removeChild(a);
+                            }, 5000);
                         }
-                        setTimeout(() => {
-                            URL.revokeObjectURL(url);
-                            document.body.removeChild(a);
-                        }, 5000);
                     });
                     setTimeout(() => {
                         input.focus();
