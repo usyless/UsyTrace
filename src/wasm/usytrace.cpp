@@ -424,8 +424,8 @@ void padOutputData(const ImageData& original, ImageData& output) {
 }
 
 void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
-    const auto widthBound = original.width - 1, heightBound = original.height - 1;
-    const auto maxWidthOrig = original.width * original.channels, maxWidthOut = original.width * outX.channels;
+    const size_t widthBound = original.width - 1, heightBound = original.height - 1;
+    const size_t maxWidthOrig = original.width * original.channels, maxWidthOut = original.width * outX.channels;
     const auto data = original.data.get();
     auto outputDataX = outX.data.get();
     auto outputDataY = outY.data.get();
@@ -453,19 +453,19 @@ void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
                 size_t yPos = origY + (k * maxWidthOrig) + origX;
                 const auto knX = xFilter[k + 1];
                 const auto knY = yFilter[k + 1];
+
                 for (int l = -1; l <= 1; ++l) {
                     const size_t pos = yPos + (l * 4); // 4 channels assumed
-                    int knnX = knX[l + 1], knnY = knY[l + 1];
                     int sum = data[pos] + data[pos + 1] + data[pos + 2];
 
-                    Xsum += sum * knnX;
-                    Ysum += sum * knnY;
+                    Xsum += sum * knX[l + 1];
+                    Ysum += sum * knY[l + 1];
                 }
             }
 
             const size_t pos = outY + x; // 1 channel assumed
-            outputDataX[pos] = static_cast<Colour>(std::clamp(Xsum * 2 / 3, 0, 255));
-            outputDataY[pos] = static_cast<Colour>(std::clamp(Ysum * 2 / 3, 0, 255));
+            outputDataX[pos] = std::clamp(Xsum * 2 / 3, 0, 255);
+            outputDataY[pos] = std::clamp(Ysum * 2 / 3, 0, 255);
         }
     }
 }
@@ -498,7 +498,7 @@ std::set<uint32_t> detectLines(const ImageData& imageData, const uint32_t tolera
         for (auto j = lowerBound; j <= upperBound; ++j) if (comparator(pos, j) && ++failedCount > bound) break;
         if (failedCount <= bound) valid.emplace_back(pos);
         else if (!valid.empty()) {
-            lines.insert(reduce(valid.begin(), valid.end()) / valid.size());
+            lines.insert(std::reduce(valid.begin(), valid.end()) / valid.size());
             valid.clear();
         }
     }
