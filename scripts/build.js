@@ -51,7 +51,9 @@ async function buildDist() {
 function buildCss(debugMode) {
     console.log(`\nMinifying ${debugString(debugMode)} CSS\n`);
     run(
-        `node ${common.joinWithScriptsQuoted("minify-css.js")}${debugMode ? " --debug" : ""} --in-css ${MINIFIED_CSS_FILES.map(common.joinWithSrcQuoted).join(" ")} --out-css ${common.joinWithDistQuoted("main.min.css")}`
+        `node ${common.joinWithScriptsQuoted("minify-css.js")}${debugMode ? " --debug" : ""} ` +
+        `--in-css ${MINIFIED_CSS_FILES.map(common.joinWithSrcQuoted).join(" ")} ` +
+        `--out-css ${common.joinWithDistQuoted("main.min.css")}`
     );
 }
 
@@ -73,8 +75,18 @@ async function buildWasm(debugMode) {
 
     const build_type = (debugMode) ? "Debug" : "Release";
 
-    run(`emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF -DCMAKE_BUILD_TYPE=${build_type} ${common.makeQuoted(common.__dirname)} -B ${common.makeQuoted(common.BUILD_DIR)}`);
-    run(`cmake --build ${common.makeQuoted(common.BUILD_DIR)} --config ${build_type}`);
+    run(
+        `emcmake cmake ` +
+        `-DCMAKE_EXPORT_COMPILE_COMMANDS=OFF ` +
+        `-DCMAKE_BUILD_TYPE=${build_type} ` +
+        `${common.makeQuoted(common.__dirname)} ` +
+        `-B ${common.makeQuoted(common.BUILD_DIR)}`
+    );
+    run(
+        `cmake --build ` +
+        `${common.makeQuoted(common.BUILD_DIR)} ` +
+        `--config ${build_type}`
+    );
 }
 
 const args = process.argv.slice(2);
