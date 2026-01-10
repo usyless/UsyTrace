@@ -20,7 +20,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 add_executable(usytrace 
-    ${PROJECT_SOURCE_DIR}/src/imageTracer.cpp
+    ${PROJECT_SOURCE_DIR}/src/wasm/usytrace.cpp
 )
 
 include(FetchContent)
@@ -57,7 +57,7 @@ if(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
     )
 
     target_link_options(usytrace PRIVATE
-        --pre-js ${PROJECT_SOURCE_DIR}/src/worker.js
+        --pre-js ${PROJECT_SOURCE_DIR}/src/wasm/worker.js
         -sSTRICT_JS
         -sMEMORY_GROWTH_LINEAR_STEP=50331648
         -sWASM=1
