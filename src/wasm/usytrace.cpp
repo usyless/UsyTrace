@@ -59,6 +59,9 @@ struct ImageData {
     std::unique_ptr<Colour[]> data;
     const uint32_t width, height, channels;
 
+    ImageData(const uint32_t width, const uint32_t height, const uint32_t channels) : width(width), height(height), channels(channels) {
+        data.reset(allocate_buffer(width, height, channels));
+    }
     ImageData(Colour* data, const uint32_t width, const uint32_t height, const uint32_t channels) : data(data), width(width), height(height), channels(channels) {}
 
     inline RGB getRGB(const uint32_t x, const uint32_t y) const {
@@ -513,10 +516,10 @@ struct Image {
         if (darkMode) invertImage(imageData);
 
         {
-        auto filteredDataX = ImageData{static_cast<Colour*>(malloc((imageData.width) * (imageData.height) * sizeof(Colour))), imageData.width, imageData.height, 1};
+        auto filteredDataX = ImageData{imageData.width, imageData.height, 1};
         padOutputData(imageData, filteredDataX);
         {
-        auto filteredDataY = ImageData{static_cast<Colour*>(malloc((imageData.width) * (imageData.height) * sizeof(Colour))), imageData.width, imageData.height, 1};
+        auto filteredDataY = ImageData{imageData.width, imageData.height, 1};
         padOutputData(imageData, filteredDataY);
 
         applySobel(imageData, filteredDataX, filteredDataY);
