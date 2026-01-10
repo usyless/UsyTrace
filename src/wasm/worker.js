@@ -3,11 +3,7 @@ self.onmessage = (e) => messageQueue.push(e);
 
 Module['onRuntimeInitialized'] = () => {
     const decode = TextDecoder.prototype.decode.bind(new TextDecoder('utf-8'));
-    const readStringFromMemory = (ptr) => {
-        const str = decode(new Uint8Array(HEAPU8.buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1]));
-        Module["_clean_string"](ptr);
-        return str;
-    }
+    const readStringFromMemory = (ptr) => decode(new Uint8Array(HEAPU8.buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1]));
 
     const stringReturn = (func) => (...args) => readStringFromMemory(func(...args));
 

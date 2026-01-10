@@ -619,31 +619,26 @@ struct Image {
     }
 };
 
-Image* currentImage = nullptr;
-
 struct ReturnedString {
-    char* data;
+    const char* data;
     std::size_t size;
+    std::string _str;
 
-    inline static ReturnedString* make(std::string_view str) {
-        auto* out = new ReturnedString{};
-        out->size = str.size();
-        out->data = new char[out->size];
-        memcpy(out->data, str.data(), out->size);
-        return out;
-    }
-
-    ~ReturnedString() {
-        delete[] data;
-    }
+    inline static ReturnedString* make(std::string&& str);
 };
 
-extern "C" {
-    // string util
-    EMSCRIPTEN_KEEPALIVE void clean_string(ReturnedString* ret) {
-        delete ret;
-    }
+Image* currentImage = nullptr;
+std::unique_ptr<ReturnedString> returnStr;
 
+inline ReturnedString* ReturnedString::make(std::string&& str) {
+    returnStr = std::make_unique<ReturnedString>();
+    returnStr->_str = std::move(str);
+    returnStr->size = returnStr->_str.size();
+    returnStr->data = returnStr->_str.data();
+    return returnStr.get();
+}
+
+extern "C" {
     // Image Control
     EMSCRIPTEN_KEEPALIVE void* create_buffer(const uint32_t width, const uint32_t height) {
         return ImageData::allocate_buffer(width, height, 4);
