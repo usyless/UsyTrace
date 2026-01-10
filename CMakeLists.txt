@@ -57,7 +57,9 @@ if(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
     )
 
     target_link_options(usytrace PRIVATE
-        --pre-js ${PROJECT_SOURCE_DIR}/src/wasm/worker.js
+        --pre-js ${PROJECT_SOURCE_DIR}/src/wasm/worker.js'
+        --no-entry
+
         -sSTRICT_JS
         -sMEMORY_GROWTH_LINEAR_STEP=50331648
         -sWASM=1
@@ -79,7 +81,6 @@ if(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
             -sASSERTIONS=0
             --closure=1
             -flto
-            --no-entry
             -s
         >
     )
