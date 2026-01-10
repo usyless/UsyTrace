@@ -621,20 +621,27 @@ struct Image {
 
 Image* currentImage = nullptr;
 
-inline void** stringReturn(const std::string_view str) {
-    const auto size = str.size();
-    void** ret = new void*[2];
-    ret[0] = new char[size];
-    ret[1] = reinterpret_cast<void*>(size); // cursed
-    memcpy(ret[0], str.data(), size);
-    return ret;
-}
+struct ReturnedString {
+    char* data;
+    std::size_t size;
+
+    inline static ReturnedString* make(std::string_view str) {
+        auto* out = new ReturnedString{};
+        out->size = str.size();
+        out->data = new char[out->size];
+        memcpy(out->data, str.data(), out->size);
+        return out;
+    }
+
+    ~ReturnedString() {
+        delete[] data;
+    }
+};
 
 extern "C" {
     // string util
-    EMSCRIPTEN_KEEPALIVE void clean_string(void** ret) {
-        delete[] static_cast<char*>(ret[0]);
-        delete[] ret;
+    EMSCRIPTEN_KEEPALIVE void clean_string(ReturnedString* ret) {
+        delete ret;
     }
 
     // Image Control
@@ -663,44 +670,44 @@ extern "C" {
     }
 
     // Tracing
-    EMSCRIPTEN_KEEPALIVE void** trace(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) {
-        return stringReturn(currentImage->trace(TraceData{x, y, colourTolerance}));
+    EMSCRIPTEN_KEEPALIVE void* trace(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) {
+        return ReturnedString::make(currentImage->trace(TraceData{x, y, colourTolerance}));
     }
 
-    EMSCRIPTEN_KEEPALIVE void** undo() {
-        return stringReturn(currentImage->undo());
+    EMSCRIPTEN_KEEPALIVE void* undo() {
+        return ReturnedString::make(currentImage->undo());
     }
 
-    EMSCRIPTEN_KEEPALIVE void** redo() {
-        return stringReturn(currentImage->redo());
+    EMSCRIPTEN_KEEPALIVE void* redo() {
+        return ReturnedString::make(currentImage->redo());
     }
 
     EMSCRIPTEN_KEEPALIVE void clear() {
         currentImage->clear();
     }
 
-    EMSCRIPTEN_KEEPALIVE void** point(const uint32_t x, const uint32_t y) {
-        return stringReturn(currentImage->point(TraceData{x, y}));
+    EMSCRIPTEN_KEEPALIVE void* point(const uint32_t x, const uint32_t y) {
+        return ReturnedString::make(currentImage->point(TraceData{x, y}));
     }
 
-    EMSCRIPTEN_KEEPALIVE void** autoTrace(const uint32_t colourTolerance) {
-        return stringReturn(currentImage->autoTrace(TraceData{colourTolerance}));
+    EMSCRIPTEN_KEEPALIVE void* autoTrace(const uint32_t colourTolerance) {
+        return ReturnedString::make(currentImage->autoTrace(TraceData{colourTolerance}));
     }
 
-    EMSCRIPTEN_KEEPALIVE void** eraseRegion(uint32_t begin, uint32_t end) {
-        return stringReturn(currentImage->eraseRegion(begin, end));
+    EMSCRIPTEN_KEEPALIVE void* eraseRegion(uint32_t begin, uint32_t end) {
+        return ReturnedString::make(currentImage->eraseRegion(begin, end));
     }
 
-    EMSCRIPTEN_KEEPALIVE void** smoothTrace() {
-        return stringReturn(currentImage->smoothTrace());
+    EMSCRIPTEN_KEEPALIVE void* smoothTrace() {
+        return ReturnedString::make(currentImage->smoothTrace());
     }
 
     // Exporting
-    EMSCRIPTEN_KEEPALIVE void** exportTrace(const int PPO, const int delim, const double lowFRExport,
+    EMSCRIPTEN_KEEPALIVE void* exportTrace(const int PPO, const int delim, const double lowFRExport,
         const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
         const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
         const double FRBottomPixel) {
-        return stringReturn(currentImage->exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
+        return ReturnedString::make(currentImage->exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
             SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
             FRBottomPixel}));
     }
@@ -715,7 +722,7 @@ extern "C" {
         return currentImage->getPixelColour(x, y).toBin();
     }
 
-    EMSCRIPTEN_KEEPALIVE void** getCurrentPath() {
-        return stringReturn(currentImage->getPath());
+    EMSCRIPTEN_KEEPALIVE void* getCurrentPath() {
+        return ReturnedString::make(currentImage->getPath());
     }
 }
