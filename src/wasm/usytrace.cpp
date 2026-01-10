@@ -56,7 +56,7 @@ struct RGB {
 };
 
 struct ImageData {
-    Colour* data;
+    std::unique_ptr<Colour[]> data;
     const uint32_t width, height, channels;
 
     ImageData(Colour* data, const uint32_t width, const uint32_t height, const uint32_t channels) : data(data), width(width), height(height), channels(channels) {}
@@ -81,10 +81,6 @@ struct ImageData {
 
         for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[getRGB(x, y)];
         return std::max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
-    }
-
-    ~ImageData() {
-        free(data);
     }
 };
 
@@ -398,8 +394,8 @@ Trace getPotentialTrace(const ImageData& imageData, TraceData traceData, const s
 void padOutputData(const ImageData& original, ImageData& output) {
     const auto width = original.width, height = original.height;
     const auto maxWidthOrig = width * original.channels, maxWidthOut = width * output.channels;
-    const auto data = original.data;
-    auto outputData = output.data;
+    const auto data = original.data.get();
+    auto outputData = output.data.get();
     // CAN ONLY TAKE 3x3 KERNELS FOR NOW DUE TO THIS
     // also cant just copy memory as input is 4 channels, output is 1
     // Copy top and bottom rows
@@ -423,9 +419,9 @@ void padOutputData(const ImageData& original, ImageData& output) {
 void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
     const auto widthBound = original.width - 1, heightBound = original.height - 1;
     const auto maxWidthOrig = original.width * original.channels, maxWidthOut = original.width * outX.channels;
-    const auto data = original.data;
-    auto outputDataX = outX.data;
-    auto outputDataY = outY.data;
+    const auto data = original.data.get();
+    auto outputDataX = outX.data.get();
+    auto outputDataY = outY.data.get();
 
     static constexpr int yFilter[3][3] = {
         {-1, -2, -1},
@@ -639,7 +635,7 @@ extern "C" {
 
     // Image Control
     EMSCRIPTEN_KEEPALIVE void* create_buffer(const uint32_t width, const uint32_t height) {
-        return malloc(width * height * 4 * sizeof(Colour));
+        return new Colour[width * height * 4];
     }
 
     EMSCRIPTEN_KEEPALIVE void setCurrent(Image* ptr) {
