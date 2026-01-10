@@ -27,8 +27,7 @@ jobs:
         working-directory: usytrace
         filters: |
           recompile:
-            - 'src/imageTracer.cpp'
-            - 'src/worker.js'
+            - 'src/wasm/**'
 
     # # Force re-compilation temporarily
     # - name: Set recompile output
