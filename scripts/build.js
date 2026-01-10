@@ -1,12 +1,8 @@
 #!/usr/bin/env node
 
 import { execSync } from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
-import { chdir } from 'node:process';
-
-const __dirname = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+import * as common from './common.js'
 
 
 const MINIFIED_JS_FILES = [
@@ -27,12 +23,6 @@ const DIST_FILES = [
     "service-worker.js", "usytrace.webmanifest"
 ];
 
-const DIST_DIR = path.join(__dirname, "dist");
-const SRC_DIR = path.join(__dirname, "src");
-const BUILD_DIR = path.join(__dirname, "build");
-
-const SCRIPTS_DIR = path.join(__dirname, "scripts");
-
 function run(cmd, options = {}) {
     console.log(`> ${cmd}`);
     execSync(cmd, { stdio: "inherit", ...options });
@@ -50,29 +40,18 @@ async function mkdir(dir) {
     }
 }
 
-const joinWith = (dir) => a => path.join(dir, a);
-const joinWithSrc = joinWith(SRC_DIR);
-const joinWithDist = joinWith(DIST_DIR);
-const joinWithScripts = joinWith(SCRIPTS_DIR);
-
-const joinWithQuoted = (jw) => a => `"${jw(a)}"`;
-
-const joinWithSrcQuoted = joinWithQuoted(joinWithSrc);
-const joinWithDistQuoted = joinWithQuoted(joinWithDist);
-const joinWithScriptsQuoted = joinWithQuoted(joinWithScripts);
-
 async function buildDist() {
     console.log("\nMoving Static Files\n");
     await Promise.all([
-        ...DIST_DIRS.map(dir => fs.cp(joinWithSrc(dir), joinWithDist(dir), { recursive: true, force: true })),
-        ...DIST_FILES.map(file => fs.cp(joinWithSrc(file), joinWithDist(file), { force: true }))
+        ...DIST_DIRS.map(dir => fs.cp(common.joinWithSrc(dir), common.joinWithDist(dir), { recursive: true, force: true })),
+        ...DIST_FILES.map(file => fs.cp(common.joinWithSrc(file), common.joinWithDist(file), { force: true }))
     ]);
 }
 
 function buildCss(debugMode) {
     console.log(`\nMinifying ${debugString(debugMode)} CSS\n`);
     run(
-        `node ${joinWithScriptsQuoted("minify-css.js")}${debugMode ? " --debug" : ""} --in-css ${MINIFIED_CSS_FILES.map(joinWithSrcQuoted).join(" ")} --out-css ${joinWithDistQuoted("main.min.css")}`
+        `node ${common.joinWithScriptsQuoted("minify-css.js")}${debugMode ? " --debug" : ""} --in-css ${MINIFIED_CSS_FILES.map(common.joinWithSrcQuoted).join(" ")} --out-css ${common.joinWithDistQuoted("main.min.css")}`
     );
 }
 
@@ -82,23 +61,20 @@ function buildJs(debugMode) {
         `npx -y google-closure-compiler ` +
         `--language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ` +
         `--compilation_level ${debugMode ? "SIMPLE" : "ADVANCED"} ` +
-        `--js ${MINIFIED_JS_FILES.map(joinWithSrcQuoted).join(" ")} ` +
-        `--js_output_file ${joinWithDistQuoted("main.min.js")}`
+        `--js ${MINIFIED_JS_FILES.map(common.joinWithSrcQuoted).join(" ")} ` +
+        `--js_output_file ${common.joinWithDistQuoted("main.min.js")}`
     );
 }
 
 async function buildWasm(debugMode) {
     console.log(`\nCompiling ${debugString(debugMode)} wasm\n`);
 
-    await mkdir(BUILD_DIR);
-    chdir(BUILD_DIR);
+    await mkdir(common.BUILD_DIR);
 
     const build_type = (debugMode) ? "Debug" : "Release";
 
-    run(`emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF -DCMAKE_BUILD_TYPE=${build_type} ..`);
-    run(`cmake --build . --config ${build_type}`);
-
-    chdir("..");
+    run(`emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF -DCMAKE_BUILD_TYPE=${build_type} ${common.makeQuoted(common.__dirname)} -B ${common.makeQuoted(common.BUILD_DIR)}`);
+    run(`cmake --build ${common.makeQuoted(common.BUILD_DIR)} --config ${build_type}`);
 }
 
 const args = process.argv.slice(2);
@@ -131,8 +107,7 @@ for (const arg of args) {
 }
 
 await (async () => {
-    chdir(__dirname);
-    await mkdir(DIST_DIR);
+    await mkdir(common.DIST_DIR);
 
     console.log("\nBuilding\n");
     console.log("Possible args: --debug --js --css --wasm --dist\n");
