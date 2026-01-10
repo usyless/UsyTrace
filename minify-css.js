@@ -16,7 +16,8 @@ const error = (...m) => {
 if (argsLength === 0) {
     console.log(`Enter input files using --in-css file1 file2 file3
 Enter output file with --out-css fileName
-Delete input files after minifying with --delete`);
+Delete input files after minifying with --delete
+Debug mode with --debug`);
     process.exit(1);
 }
 

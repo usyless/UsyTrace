@@ -137,6 +137,7 @@ await (async () => {
     await mkdir(DIST_DIR);
 
     console.log("\nBuilding\n");
+    console.log("Possible args: --debug --js --css --wasm --dist\n");
 
     if (COMPILE_ALL || DO_WASM) await buildWasm(DEBUG_MODE);
     if (COMPILE_ALL || DO_JS) buildJs(DEBUG_MODE);
