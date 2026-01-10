@@ -464,8 +464,8 @@ void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
             }
 
             const size_t pos = outY + x; // 1 channel assumed
-            outputDataX[pos] = static_cast<Colour>(std::max(0, std::min(Xsum * 2 / 3, 255)));
-            outputDataY[pos] = static_cast<Colour>(std::max(0, std::min(Ysum * 2 / 3, 255)));
+            outputDataX[pos] = static_cast<Colour>(std::clamp(Xsum * 2 / 3, 0, 255));
+            outputDataY[pos] = static_cast<Colour>(std::clamp(Ysum * 2 / 3, 0, 255));
         }
     }
 }
