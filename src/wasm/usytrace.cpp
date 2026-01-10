@@ -50,6 +50,8 @@ struct RGB {
         return R + G + B;
     }
 
+    // Might be able to do silly thing with this pointer here
+    // Although probably undefined behaviour due to padding
     inline int toBin() const {
         return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
     }
@@ -119,8 +121,13 @@ struct TraceData {
     uint32_t x = 0, y = 0, colourTolerance = 0;
 
     TraceData(const uint32_t x, const uint32_t y) : x(x), y(y) {}
-    TraceData(const uint32_t colourTolerance) : colourTolerance(colourTolerance) {}
+    explicit TraceData(const uint32_t colourTolerance) : colourTolerance(colourTolerance) {}
     TraceData(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) : x(x), y(y), colourTolerance(colourTolerance) {}
+
+
+    TraceData clamp(const ImageData<4>& data) const {
+        return {std::clamp(x, 0U, data.width - 1), std::clamp(y, 0U, data.height - 1), colourTolerance};
+    }
 };
 
 struct ExportData {
@@ -236,7 +243,9 @@ struct Trace {
         }
     }
 
-    Trace newTrace(const TraceData& traceData, const bool traceLeft=false) const {
+    Trace newTrace(const TraceData& _traceData, const bool traceLeft=false) const {
+        const auto traceData = _traceData.clamp(imageData);
+
         const auto maxLineHeight = std::max<uint32_t>(0, imageData.height / 20);
         const auto maxJump = std::max<uint32_t>(0, imageData.width / 50);
         auto baselineColour = RGBTools(imageData.getRGB(traceData.x, traceData.y), traceData.colourTolerance);
@@ -291,7 +300,9 @@ struct Trace {
         return {imageData, std::move(newTrace)};
     }
 
-    Trace addPoint(const TraceData& traceData) const {
+    Trace addPoint(const TraceData& _traceData) const {
+        const auto traceData = _traceData.clamp(imageData);
+
         frTrace newTrace{trace};
         newTrace[traceData.x] = traceData.y;
         return {imageData, std::move(newTrace)};
@@ -604,7 +615,8 @@ struct Image {
     }
 
     inline RGB getPixelColour(const uint32_t x, const uint32_t y) const {
-        return imageData.getRGB(x, y);
+        const auto clamped = TraceData{x, y}.clamp(imageData);
+        return imageData.getRGB(clamped.x, clamped.y);
     }
 
     inline std::string getPath() const {
