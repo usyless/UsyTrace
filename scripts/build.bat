@@ -84,11 +84,19 @@ exit /b
 :: functions
 
 :buildCss
-call npm run build:css
+if "!DEBUG_MODE!"=="true" (
+    call npm run build:css:debug
+) else (
+    call npm run build:css
+)
 exit /b
 
 :buildJs
-call npm run build:js
+if "!DEBUG_MODE!"=="true" (
+    call npm run build:js:debug
+) else (
+    call npm run build:js
+)
 exit /b
 
 :buildDist
