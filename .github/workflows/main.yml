@@ -20,20 +20,20 @@ jobs:
         ref: main
         persist-credentials: false
 
-    # - name: Check if recompile needed
-    #   uses: dorny/paths-filter@v3
-    #   id: changes
-    #   with:
-    #     working-directory: usytrace
-    #     filters: |
-    #       recompile:
-    #         - 'src/imageTracer.cpp'
-    #         - 'src/worker.js'
-
-    # Force re-compilation temporarily
-    - name: Set recompile output
+    - name: Check if recompile needed
+      uses: dorny/paths-filter@v3
       id: changes
-      run: echo "recompile=true" >> $GITHUB_OUTPUT
+      with:
+        working-directory: usytrace
+        filters: |
+          recompile:
+            - 'src/imageTracer.cpp'
+            - 'src/worker.js'
+
+    # # Force re-compilation temporarily
+    # - name: Set recompile output
+    #   id: changes
+    #   run: echo "recompile=true" >> $GITHUB_OUTPUT
 
     - name: Set up Emscripten
       if: steps.changes.outputs.recompile == 'true'
@@ -53,24 +53,27 @@ jobs:
         ./cmake-${version}-linux-x86_64.sh --skip-license --prefix=$(pwd)/cmake
         echo "$(pwd)/cmake/bin" >> $GITHUB_PATH
 
-    - name: Compile WASM and worker js
+    - name: Build everything due to wasm change
       if: steps.changes.outputs.recompile == 'true'
       run: |
         source ./emsdk/emsdk_env.sh
         cd ./usytrace
-        npm run build:wasm
+        npm run build
 
     - name: Minify js
+      if: steps.changes.outputs.recompile == 'false'
       working-directory: usytrace
       run: |
         npm run build:js
 
     - name: Minify css
+      if: steps.changes.outputs.recompile == 'false'
       working-directory: usytrace
       run: |
         npm run build:css
     
     - name: Copy all other distributables
+      if: steps.changes.outputs.recompile == 'false'
       working-directory: usytrace
       run: |
         npm run build:dist
@@ -88,8 +91,8 @@ jobs:
       if: steps.changes.outputs.recompile == 'false'
       run: |
         mkdir usytrace_temp
-        cp usyless.github.io/trace/usytrace.js usytrace_temp/
-        cp usyless.github.io/trace/usytrace.wasm usytrace_temp/
+        mv usyless.github.io/trace/usytrace.js usytrace_temp/
+        mv usyless.github.io/trace/usytrace.wasm usytrace_temp/
 
     - name: Move built files to pages repo
       run: |
@@ -99,8 +102,8 @@ jobs:
     - name: Move previous wasm back into repo
       if: steps.changes.outputs.recompile == 'false'
       run: |
-        cp -f usytrace_temp/usytrace.js usyless.github.io/trace/
-        cp -f usytrace_temp/usytrace.wasm usyless.github.io/trace/
+        mv usytrace_temp/usytrace.js usyless.github.io/trace/
+        mv usytrace_temp/usytrace.wasm usyless.github.io/trace/
     
     - name: Commit and push
       working-directory: usyless.github.io
