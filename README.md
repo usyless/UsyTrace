@@ -39,14 +39,14 @@
 - The maximum frequency to export to, will draw a straight line from the last data point to maximum frequency
 
 # Compiling Instructions
-1. Download and install [emscripten](https://emscripten.org/)
-2. Install the latest version, or `4.0.5` if the latest one does not work (this is the latest I have tested)
-3. Compile with build.bat, or for linux, follow the compiling commands in .github/workflows/main.yml
+1. Download and install [emscripten](https://emscripten.org/), [cmake](https://cmake.org/), and [ninja](https://github.com/ninja-build/ninja)
+2. Install the latest version of emscripten, or `4.0.22` if the latest one does not work (this is the latest I have tested)
+3. Compile with `npm run build` or `npm run build:debug` for debug builds
+4. Run local server with `npm run serve` or `npm run serve:debug`
 
 ### Info/Extras
 - Default heap size set to 100mb
 - Set stack size with -sSTACK_SIZE=size in bytes
 - Set max memory with -sMAXIMUM_MEMORY=size in bytes (2gb by default, >2gb has performance penalty afaik)
-- To use c++20 features: -std=c++20
 - Pass -msimd128 to auto add SIMD, seems to make no noticeable performance difference for now
 
