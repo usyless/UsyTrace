@@ -25,6 +25,9 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
+:: Go up to root of project
+cd ..
+
 echo.
 echo Building
 echo.
