@@ -23,6 +23,7 @@ Delete input files after minifying with --delete`);
 const files = [];
 let outName = 'main.min.css';
 let deleteAfter = false;
+let debugMode = false;
 
 const isArgument = (arg) => arg.startsWith('--');
 const argMap = { // return next arguments index
@@ -38,6 +39,9 @@ const argMap = { // return next arguments index
     },
     '--delete': () => {
         deleteAfter = true;
+    },
+    '--debug': () => {
+        debugMode = true;
     }
 }
 
@@ -60,33 +64,36 @@ for (const filename of files) {
     }
 }
 
-// this might cause issues: such as when trying to set variables used outside of var() through js
-// replace all variables with minified ones
-const nameGen = (function* () {
-    const chars = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
-    let length = 1;
+minifiedCss = minifiedCss.replace(/^@import.*(?:;|[\r\n])/gm, ''); // remove @import
 
-    while (true) {
-        for (const ch of chars) yield ch.repeat(length);
-        length++;
+if (!debugMode) {
+    // this might cause issues: such as when trying to set variables used outside of var() through js
+    // replace all variables with minified ones
+    const nameGen = (function* () {
+        const chars = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+        let length = 1;
+
+        while (true) {
+            for (const ch of chars) yield ch.repeat(length);
+            length++;
+        }
+    })();
+
+    for (const variable of Array.from(new Set(minifiedCss.match(/--.*?:/g))).sort((a, b) => b.length - a.length)) {
+        minifiedCss = minifiedCss.replaceAll(variable.slice(0, -1), `--${nameGen.next().value}`);
     }
-})();
 
-for (const variable of Array.from(new Set(minifiedCss.match(/--.*?:/g))).sort((a, b) => b.length - a.length)) {
-    minifiedCss = minifiedCss.replaceAll(variable.slice(0, -1), `--${nameGen.next().value}`);
+    minifiedCss = minifiedCss
+        .replace(/[\r\n]/gm, '') // remove newlines
+        .replaceAll('    ', '') // remove indentation
+        .replaceAll(' {', '{') // remove extra space
+        .replaceAll(': ', ':') // remove extra space
+        .replaceAll(';}', '}') // remove final semicolon
+        .replaceAll(', ', ',') // remove extra space
+        .replace(/\/\*[\s\S]*?\*\//g, '') // remove comments
+        .replaceAll(' > ', '>') // remove space
+        .replaceAll('> ', '>') // remove space
 }
-
-minifiedCss = minifiedCss
-    .replace(/^@import.*(?:;|[\r\n])/gm, '') // remove @import
-    .replace(/[\r\n]/gm, '') // remove newlines
-    .replaceAll('    ', '') // remove indentation
-    .replaceAll(' {', '{') // remove extra space
-    .replaceAll(': ', ':') // remove extra space
-    .replaceAll(';}', '}') // remove final semicolon
-    .replaceAll(', ', ',') // remove extra space
-    .replace(/\/\*[\s\S]*?\*\//g, '') // remove comments
-    .replaceAll(' > ', '>') // remove space
-    .replaceAll('> ', '>') // remove space
 
 fs.writeFileSync(outName, minifiedCss, 'utf8');
 console.log(`Successfully minified css into "${outName}".`);

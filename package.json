@@ -20,7 +20,9 @@
     "build:wasm": "node build.js --wasm",
     "build:wasm:debug": "node build.js --wasm --debug",
     "build:js": "node build.js --js",
+    "build:js:debug": "node build.js --js --debug",
     "build:css": "node build.js --css",
+    "build:css:debug": "node build.js --css --debug",
     "build:dist": "node build.js --dist"
   }
 }

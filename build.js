@@ -38,6 +38,10 @@ function run(cmd, options = {}) {
     execSync(cmd, { stdio: "inherit", ...options });
 }
 
+function debugString(debugMode) {
+    return debugMode ? "debug" : "release";
+}
+
 async function mkdir(dir) {
     try {
         await fs.mkdir(dir, { recursive: true });
@@ -60,22 +64,22 @@ async function buildDist() {
     chdir("..");
 }
 
-function buildCss() {
-    console.log("\nMinifying CSS\n");
+function buildCss(debugMode) {
+    console.log(`\nMinifying ${debugString(debugMode)} CSS\n`);
     chdir(SRC_DIR);
     run(
-        `node ../minify-css.js --in-css ${MINIFIED_CSS_FILES.join(" ")} --out-css "${OUTPUT_DIR}/main.min.css"`
+        `node ../minify-css.js ${debugMode ? "--debug " : " "}--in-css ${MINIFIED_CSS_FILES.join(" ")} --out-css "${OUTPUT_DIR}/main.min.css"`
     );
     chdir("..");
 }
 
-function buildJs() {
-    console.log("\nCompiling JS\n");
+function buildJs(debugMode) {
+    console.log(`\nCompiling ${debugString(debugMode)} JS\n`);
     chdir(SRC_DIR);
     run(
         `npx -y google-closure-compiler ` +
         `--language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ` +
-        `--compilation_level ADVANCED ` +
+        `--compilation_level ${debugMode ? "SIMPLE" : "ADVANCED"} ` +
         `--js ${MINIFIED_JS_FILES.join(" ")} ` +
         `--js_output_file "${OUTPUT_DIR}/main.min.js"`
     );
@@ -83,7 +87,7 @@ function buildJs() {
 }
 
 async function buildWasm(debugMode) {
-    console.log(`\nCompiling ${debugMode ? "debug" : "release"} wasm\n`);
+    console.log(`\nCompiling ${debugString(debugMode)} wasm\n`);
 
     await mkdir(BUILD_DIR);
     chdir(BUILD_DIR);
@@ -123,6 +127,8 @@ for (const arg of args) {
     } else if (arg === "--dist") {
         COMPILE_ALL = false;
         DO_DIST = true;
+    } else {
+        console.warn("Unrecognised argument: ", arg);
     }
 }
 
@@ -132,17 +138,10 @@ await (async () => {
 
     console.log("\nBuilding\n");
 
-    if (COMPILE_ALL) {
-        await buildWasm(DEBUG_MODE);
-        buildJs();
-        buildCss();
-        await buildDist();
-    } else {
-        if (DO_WASM) await buildWasm(DEBUG_MODE);
-        if (DO_JS) buildJs();
-        if (DO_CSS) buildCss();
-        if (DO_DIST) await buildDist();
-    }
+    if (COMPILE_ALL || DO_WASM) await buildWasm(DEBUG_MODE);
+    if (COMPILE_ALL || DO_JS) buildJs(DEBUG_MODE);
+    if (COMPILE_ALL || DO_CSS) buildCss(DEBUG_MODE);
+    if (COMPILE_ALL || DO_DIST) await buildDist(DEBUG_MODE);
 
     console.log("\nBuild Finished\n");
 })();
