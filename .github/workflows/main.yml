@@ -87,7 +87,7 @@ jobs:
     - name: Move built files to pages repo (complete)
       if: steps.changes.outputs.recompile == 'true'
       run: |
-        rm usyless.github.io/trace/*
+        rm -rf usyless.github.io/trace/*
         cp -rf usytrace/dist/* usyless.github.io/trace/
 
     - name: Move built files to pages repo (excluding wasm)
@@ -97,7 +97,7 @@ jobs:
         cp usyless.github.io/trace/usytrace.js usytrace_temp/
         cp usyless.github.io/trace/usytrace.wasm usytrace_temp/
 
-        rm usyless.github.io/trace/*
+        rm -rf usyless.github.io/trace/*
         cp usytrace_temp/usytrace.js usyless.github.io/trace/
         cp usytrace_temp/usytrace.wasm usyless.github.io/trace/
 
