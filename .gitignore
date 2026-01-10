@@ -8,3 +8,4 @@ compile_commands.json
 open-vscode.bat
 .clangd
 /dist
+/node_modules

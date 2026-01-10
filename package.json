@@ -16,13 +16,17 @@
   "scripts": {
     "build": "node build.js",
     "build:debug": "node build.js --debug",
-
     "build:wasm": "node build.js --wasm",
     "build:wasm:debug": "node build.js --wasm --debug",
     "build:js": "node build.js --js",
     "build:js:debug": "node build.js --js --debug",
     "build:css": "node build.js --css",
     "build:css:debug": "node build.js --css --debug",
-    "build:dist": "node build.js --dist"
+    "build:dist": "node build.js --dist",
+    "serve": "npm run build && node server.js",
+    "serve:debug": "npm run build:debug && node server.js"
+  },
+  "devDependencies": {
+    "express": "^5.2.1"
   }
 }
