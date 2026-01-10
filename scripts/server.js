@@ -1,13 +1,10 @@
 import express from 'express';
-import path from 'node:path';
-import { fileURLToPath } from "node:url";
 
-const __dirname = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+import * as common from './common.js'
 
 const app = express();
 
 const port = 8181;
-const srcDir = path.join(__dirname, 'dist');
 
 app.use((req, res, next) => {
     res.set('Cross-Origin-Opener-Policy', 'same-origin');
@@ -16,7 +13,7 @@ app.use((req, res, next) => {
 });
 
 // Serve static files
-app.use(express.static(srcDir));
+app.use(express.static(common.DIST_DIR));
 
 app.listen(port, () => {
     console.log(`Static server running at http://localhost:${port}`);
