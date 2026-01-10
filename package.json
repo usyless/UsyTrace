@@ -23,8 +23,8 @@
     "build:css": "node scripts/build.js --css",
     "build:css:debug": "node scripts/build.js --css --debug",
     "build:dist": "node scripts/build.js --dist",
-    "serve": "npm run scripts/build && node scripts/server.js",
-    "serve:debug": "npm run scripts/build:debug && node scripts/server.js"
+    "serve": "npm run build && node scripts/server.js",
+    "serve:debug": "npm run build:debug && node scripts/server.js"
   },
   "devDependencies": {
     "express": "^5.2.1"
