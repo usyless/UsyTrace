@@ -4,10 +4,9 @@ import { execSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs/promises";
-import { chdir, cwd } from 'node:process';
+import { chdir } from 'node:process';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
 
 const MINIFIED_JS_FILES = [
@@ -28,10 +27,11 @@ const DIST_FILES = [
     "service-worker.js", "usytrace.webmanifest"
 ];
 
-const DIST_DIR = "dist";
-const SRC_DIR = "src";
-const BUILD_DIR = "build";
-const OUTPUT_DIR = `../${DIST_DIR}`;
+const DIST_DIR = path.join(__dirname, "dist");
+const SRC_DIR = path.join(__dirname, "src");
+const BUILD_DIR = path.join(__dirname, "build");
+
+const SCRIPTS_DIR = path.join(__dirname, "scripts");
 
 function run(cmd, options = {}) {
     console.log(`> ${cmd}`);
@@ -50,40 +50,41 @@ async function mkdir(dir) {
     }
 }
 
+const joinWith = (dir) => a => path.join(dir, a);
+const joinWithSrc = joinWith(SRC_DIR);
+const joinWithDist = joinWith(DIST_DIR);
+const joinWithScripts = joinWith(SCRIPTS_DIR);
+
+const joinWithQuoted = (jw) => a => `"${jw(a)}"`;
+
+const joinWithSrcQuoted = joinWithQuoted(joinWithSrc);
+const joinWithDistQuoted = joinWithQuoted(joinWithDist);
+const joinWithScriptsQuoted = joinWithQuoted(joinWithScripts);
+
 async function buildDist() {
     console.log("\nMoving Static Files\n");
-    chdir(SRC_DIR);
-
-    const _cwd = cwd();
-
     await Promise.all([
-        ...DIST_DIRS.map(dir => fs.cp(path.join(_cwd, dir), path.join(OUTPUT_DIR, path.basename(dir)), { recursive: true, force: true })),
-        ...DIST_FILES.map(file => fs.cp(path.join(_cwd, file), path.join(OUTPUT_DIR, path.basename(file)), { force: true }))
+        ...DIST_DIRS.map(dir => fs.cp(joinWithSrc(dir), joinWithDist(dir), { recursive: true, force: true })),
+        ...DIST_FILES.map(file => fs.cp(joinWithSrc(file), joinWithDist(file), { force: true }))
     ]);
-
-    chdir("..");
 }
 
 function buildCss(debugMode) {
     console.log(`\nMinifying ${debugString(debugMode)} CSS\n`);
-    chdir(SRC_DIR);
     run(
-        `node ../minify-css.js${debugMode ? " --debug" : ""} --in-css ${MINIFIED_CSS_FILES.join(" ")} --out-css "${OUTPUT_DIR}/main.min.css"`
+        `node ${joinWithScriptsQuoted("minify-css.js")}${debugMode ? " --debug" : ""} --in-css ${MINIFIED_CSS_FILES.map(joinWithSrcQuoted).join(" ")} --out-css ${joinWithDistQuoted("main.min.css")}`
     );
-    chdir("..");
 }
 
 function buildJs(debugMode) {
     console.log(`\nCompiling ${debugString(debugMode)} JS\n`);
-    chdir(SRC_DIR);
     run(
         `npx -y google-closure-compiler ` +
         `--language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ` +
         `--compilation_level ${debugMode ? "SIMPLE" : "ADVANCED"} ` +
-        `--js ${MINIFIED_JS_FILES.join(" ")} ` +
-        `--js_output_file "${OUTPUT_DIR}/main.min.js"`
+        `--js ${MINIFIED_JS_FILES.map(joinWithSrcQuoted).join(" ")} ` +
+        `--js_output_file ${joinWithDistQuoted("main.min.js")}`
     );
-    chdir("..");
 }
 
 async function buildWasm(debugMode) {

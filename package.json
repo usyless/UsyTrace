@@ -14,17 +14,17 @@
   "author": "usy",
   "type": "module",
   "scripts": {
-    "build": "node build.js",
-    "build:debug": "node build.js --debug",
-    "build:wasm": "node build.js --wasm",
-    "build:wasm:debug": "node build.js --wasm --debug",
-    "build:js": "node build.js --js",
-    "build:js:debug": "node build.js --js --debug",
-    "build:css": "node build.js --css",
-    "build:css:debug": "node build.js --css --debug",
-    "build:dist": "node build.js --dist",
-    "serve": "npm run build && node server.js",
-    "serve:debug": "npm run build:debug && node server.js"
+    "build": "node scripts/build.js",
+    "build:debug": "node scripts/build.js --debug",
+    "build:wasm": "node scripts/build.js --wasm",
+    "build:wasm:debug": "node scripts/build.js --wasm --debug",
+    "build:js": "node scripts/build.js --js",
+    "build:js:debug": "node scripts/build.js --js --debug",
+    "build:css": "node scripts/build.js --css",
+    "build:css:debug": "node scripts/build.js --css --debug",
+    "build:dist": "node scripts/build.js --dist",
+    "serve": "npm run scripts/build && node scripts/server.js",
+    "serve:debug": "npm run scripts/build:debug && node scripts/server.js"
   },
   "devDependencies": {
     "express": "^5.2.1"
