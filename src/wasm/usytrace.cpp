@@ -82,6 +82,10 @@ struct ImageData {
         for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[getRGB(x, y)];
         return std::max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
     }
+
+    static Colour* allocate_buffer(const uint32_t width, const uint32_t height, const uint32_t channels) {
+        return new Colour[width * height * channels];
+    }
 };
 
 struct RGBTools {
@@ -635,7 +639,7 @@ extern "C" {
 
     // Image Control
     EMSCRIPTEN_KEEPALIVE void* create_buffer(const uint32_t width, const uint32_t height) {
-        return new Colour[width * height * 4];
+        return ImageData::allocate_buffer(width, height, 4);
     }
 
     EMSCRIPTEN_KEEPALIVE void setCurrent(Image* ptr) {
