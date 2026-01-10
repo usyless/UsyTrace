@@ -68,7 +68,7 @@ function buildCss(debugMode) {
     console.log(`\nMinifying ${debugString(debugMode)} CSS\n`);
     chdir(SRC_DIR);
     run(
-        `node ../minify-css.js ${debugMode ? "--debug " : " "}--in-css ${MINIFIED_CSS_FILES.join(" ")} --out-css "${OUTPUT_DIR}/main.min.css"`
+        `node ../minify-css.js${debugMode ? " --debug" : ""} --in-css ${MINIFIED_CSS_FILES.join(" ")} --out-css "${OUTPUT_DIR}/main.min.css"`
     );
     chdir("..");
 }
@@ -94,7 +94,7 @@ async function buildWasm(debugMode) {
 
     const build_type = (debugMode) ? "Debug" : "Release";
 
-    run(`emcmake cmake -DCMAKE_BUILD_TYPE=${build_type} ..`);
+    run(`emcmake cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=OFF -DCMAKE_BUILD_TYPE=${build_type} ..`);
     run(`cmake --build . --config ${build_type}`);
 
     chdir("..");
