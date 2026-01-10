@@ -55,14 +55,17 @@ struct RGB {
     }
 };
 
+template <uint32_t Channels>
 struct ImageData {
     std::unique_ptr<Colour[]> data;
-    const uint32_t width, height, channels;
+    const uint32_t width, height;
 
-    ImageData(const uint32_t width, const uint32_t height, const uint32_t channels) : width(width), height(height), channels(channels) {
-        data.reset(allocate_buffer(width, height, channels));
+    static constexpr size_t channels = Channels;
+
+    ImageData(const uint32_t width, const uint32_t height) : width(width), height(height) {
+        data.reset(ImageData<Channels>::allocate_buffer(width, height));
     }
-    ImageData(Colour* data, const uint32_t width, const uint32_t height, const uint32_t channels) : data(data), width(width), height(height), channels(channels) {}
+    ImageData(Colour* data, const uint32_t width, const uint32_t height) : data(data), width(width), height(height) {}
 
     inline RGB getRGB(const uint32_t x, const uint32_t y) const {
         const auto pos = (y * width + x) * channels;
@@ -86,8 +89,8 @@ struct ImageData {
         return std::max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
     }
 
-    static Colour* allocate_buffer(const uint32_t width, const uint32_t height, const uint32_t channels) {
-        return new Colour[width * height * channels];
+    static Colour* allocate_buffer(const uint32_t width, const uint32_t height) {
+        return new Colour[width * height * Channels];
     }
 };
 
@@ -156,10 +159,10 @@ struct ExportString {
 
 struct Trace {
     const frTrace trace;
-    const ImageData& imageData;
+    const ImageData<4>& imageData;
 
-    Trace(const ImageData& data) : imageData(data) {}
-    Trace(const ImageData& data, frTrace&& _trace) : trace(std::move(_trace)), imageData(data) {}
+    Trace(const ImageData<4>& data) : imageData(data) {}
+    Trace(const ImageData<4>& data, frTrace&& _trace) : trace(std::move(_trace)), imageData(data) {}
 
     std::vector<std::pair<uint32_t, uint32_t>> clean() const {
         std::vector<std::pair<uint32_t, uint32_t>> simplifiedTrace{};
@@ -207,7 +210,7 @@ struct Trace {
         return svg;
     }
 
-    static void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& trace, const ImageData& imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
+    static void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& trace, const ImageData<4>& imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
         std::vector<uint32_t> yValues{};
         uint32_t currJump = 0;
         const uint32_t maxHeight = imageData.height - 1;
@@ -306,9 +309,9 @@ struct Trace {
 struct TraceHistory {
     std::stack<Trace> history;
     std::stack<Trace> future;
-    const ImageData& imageData;
+    const ImageData<4>& imageData;
 
-    TraceHistory(const ImageData& data) : imageData(data) {
+    TraceHistory(const ImageData<4>& data) : imageData(data) {
         history.emplace(Trace{data});
     }
 
@@ -376,7 +379,7 @@ std::function<double(double)> contiguousLinearInterpolation(const std::vector<st
     };
 }
 
-Trace getPotentialTrace(const ImageData& imageData, TraceData traceData, const std::function<uint32_t(RGB)>& differenceFunc) {
+Trace getPotentialTrace(const ImageData<4>& imageData, TraceData traceData, const std::function<uint32_t(RGB)>& differenceFunc) {
     auto bestY = 0, currentDiff = 0;
     const auto middleX = imageData.width / 2;
     const auto yRange = imageData.height / 5;
@@ -398,7 +401,7 @@ Trace getPotentialTrace(const ImageData& imageData, TraceData traceData, const s
     return {imageData};
 }
 
-void padOutputData(const ImageData& original, ImageData& output) {
+void padOutputData(const ImageData<4>& original, ImageData<1>& output) {
     const auto width = original.width, height = original.height;
     const auto maxWidthOrig = width * original.channels, maxWidthOut = width * output.channels;
     const auto data = original.data.get();
@@ -423,7 +426,7 @@ void padOutputData(const ImageData& original, ImageData& output) {
     }
 }
 
-void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
+void applySobel(const ImageData<4>& original, ImageData<1>& outX, ImageData<1>& outY) {
     const size_t widthBound = original.width - 1, heightBound = original.height - 1;
     const size_t maxWidthOrig = original.width * original.channels, maxWidthOut = original.width * outX.channels;
     const auto data = original.data.get();
@@ -470,8 +473,7 @@ void applySobel(const ImageData& original, ImageData& outX, ImageData& outY) {
     }
 }
 
-// assume 4 channels
-void invertImage(ImageData& data) {
+void invertImage(ImageData<4>& data) {
     const size_t pixelCount = static_cast<size_t>(data.width) * data.height;
     auto* pixels = reinterpret_cast<uint32_t*>(data.data.get());
 
@@ -479,7 +481,7 @@ void invertImage(ImageData& data) {
 }
 
 template <bool vertical>
-std::set<uint32_t> detectLines(const ImageData& imageData, const uint32_t tolerance) {
+std::set<uint32_t> detectLines(const ImageData<1>& imageData, const uint32_t tolerance) {
     std::set<uint32_t> lines{};
     uint32_t length, otherDirection;
     std::function<bool(uint32_t, uint32_t)> comparator;
@@ -509,21 +511,21 @@ std::set<uint32_t> detectLines(const ImageData& imageData, const uint32_t tolera
 }
 
 struct Image {
-    ImageData imageData;
+    ImageData<4> imageData;
     TraceHistory traceHistory;
     RGBTools backgroundColour{RGB{0,0,0}, 0};
     std::set<uint32_t> vLines;
     std::set<uint32_t> hLines;
 
-    Image(ImageData&& _imageData) : imageData(std::move(_imageData)), traceHistory(imageData) {
+    Image(ImageData<4>&& _imageData) : imageData(std::move(_imageData)), traceHistory(imageData) {
         const auto darkMode = (imageData.getBackgroundColour().sum() / 3) < 127;
         if (darkMode) invertImage(imageData);
 
         {
-        auto filteredDataX = ImageData{imageData.width, imageData.height, 1};
+        auto filteredDataX = ImageData<1>{imageData.width, imageData.height};
         padOutputData(imageData, filteredDataX);
         {
-        auto filteredDataY = ImageData{imageData.width, imageData.height, 1};
+        auto filteredDataY = ImageData<1>{imageData.width, imageData.height};
         padOutputData(imageData, filteredDataY);
 
         applySobel(imageData, filteredDataX, filteredDataY);
@@ -649,7 +651,7 @@ inline ReturnedString* ReturnedString::make(std::string&& str) {
 extern "C" {
     // Image Control
     EMSCRIPTEN_KEEPALIVE void* create_buffer(const uint32_t width, const uint32_t height) {
-        return ImageData::allocate_buffer(width, height, 4);
+        return ImageData<4>::allocate_buffer(width, height);
     }
 
     EMSCRIPTEN_KEEPALIVE void setCurrent(Image* ptr) {
@@ -658,7 +660,7 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE void* addImage(Colour* data, const uint32_t width, const uint32_t height) {
         // Images come in with 4 channels (RGBA)
-        auto ptr = new Image{ImageData{data, width, height, 4}};
+        auto ptr = new Image{ImageData<4>{data, width, height}};
         currentImage = ptr;
         return ptr;
     }
