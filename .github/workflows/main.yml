@@ -49,8 +49,8 @@ jobs:
         version=4.2.1
         wget https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.sh
         chmod +x cmake-${version}-linux-x86_64.sh
-        ./cmake-${version}-linux-x86_64.sh --skip-license --prefix=$HOME/cmake
-        echo "$HOME/cmake/bin" >> $GITHUB_PATH
+        ./cmake-${version}-linux-x86_64.sh --skip-license --prefix=$(pwd)/cmake
+        echo "$(pwd)/cmake/bin" >> $GITHUB_PATH
 
     - name: Compile WASM and worker js
       if: steps.changes.outputs.recompile == 'true'
