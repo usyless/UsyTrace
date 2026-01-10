@@ -1,6 +1,6 @@
 const cacheName = 'v76';
 
-contentToCache = [
+const contentToCache = [
     './favicon.ico',
     './favicon.svg',
 
@@ -20,7 +20,7 @@ contentToCache = [
 self.addEventListener('install', (e) => {
     e.waitUntil((async () => {
         const cache = await caches.open(cacheName);
-        await cache.addAll(contentToCache);
+        await Promise.allSettled(contentToCache.map(url => cache.add(url)));
     })());
 });
 
@@ -28,11 +28,9 @@ self.addEventListener('activate', e => {
     e.waitUntil((async () => {
         const cacheNames = await caches.keys();
         await Promise.allSettled(
-            cacheNames.map(cn => {
-                if (cn !== cacheName) {
-                    return caches.delete(cn);
-                }
-            })
+            cacheNames
+                .filter(cn => cn !== cacheName)
+                .map(cn => caches.delete(cn))
         );
         await self.clients.claim();
     })());
