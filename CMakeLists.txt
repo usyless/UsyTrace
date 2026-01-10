@@ -38,52 +38,52 @@ target_link_libraries(usytrace PRIVATE usylibpp::usylibpp)
 
 set_target_properties(usytrace PROPERTIES CXX_SCAN_FOR_MODULES OFF)
 
-# If you want to make a compile_commands.json from this, comment out from here
-target_compile_options(usytrace PRIVATE
-    -sMEMORY64=0
-    -sSTRICT
+if(NOT CMAKE_EXPORT_COMPILE_COMMANDS) 
+    target_compile_options(usytrace PRIVATE
+        -sMEMORY64=0
+        -sSTRICT
 
-    $<$<CONFIG:Debug>:
-        -sNO_DISABLE_EXCEPTION_CATCHING
-    >
+        $<$<CONFIG:Debug>:
+            -sNO_DISABLE_EXCEPTION_CATCHING
+        >
 
-    $<$<CONFIG:Release>:
-        -g0
-        -fno-exceptions
-        -O3
-        -flto
-        -fno-rtti
-    >
-)
+        $<$<CONFIG:Release>:
+            -g0
+            -fno-exceptions
+            -O3
+            -flto
+            -fno-rtti
+        >
+    )
 
-target_link_options(usytrace PRIVATE
-    --pre-js ${PROJECT_SOURCE_DIR}/src/worker.js
-    -sSTRICT_JS
-    -sMEMORY_GROWTH_LINEAR_STEP=50331648
-    -sWASM=1
-    -sALLOW_MEMORY_GROWTH=1
-    -sINITIAL_HEAP=100663296
-    -sFILESYSTEM=0
-    -sENVIRONMENT=worker
-    -sINCOMING_MODULE_JS_API=onRuntimeInitialized
-    -sEXPORTED_RUNTIME_METHODS=[]
-    -sMEMORY64=0
-    -sSTRICT
+    target_link_options(usytrace PRIVATE
+        --pre-js ${PROJECT_SOURCE_DIR}/src/worker.js
+        -sSTRICT_JS
+        -sMEMORY_GROWTH_LINEAR_STEP=50331648
+        -sWASM=1
+        -sALLOW_MEMORY_GROWTH=1
+        -sINITIAL_HEAP=100663296
+        -sFILESYSTEM=0
+        -sENVIRONMENT=worker
+        -sINCOMING_MODULE_JS_API=onRuntimeInitialized
+        -sEXPORTED_RUNTIME_METHODS=[]
+        -sMEMORY64=0
+        -sSTRICT
 
-    $<$<CONFIG:Debug>:
-        -sASSERTIONS=1
-        -sNO_DISABLE_EXCEPTION_CATCHING
-    >
+        $<$<CONFIG:Debug>:
+            -sASSERTIONS=1
+            -sNO_DISABLE_EXCEPTION_CATCHING
+        >
 
-    $<$<CONFIG:Release>:
-        -sASSERTIONS=0
-        --closure=1
-        -flto
-        --no-entry
-        -s
-    >
-)
-# To here
+        $<$<CONFIG:Release>:
+            -sASSERTIONS=0
+            --closure=1
+            -flto
+            --no-entry
+            -s
+        >
+    )
+endif()
 
 add_custom_command(TARGET usytrace POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/dist
