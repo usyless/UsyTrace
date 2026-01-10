@@ -69,13 +69,13 @@ jobs:
         ref: main
         persist-credentials: true
 
-    - name: Move built files to pages repo
+    - name: Move built files to pages repo (complete)
       if: steps.changes.outputs.recompile == 'true'
       run: |
         rm usyless.github.io/trace/*
         cp -rf usytrace/dist/* usyless.github.io/trace/
 
-    - name: Move built files to pages repo
+    - name: Move built files to pages repo (excluding wasm)
       if: steps.changes.outputs.recompile == 'false'
       run: |
         mkdir usytrace_temp
