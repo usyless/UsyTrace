@@ -878,28 +878,59 @@ image.addEventListener('error', () => {
 });
 
 { // keybindings
-    const pointerDown = new PointerEvent('pointerdown', {bubbles: true}), pointerUp = new PointerEvent('pointerup', {bubbles: true});
+    const pointerDown = new PointerEvent('pointerdown', {bubbles: true});
+    const pointerUp = new PointerEvent('pointerup', {bubbles: true});
+    
+    const e_redo = document.getElementById('redo');
+    const e_undo = document.getElementById('undo');
+    const e_autoPath = document.getElementById('autoPath');
+    const e_selectPath = document.getElementById('selectPath');
+    const e_selectPoint = document.getElementById('selectPoint');
+    const e_toggleImageQueue = document.getElementById('toggleImageQueue');
+    const e_export = document.getElementById('export');
+    const e_smoothTrace = document.getElementById('smoothTrace');
+    const e_editImage = document.getElementById('editImage');
+    const e_eraseRegion = document.getElementById('eraseRegion');
+    const e_fileInputButton = document.getElementById('fileInputButton');
+    const e_removeImage = document.getElementById('removeImage');
+    const e_clearPath = document.getElementById('clearPath');
+
+    const e_offsetUp = document.querySelector('[data-id="offset_trace"] > [data-direction="1"]');
+    const e_offsetDown = document.querySelector('[data-id="offset_trace"] > [data-direction="0"]');
+    const e_offsetLeft = document.querySelector('[data-id="offset_trace"] > [data-direction="2"]');
+    const e_offsetRight = document.querySelector('[data-id="offset_trace"] > [data-direction="3"]');
+
+    const e_lowUp = document.querySelector('[data-for="yLow"] > [data-direction="-1"]');
+    const e_lowDown = document.querySelector('[data-for="yLow"] > [data-direction="1"]');
+    const e_lowLeft = document.querySelector('[data-for="xLow"] > [data-direction="-1"]');
+    const e_lowRight = document.querySelector('[data-for="xLow"] > [data-direction="1"]');
+
+    const e_highUp = document.querySelector('[data-for="yHigh"] > [data-direction="-1"]');
+    const e_highDown = document.querySelector('[data-for="yHigh"] > [data-direction="1"]');
+    const e_highLeft = document.querySelector('[data-for="xHigh"] > [data-direction="-1"]');
+    const e_highRight = document.querySelector('[data-for="xHigh"] > [data-direction="1"]');
+
     const keydownMap = {
-        /** @export */ z: (e) => e.ctrlKey && document.getElementById(e.shiftKey ? 'redo' : 'undo').click(),
-        /** @export */ a: () => document.getElementById('autoPath').click(),
-        /** @export */ t: () => document.getElementById('selectPath').click(),
-        /** @export */ p: () => document.getElementById('selectPoint').click(),
-        /** @export */ h: () => document.getElementById('toggleImageQueue').click(),
-        /** @export */ s: (e) => document.getElementById(e.ctrlKey ? 'export' : 'smoothTrace').click(),
-        /** @export */ e: (e) => document.getElementById(e.ctrlKey ? 'editImage' : 'eraseRegion').click(),
-        /** @export */ enter: () => document.getElementById('fileInputButton').click(),
-        /** @export */ delete: () => document.getElementById('removeImage').click(),
-        /** @export */ backspace: () => document.getElementById('clearPath').click(),
-        /** @export */ arrowup: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="1"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerDown),
-        /** @export */ arrowdown: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="0"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerDown),
-        /** @export */ arrowleft: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="2"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerDown),
-        /** @export */ arrowright: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="3"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerDown),
+        /** @export */ z: (e) => e.ctrlKey && (e.shiftKey ? e_redo : e_undo).click(),
+        /** @export */ a: () => e_autoPath.click(),
+        /** @export */ t: () => e_selectPath.click(),
+        /** @export */ p: () => e_selectPoint.click(),
+        /** @export */ h: () => e_toggleImageQueue.click(),
+        /** @export */ s: (e) => (e.ctrlKey ? e_export : e_smoothTrace).click(),
+        /** @export */ e: (e) => (e.ctrlKey ? e_editImage : e_eraseRegion).click(),
+        /** @export */ enter: () => e_fileInputButton.click(),
+        /** @export */ delete: () => e_removeImage.click(),
+        /** @export */ backspace: () => e_clearPath.click(),
+        /** @export */ arrowup: (e) => ((e.ctrlKey) ? e_offsetUp : (e.shiftKey ? e_lowUp : e_highUp)).dispatchEvent(pointerDown),
+        /** @export */ arrowdown: (e) => ((e.ctrlKey) ? e_offsetDown : (e.shiftKey ? e_lowDown : e_highDown)).dispatchEvent(pointerDown),
+        /** @export */ arrowleft: (e) => ((e.ctrlKey) ? e_offsetLeft : (e.shiftKey ? e_lowLeft : e_highLeft)).dispatchEvent(pointerDown),
+        /** @export */ arrowright: (e) => ((e.ctrlKey) ? e_offsetRight : (e.shiftKey ? e_lowRight : e_highRight)).dispatchEvent(pointerDown),
     };
     const keyupMap = {
-        /** @export */ arrowup: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="1"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerUp),
-        /** @export */ arrowdown: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="0"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerUp),
-        /** @export */ arrowleft: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="2"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerUp),
-        /** @export */ arrowright: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="3"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerUp),
+        /** @export */ arrowup: (e) => ((e.ctrlKey) ? e_offsetUp : (e.shiftKey ? e_lowUp : e_highUp)).dispatchEvent(pointerUp),
+        /** @export */ arrowdown: (e) => ((e.ctrlKey) ? e_offsetDown : (e.shiftKey ? e_lowDown : e_highDown)).dispatchEvent(pointerUp),
+        /** @export */ arrowleft: (e) => ((e.ctrlKey) ? e_offsetLeft : (e.shiftKey ? e_lowLeft : e_highLeft)).dispatchEvent(pointerUp),
+        /** @export */ arrowright: (e) => ((e.ctrlKey) ? e_offsetRight : (e.shiftKey ? e_lowRight : e_highRight)).dispatchEvent(pointerUp),
     };
     document.addEventListener('keydown', (e) => {
         if (state.keyBindsEnabled) {
