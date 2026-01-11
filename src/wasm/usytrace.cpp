@@ -376,7 +376,12 @@ struct Trace {
 struct TraceHistory {
     std::stack<Trace> history;
     std::stack<Trace> future;
+    std::chrono::steady_clock::time_point last_full_add{std::chrono::steady_clock::now()};
+    std::chrono::steady_clock::time_point last_add{last_full_add};
     const ImageData<4>& imageData;
+
+    static constexpr std::chrono::steady_clock::duration ignore_time{std::chrono::milliseconds{100}};
+    static constexpr std::chrono::steady_clock::duration max_ignore_time{std::chrono::milliseconds{500}};
 
     TraceHistory(const ImageData<4>& data) : imageData(data) {
         history.emplace(Trace{data});
@@ -394,9 +399,21 @@ struct TraceHistory {
         if ((history.top().empty() && trace.empty()) || (history.top() == trace)) {
             return history.top();
         }
+
+        auto now = std::chrono::steady_clock::now();
+
+        if ((now - last_full_add) >= max_ignore_time) {
+            last_full_add = now;
+        } else if ((now - last_add) < ignore_time) {
+            if (undoAvailable()) history.pop();
+            last_add = now;
+        } else {
+            last_add = now;
+        }
+
         clearFuture();
         history.emplace(std::move(trace));
-        return history.top();
+        return getLatest();
     }
 
     const Trace& undo() {
@@ -404,7 +421,7 @@ struct TraceHistory {
             future.emplace(std::move(history.top()));
             history.pop();
         }
-        return history.top();
+        return getLatest();
     }
 
     const Trace& redo() {
@@ -412,7 +429,7 @@ struct TraceHistory {
             history.emplace(std::move(future.top()));
             future.pop();
         }
-        return history.top();
+        return getLatest();
     }
 
     inline bool redoAvailable() {
