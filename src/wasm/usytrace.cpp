@@ -169,6 +169,15 @@ struct Trace {
     Trace(const ImageData<4>& data) : imageData(data) {}
     Trace(const ImageData<4>& data, frTrace&& _trace) : trace(std::move(_trace)), imageData(data) {}
 
+    Trace(Trace&& other) noexcept : trace(std::move(other.trace)), imageData(other.imageData) {}
+    Trace& operator=(Trace&& other) noexcept { 
+        if (this != &other) trace = std::move(other.trace);
+        return *this;
+    }
+
+    Trace(const Trace&) = delete;
+    Trace& operator=(const Trace&) = delete;
+
     std::vector<std::pair<uint32_t, uint32_t>> clean() const {
         std::vector<std::pair<uint32_t, uint32_t>> simplifiedTrace{};
         if (!trace.empty()) {
