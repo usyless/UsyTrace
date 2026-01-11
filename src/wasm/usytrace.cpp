@@ -489,6 +489,22 @@ void invertImage(ImageData<4>& data) {
     auto* pixels = reinterpret_cast<uint32_t*>(data.data.get());
 
     for (size_t i = 0; i < pixelCount; ++i) pixels[i] = ~pixels[i];
+
+    // since its 32 bit original is fine
+    // could probably do something cursed like this if 64 bit
+    // currently no performance gain (microoptimisation hell)?
+
+    // const size_t pixelCountActual = static_cast<size_t>(data.width) * data.height;
+    // const bool isEven = (pixelCountActual % 2 == 0);
+    // const size_t pixelCountEven = ((isEven) ? pixelCountActual : pixelCountActual - 1) / 2; 
+    // auto* pixels_long = reinterpret_cast<uint64_t*>(data.data.get());
+
+
+    // for (size_t i = 0; i < pixelCountEven; ++i) pixels_long[i] = ~pixels_long[i];
+    // if (!isEven) {
+    //     auto* pixels = reinterpret_cast<uint32_t*>(data.data.get());
+    //     pixels[pixelCountActual - 1] = ~pixels[pixelCountActual - 1];
+    // }
 }
 
 template <bool vertical>
