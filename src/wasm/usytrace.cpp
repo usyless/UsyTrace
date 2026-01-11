@@ -165,7 +165,7 @@ struct ExportString {
 };
 
 struct Trace {
-    const frTrace trace;
+    frTrace trace;
     const ImageData<4>& imageData;
 
     Trace(const ImageData<4>& data) : imageData(data) {}
