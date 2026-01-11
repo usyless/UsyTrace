@@ -315,12 +315,65 @@ struct Trace {
         return {imageData, std::move(newTrace)};
     }
 
+    Trace offsetTrace(uint8_t direction, uint32_t magnitude) const {
+        frTrace newTrace{};
+
+        const auto image_height_bound = imageData.height - 1;
+        const auto image_width_bound = imageData.width - 1;
+
+        switch (direction) {
+            case 0: {
+                // down
+                for (const auto [key, val] : trace) {
+                    const auto newVal = val + magnitude;
+                    if (newVal > image_height_bound) continue;
+                    newTrace[key] = newVal;
+                }
+                break;
+            }
+            case 1: {
+                // up
+                for (const auto [key, val] : trace) {
+                    const auto newVal = val - magnitude;
+                    if (newVal < 0) continue;
+                    newTrace[key] = newVal;
+                }
+                break;
+            }
+            case 2: {
+                // left
+                for (const auto [key, val] : trace) {
+                    const auto newKey = key - magnitude;
+                    if (newKey < 0) continue;
+                    newTrace[newKey] = val;
+                }
+                break;
+            }
+            case 3: {
+                // right
+                for (const auto [key, val] : trace) {
+                    const auto newKey = key + magnitude;
+                    if (newKey > image_width_bound) continue;
+                    newTrace[newKey] = val;
+                }
+                break;
+            }
+
+        }
+
+        return {imageData, std::move(newTrace)};
+    }
+
     size_t size() const noexcept {
         return trace.size();
     }
 
     bool empty() const noexcept {
         return trace.empty();
+    }
+
+    bool operator==(const Trace& other) const {
+        return trace == other.trace;
     }
 };
 
@@ -342,7 +395,7 @@ struct TraceHistory {
     }
 
     const Trace& add(Trace&& trace) {
-        if (history.top().empty() && trace.empty()) {
+        if ((history.top().empty() && trace.empty()) || (history.top() == trace)) {
             return history.top();
         }
         clearFuture();
@@ -593,7 +646,7 @@ struct Image {
         return (traceHistory.undoAvailable() << 1) | traceHistory.redoAvailable();
     }
 
-    std::string autoTrace(const TraceData&& traceData) {
+    inline std::string autoTrace(const TraceData&& traceData) {
         auto traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         auto traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour.rgb] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
         if (traceOne.size() > traceTwo.size()) {
@@ -602,6 +655,10 @@ struct Image {
             traceHistory.add(traceTwo.standardSmooth(static_cast<int>(imageData.width)));
         }
         return traceHistory.getLatest().toSVG();
+    }
+
+    inline std::string offsetTrace(uint8_t direction, uint32_t magnitude) {
+        return traceHistory.add(traceHistory.getLatest().offsetTrace(direction, magnitude)).toSVG();
     }
 
     std::string exportTrace(const ExportData&& exportData) const {
@@ -740,6 +797,10 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE void* smoothTrace() {
         return ReturnedString::make(currentImage->smoothTrace());
+    }
+
+    EMSCRIPTEN_KEEPALIVE void* offsetTrace(uint8_t direction, uint32_t magnitude) {
+        return ReturnedString::make(currentImage->offsetTrace(direction, magnitude));
     }
 
     // Exporting

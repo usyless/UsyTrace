@@ -18,6 +18,7 @@ Module['onRuntimeInitialized'] = () => {
         },
         historyStatus: Module["_historyStatus"],
         trace_: stringReturn(Module["_trace"]),
+        offsetTrace: stringReturn(Module["_offsetTrace"]),
         point: stringReturn(Module["_point"]),
         undo: stringReturn(Module["_undo"]),
         redo: stringReturn(Module["_redo"]),
@@ -72,6 +73,7 @@ Module['onRuntimeInitialized'] = () => {
         /** @export */ addPoint: (data) => defaultTraceResponse(data, api.point(parseInt(data["x"], 10), parseInt(data["y"], 10))),
         /** @export */ autoTrace: (data) => defaultTraceResponse(data, api.auto(parseInt(data["colourTolerance"], 10))),
         /** @export */ trace: (data) => defaultTraceResponse(data, api.trace_(parseInt(data["x"], 10), parseInt(data["y"], 10), parseInt(data["colourTolerance"], 10))),
+        /** @export */ offsetTrace: (data) => defaultTraceResponse(data, api.offsetTrace(parseInt(data["direction"], 10), parseInt(data["magnitude"], 10))),
 
         /** @export */ snapLine: (data) => {
             data["line"]["position"] = api.snap(parseInt(data["line"]["position"], 10), data["line"]["direction"] === "x" ? 1 : 0, parseInt(data["direction"], 10));

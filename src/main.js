@@ -397,7 +397,8 @@ const worker = {
     }),
     autoTrace: () => {
         worker.postMessage({
-            /** @export */ type: 'autoTrace', colourTolerance: preferences.colourTolerance()
+            /** @export */ type: 'autoTrace', 
+            /** @export */ colourTolerance: preferences.colourTolerance()
         });
     },
     trace: (x, y) => {
@@ -408,6 +409,11 @@ const worker = {
             /** @export */ colourTolerance: preferences.colourTolerance()
         });
     },
+    offsetTrace: (direction, magnitude) => worker.postMessage({
+        /** @export */ type: 'offsetTrace', 
+        /** @export */ direction,
+        /** @export */ magnitude
+    }),
     snapLine: (line, direction, final = false) => {
         worker.postMessage({
             /** @export */ type: 'snapLine',
@@ -761,10 +767,20 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
         const t = e.target, p = t.parentNode;
         if (!holdInterval && p.classList.contains('moveButtons')) {
             e.preventDefault();
-            line = lines.lines[p.dataset["for"]];
-            if (!snap) {
+            const dataset_for = p.dataset["for"];
+            if (!dataset_for) {
+                // Global trace offset
+                const direction = parseInt(t.dataset["direction"], 10);
                 holdInterval = setInterval(() => {
-                    lines.setPosition(line, lines.getPosition(line) + parseInt(t.dataset["direction"], 10) * sizeRatio);
+                    worker.offsetTrace(direction, 1);
+                }, 10);
+                return;
+            }
+            line = lines.lines[dataset_for];
+            if (!snap) {
+                const direction = parseInt(t.dataset["direction"], 10);
+                holdInterval = setInterval(() => {
+                    lines.setPosition(line, lines.getPosition(line) + direction * sizeRatio);
                 }, 10);
             } else worker.snapLine(lines.lines[p.dataset["for"]], parseInt(t.dataset["direction"], 10));
         }
@@ -874,16 +890,16 @@ image.addEventListener('error', () => {
         /** @export */ enter: () => document.getElementById('fileInputButton').click(),
         /** @export */ delete: () => document.getElementById('removeImage').click(),
         /** @export */ backspace: () => document.getElementById('clearPath').click(),
-        /** @export */ arrowup: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
-        /** @export */ arrowdown: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
-        /** @export */ arrowleft: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerDown),
-        /** @export */ arrowright: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerDown),
+        /** @export */ arrowup: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="1"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerDown),
+        /** @export */ arrowdown: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="0"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerDown),
+        /** @export */ arrowleft: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="2"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerDown),
+        /** @export */ arrowright: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="3"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerDown),
     };
     const keyupMap = {
-        /** @export */ arrowup: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
-        /** @export */ arrowdown: (e) => document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
-        /** @export */ arrowleft: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`).dispatchEvent(pointerUp),
-        /** @export */ arrowright: (e) => document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`).dispatchEvent(pointerUp),
+        /** @export */ arrowup: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="1"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerUp),
+        /** @export */ arrowdown: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="0"]') : document.querySelector(`[data-for="y${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerUp),
+        /** @export */ arrowleft: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="2"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="-1"]`)).dispatchEvent(pointerUp),
+        /** @export */ arrowright: (e) => ((e.ctrlKey) ? document.querySelector('[data-id="offset_trace"] > [data-direction="3"]') : document.querySelector(`[data-for="x${e.shiftKey ? 'Low' : 'High'}"] > [data-direction="1"]`)).dispatchEvent(pointerUp),
     };
     document.addEventListener('keydown', (e) => {
         if (state.keyBindsEnabled) {
