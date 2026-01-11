@@ -10,6 +10,8 @@ const defaults = {
 
     /** @export */ colourTolerance: 67,
 
+    /** @export */ line_move_speed: 100,
+
     /** @export */ PPO: 48,
     /** @export */ delimitation: "tab",
     /** @export */ lowFRExport: 20,
@@ -164,21 +166,36 @@ image.loadLines = () => {
     lines.showLines();
 }
 
-const preferences = {
-    SPLHigher: () => document.getElementById('SPLHigher').value,
-    SPLLower: () => document.getElementById('SPLLower').value,
-    FRHigher: () => document.getElementById('FRHigher').value,
-    FRLower: () => document.getElementById('FRLower').value,
+const preferences = (() => {
+    const e_SPLHigher = document.getElementById('SPLHigher');
+    const e_SPLLower = document.getElementById('SPLLower');
+    const e_FRHigher = document.getElementById('FRHigher');
+    const e_FRLower = document.getElementById('FRLower');
+    const e_snapToLines = document.getElementById('snapToLines');
+    const e_line_move_speed = document.getElementById('line_move_speed');
+    const e_colourTolerance = document.getElementById('colourTolerance');
+    const e_PPO = document.getElementById('PPO');
+    const e_delimitation = document.getElementById('delimitation');
+    const e_lowFRExport = document.getElementById('lowFRExport');
+    const e_highFRExport = document.getElementById('highFRExport');
 
-    snapToLines: () => document.getElementById('snapToLines').checked,
+    return {
+        SPLHigher: () => e_SPLHigher.value,
+        SPLLower: () => e_SPLLower.value,
+        FRHigher: () => e_FRHigher.value,
+        FRLower: () => e_FRLower.value,
 
-    colourTolerance: () => document.getElementById('colourTolerance').value || defaults.colourTolerance,
+        snapToLines: () => e_snapToLines.checked,
+        line_move_speed: () => parseInt(e_line_move_speed.value, 10) || defaults.line_move_speed,
 
-    PPO: () => document.getElementById('PPO').value || defaults.ppo,
-    delimitation: () => document.getElementById('delimitation').value || defaults.delimitation,
-    lowFRExport: () => document.getElementById('lowFRExport').value || defaults.lowFRExport,
-    highFRExport: () => document.getElementById('highFRExport').value || defaults.highFRExport,
-}
+        colourTolerance: () => parseInt(e_colourTolerance.value, 10) || defaults.colourTolerance,
+
+        PPO: () => e_PPO.value || defaults.PPO,
+        delimitation: () => e_delimitation.value || defaults.delimitation,
+        lowFRExport: () => e_lowFRExport.value || defaults.lowFRExport,
+        highFRExport: () => e_highFRExport.value || defaults.highFRExport,
+    };
+})();
 
 const indefinitePopup = (message) => {
     createPopup(message).then(_ => indefinitePopup(message)).catch(_ => indefinitePopup(message));
@@ -772,8 +789,8 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
                 // Global trace offset
                 const direction = parseInt(t.dataset["direction"], 10);
                 holdInterval = setInterval(() => {
-                    worker.offsetTrace(direction, sizeRatio / 2);
-                }, 10);
+                    worker.offsetTrace(direction, sizeRatio);
+                }, (100 / preferences.line_move_speed()) * 10);
                 return;
             }
             line = lines.lines[dataset_for];
@@ -781,7 +798,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
                 const direction = parseInt(t.dataset["direction"], 10);
                 holdInterval = setInterval(() => {
                     lines.setPosition(line, lines.getPosition(line) + direction * sizeRatio);
-                }, 10);
+                }, (100 / preferences.line_move_speed()) * 10);
             } else worker.snapLine(lines.lines[p.dataset["for"]], parseInt(t.dataset["direction"], 10));
         }
     });
@@ -981,10 +998,19 @@ function updateSizeRatio() {
 {
     const minVal = (e) => {
         e = e.target;
-        if (e.value < e.min) e.value = e.min;
+        if (parseInt(e.value, 10) < e.min) e.value = e.min;
     }
 
-    for (const id of ['FRLower', 'colourTolerance', 'lowFRExport']) {
+    const maxVal = (e) => {
+        e = e.target;
+        if (parseInt(e.value, 10) > e.max) e.value = e.max;
+    }
+
+    for (const id of ['FRLower', 'colourTolerance', 'lowFRExport', 'line_move_speed']) {
         document.getElementById(id).addEventListener('change', minVal);
+    }
+
+    for (const id of ['line_move_speed']) {
+        document.getElementById(id).addEventListener('change', maxVal);
     }
 }
