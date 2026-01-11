@@ -144,7 +144,7 @@ struct ExportData {
 // delim 1 = tab, else = space
 struct ExportString {
     std::string data;
-    std::string delim{" "};
+    std::string_view delim{" "};
 
     explicit ExportString(const int delim = 1) {
         using namespace usylibpp::strings;
@@ -155,10 +155,6 @@ struct ExportString {
     void addData(auto&& freq, auto&& spl) {
         using namespace usylibpp::strings;
         data += concat_strings("\n", std::to_string(freq), delim, std::to_string(spl));
-    }
-
-    std::string getData() const {
-        return data;
     }
 };
 
@@ -682,7 +678,8 @@ struct Image {
             }
         }
 
-        return str.getData();
+        auto ret = std::move(str.data);
+        return ret;
     }
 
     uint32_t snapLine(uint32_t pos, const int lineDir, const int moveDir) const {
