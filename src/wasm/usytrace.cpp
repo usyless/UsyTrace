@@ -1,12 +1,10 @@
 #include <algorithm>
-#include <cmath>
 #include <functional>
 #include <iterator>
 #include <map>
 #include <numeric>
 #include <stack>
 #include <vector>
-#include <string.h>
 #include <set>
 #include <cstdint>
 #include <string>
@@ -27,7 +25,7 @@ struct RGB {
     RGB(const Colour r, const Colour g, const Colour b) : R(r), G(g), B(b) {}
 
     static inline Colour biggestDifference(const RGB& rgb) {
-        return abs(static_cast<int>(std::max(std::max(rgb.R, rgb.G), rgb.B)) - std::min(std::min(rgb.R, rgb.G), rgb.B));
+        return std::abs(static_cast<int>(std::max(std::max(rgb.R, rgb.G), rgb.B)) - std::min(std::min(rgb.R, rgb.G), rgb.B));
     }
 
     inline double getDifference(const RGB& rgb) const {
@@ -191,7 +189,7 @@ struct Trace {
                     else simplifiedTrace.emplace_back(reduce(identity.begin(), identity.end()) / identity.size(), previousValue);
                 }
                 if (simplifiedTrace.back().first != trace.rbegin()->first) simplifiedTrace.emplace_back(trace.rbegin()->first, trace.rbegin()->second);
-            } else copy(trace.begin(), trace.end(), back_inserter(simplifiedTrace));
+            } else std::copy(trace.begin(), trace.end(), std::back_inserter(simplifiedTrace));
         }
         return simplifiedTrace;
     }
