@@ -334,7 +334,7 @@ struct Trace {
             case 1: {
                 // up
                 for (const auto [key, val] : trace) {
-                    const auto newVal = val - magnitude;
+                    const auto newVal = static_cast<int>(val) - static_cast<int>(magnitude);
                     if (newVal < 0) continue;
                     newTrace[key] = newVal;
                 }
@@ -343,7 +343,7 @@ struct Trace {
             case 2: {
                 // left
                 for (const auto [key, val] : trace) {
-                    const auto newKey = key - magnitude;
+                    const auto newKey = static_cast<int>(key) - static_cast<int>(magnitude);
                     if (newKey < 0) continue;
                     newTrace[newKey] = val;
                 }
