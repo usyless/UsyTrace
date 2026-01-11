@@ -759,7 +759,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
     });
 }
 
-{ // Move canvas lines with buttons
+{ // Move canvas lines with buttons and offset trace
     let holdInterval, line, snap = preferences.snapToLines();
     document.getElementById('snapToLines').addEventListener('change', () => snap = preferences.snapToLines());
 
@@ -772,7 +772,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
                 // Global trace offset
                 const direction = parseInt(t.dataset["direction"], 10);
                 holdInterval = setInterval(() => {
-                    worker.offsetTrace(direction, 1);
+                    worker.offsetTrace(direction, sizeRatio / 2);
                 }, 10);
                 return;
             }
@@ -880,7 +880,7 @@ image.addEventListener('error', () => {
 { // keybindings
     const pointerDown = new PointerEvent('pointerdown', {bubbles: true});
     const pointerUp = new PointerEvent('pointerup', {bubbles: true});
-    
+
     const e_redo = document.getElementById('redo');
     const e_undo = document.getElementById('undo');
     const e_autoPath = document.getElementById('autoPath');
