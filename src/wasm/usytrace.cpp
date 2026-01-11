@@ -314,12 +314,10 @@ struct Trace {
     Trace offsetTrace(uint8_t direction, uint32_t magnitude) const {
         frTrace newTrace{};
 
-        const auto image_height_bound = imageData.height - 1;
-        const auto image_width_bound = imageData.width - 1;
-
         switch (direction) {
             case 0: {
                 // down
+                const auto image_height_bound = imageData.height - 1;
                 for (const auto [key, val] : trace) {
                     const auto newVal = val + magnitude;
                     if (newVal > image_height_bound) continue;
@@ -347,6 +345,7 @@ struct Trace {
             }
             case 3: {
                 // right
+                const auto image_width_bound = imageData.width - 1;
                 for (const auto [key, val] : trace) {
                     const auto newKey = key + magnitude;
                     if (newKey > image_width_bound) continue;
