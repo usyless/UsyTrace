@@ -364,6 +364,9 @@ const worker = {
             /** @export */ width,
             /** @export */ height
         }, [imageData.data.buffer]);
+
+        global_canvas.width = 0;
+        global_canvas.height = 0;
     },
     clearTrace: () => worker.postMessage({
         /** @export */ type: 'clearTrace'
@@ -679,6 +682,9 @@ document.getElementById('editImage').addEventListener('click', () => {
                 imageQueue.addImage(URL.createObjectURL(b), true);
                 currentlySelected?.__usytrace_remove();
                 clearPopups();
+
+                global_canvas.width = 0;
+                global_canvas.height = 0;
             });
         }, {once: true});
         void createPopup(elem, {buttons});
