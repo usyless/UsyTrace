@@ -29,6 +29,9 @@ function resetToDefault() {
     for (const val in defaults) document.getElementById(val).value = defaults[val];
 }
 
+const global_canvas = document.createElement('canvas');
+const global_canvas_ctx_2d = global_canvas.getContext('2d');
+
 // Global Variables
 let sizeRatio, width, height, lineWidth, CURRENT_MODE = null, MODE_RESET_CB = null;
 
@@ -350,12 +353,10 @@ const worker = {
         /** @export */ src: src
     }),
     addImage: (width, height) => {
-        const processing_canvas = document.createElement("canvas"),
-            processing_context = processing_canvas.getContext('2d');
-        processing_canvas.width = width;
-        processing_canvas.height = height;
-        processing_context.drawImage(image, 0, 0);
-        const imageData = processing_context.getImageData(0, 0, width, height);
+        global_canvas.width = width;
+        global_canvas.height = height;
+        global_canvas_ctx_2d.drawImage(image, 0, 0);
+        const imageData = global_canvas_ctx_2d.getImageData(0, 0, width, height);
         worker.worker.postMessage({
             /** @export */ src: image.src, // use postMessage directly to pass buffer properly
             /** @export */ type: 'setData',
@@ -651,33 +652,31 @@ document.getElementById('editImage').addEventListener('click', () => {
         buttons.append(cancel, confirm);
         cancel.addEventListener('click', clearPopups);
         confirm.addEventListener('click', () => {
-            const canvas = document.createElement("canvas"),
-                ctx = canvas.getContext('2d');
-            canvas.width = width;
-            canvas.height = height;
+            global_canvas.width = width;
+            global_canvas.height = height;
 
-            if (!safari) ctx.filter = img.style.filter;
-            ctx.drawImage(img, 0, 0);
+            if (!safari) global_canvas_ctx_2d.filter = img.style.filter;
+            global_canvas_ctx_2d.drawImage(img, 0, 0);
 
             if (safari) {
                 // should only fire for safari, which does not support 2d context filter
                 // i ain't implementing the other filters :serioussssly:
                 console.log("Using fallback invert mode");
-                const imageData = ctx.getImageData(0, 0, width, height),
+                const imageData = global_canvas_ctx_2d.getImageData(0, 0, width, height),
                     data = imageData.data, l = data.length;
                 for (let i = 0; i < l; i += 4) {
                     data[i] = 255 - data[i];
                     data[i + 1] = 255 - data[i + 1];
                     data[i + 2] = 255 - data[i + 2];
                 }
-                ctx.putImageData(imageData, 0, 0);
+                global_canvas_ctx_2d.putImageData(imageData, 0, 0);
             }
 
             document.getElementById('removeImage').click();
-            canvas.toBlob((b) => {
+            global_canvas.toBlob((b) => {
                 imageQueue.addImage(URL.createObjectURL(b), true);
                 clearPopups();
-            })
+            });
         }, {once: true});
         void createPopup(elem, {buttons});
     } else void createPopup('No valid image selected');
