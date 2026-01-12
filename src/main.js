@@ -487,9 +487,10 @@ const fileInput = document.getElementById('fileInput');
 
 const imageQueue = {
     elem: document.getElementById('imageQueueInner'),
-    currentlySelected: () => imageQueue.elem.querySelectorAll('img[class="selectedImage"]'),
+    currentlySelected: () => imageQueue.elem.querySelector('img.selectedImage'),
+    currentlyAllSelected: () => imageQueue.elem.querySelectorAll('img.selectedImage'),
     removeSelectedImage: () => {
-        for (const i of imageQueue.currentlySelected()) i.classList.remove('selectedImage');
+        for (const i of imageQueue.currentlyAllSelected()) i.classList.remove('selectedImage');
     },
     deleteImage: (img) => {
         imageMap.delete(img.src);
@@ -498,7 +499,7 @@ const imageQueue = {
         img.remove();
     },
     scrollToSelected: () => {
-        imageQueue.elem.querySelector('img[class="selectedImage"]').scrollIntoView({inline: 'center', behavior: 'smooth'});
+        (imageQueue.currentlySelected())?.scrollIntoView({inline: 'center', behavior: 'smooth'});
     },
     addImage: (src, display=false) => {
         const img = document.createElement('img'),
@@ -517,8 +518,8 @@ const imageQueue = {
             img.classList.add('selectedImage');
             imageQueue.scrollToSelected();
         });
-        img.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
+        img.__usytrace_remove = (e) => {
+            e?.preventDefault();
             if (img.classList.contains('selectedImage')) {
                 let newImage = img.nextElementSibling;
                 if (!newImage) newImage = img.previousElementSibling;
@@ -526,11 +527,12 @@ const imageQueue = {
                 else newImage.click();
             }
             imageQueue.deleteImage(img);
-        })
+        };
+        img.addEventListener('contextmenu', img.__usytrace_remove);
         a.appendChild(img);
         if (display) {
             img.click();
-            setTimeout(() => imageQueue.scrollToSelected(), 50);
+            setTimeout(imageQueue.scrollToSelected, 50);
         }
         return img;
     },
@@ -546,7 +548,7 @@ const imageQueue = {
         }
     }
 }
-document.getElementById('removeImage').addEventListener('click', () => document.querySelector('img[class="selectedImage"]')?.dispatchEvent(new Event('contextmenu')));
+document.getElementById('removeImage').addEventListener('click', () => imageQueue.currentlySelected()?.__usytrace_remove());
 document.getElementById('toggleImageQueue').addEventListener('click', imageQueue.toggle);
 document.getElementById('editImage').addEventListener('click', () => {
     if (image.isValid()) {
@@ -672,9 +674,10 @@ document.getElementById('editImage').addEventListener('click', () => {
                 global_canvas_ctx_2d.putImageData(imageData, 0, 0);
             }
 
-            document.getElementById('removeImage').click();
+            const currentlySelected = imageQueue.currentlySelected();
             global_canvas.toBlob((b) => {
                 imageQueue.addImage(URL.createObjectURL(b), true);
+                currentlySelected?.__usytrace_remove();
                 clearPopups();
             });
         }, {once: true});
@@ -687,12 +690,13 @@ resetToDefault();
 initAll();
 
 fileInput.loadFiles = (files) => {
-    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/")), lastId = validFiles.length - 1;
+    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    const lastId = validFiles.length - 1;
+    
     if (validFiles.length > 0) {
         clearPopups();
         validFiles.forEach((file, index) => {
-            file = URL.createObjectURL(file);
-            imageQueue.addImage(file, index === lastId);
+            imageQueue.addImage(URL.createObjectURL(file), index === lastId);
         });
     }
     else void createPopup("Invalid image/file(s) added!");
