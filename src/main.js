@@ -29,6 +29,11 @@ function resetToDefault() {
     for (const val in defaults) document.getElementById(val).value = defaults[val];
 }
 
+// const global_canvas = 'OffscreenCanvas' in window ? new OffscreenCanvas(0, 0) : document.createElement('canvas');
+// if (!global_canvas.toBlob && global_canvas.convertToBlob) {
+//     global_canvas.toBlob = function (callback, type, quality) { this.convertToBlob({ type, quality }).then(callback); };
+// }
+
 const global_canvas = document.createElement('canvas');
 const global_canvas_ctx_2d = global_canvas.getContext('2d');
 
