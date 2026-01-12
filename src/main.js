@@ -552,11 +552,11 @@ document.getElementById('removeImage').addEventListener('click', () => imageQueu
 document.getElementById('toggleImageQueue').addEventListener('click', imageQueue.toggle);
 document.getElementById('editImage').addEventListener('click', () => {
     if (image.isValid()) {
-        const elem = document.createElement('div'),
-            header = document.createElement('h3'),
-            edit_buttons = document.createElement('div'),
-            img_wrapper = document.createElement('div'),
-            img = document.createElement('img');
+        const elem = document.createElement('div');
+        const header = document.createElement('h3');
+        const edit_buttons = document.createElement('div');
+        const img_wrapper = document.createElement('div');
+        const img = document.createElement('img');
         elem.id = 'editContainer';
         elem.append(header, edit_buttons, img_wrapper);
         img_wrapper.append(img);
@@ -567,8 +567,8 @@ document.getElementById('editImage').addEventListener('click', () => {
 
         const activeFilters = new Set();
         // safari check
-        const safari = !('filter' in CanvasRenderingContext2D.prototype),
-            filters = !safari ? {
+        const safari = !('filter' in CanvasRenderingContext2D.prototype);
+        const filters = !safari ? {
             /** @export */ Invert: {
                 property: 'invert',
                 default: 1,
