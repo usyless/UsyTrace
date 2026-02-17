@@ -22,13 +22,13 @@ using frTrace = std::map<uint32_t, uint32_t>;
 struct RGB {
     Colour R, G, B;
 
-    RGB(const Colour r, const Colour g, const Colour b) : R(r), G(g), B(b) {}
+    constexpr RGB(const Colour r, const Colour g, const Colour b) noexcept : R(r), G(g), B(b) {}
 
-    static inline Colour biggestDifference(const RGB& rgb) {
+    static constexpr inline Colour biggestDifference(const RGB& rgb) noexcept {
         return std::abs(static_cast<int>(std::max(std::max(rgb.R, rgb.G), rgb.B)) - std::min(std::min(rgb.R, rgb.G), rgb.B));
     }
 
-    inline double getDifference(const RGB& rgb) const {
+    constexpr inline double getDifference(const RGB& rgb) const noexcept {
         const int rmean = (static_cast<int>(R) + rgb.R) / 2;
         const int rdiff = static_cast<int>(R) - rgb.R;
         const int gdiff = static_cast<int>(G) - rgb.G;
@@ -36,21 +36,21 @@ struct RGB {
         return sqrt((512 + rmean) * ((rdiff * rdiff) >> 8) + 4 * (gdiff * gdiff) + (((767 - rmean) * (bdiff * bdiff)) >> 8));
     }
 
-    bool operator==(const RGB& rgb) const {
+    constexpr bool operator==(const RGB& rgb) const noexcept {
         return R == rgb.R && G == rgb.G && B == rgb.B;
     }
 
-    bool operator<(const RGB& rgb) const {
+    constexpr bool operator<(const RGB& rgb) const noexcept {
         return R < rgb.R || G < rgb.G || B < rgb.B;
     }
 
-    inline uint32_t sum() const {
+    constexpr inline uint32_t sum() const noexcept {
         return R + G + B;
     }
 
     // Might be able to do silly thing with this pointer here
     // Although probably undefined behaviour due to padding
-    inline int toBin() const {
+    constexpr inline int toBin() const noexcept {
         return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
     }
 };
@@ -65,18 +65,18 @@ struct ImageData {
     ImageData(const uint32_t width, const uint32_t height) : width(width), height(height) {
         data.reset(ImageData<Channels>::allocate_buffer(width, height));
     }
-    ImageData(Colour* data, const uint32_t width, const uint32_t height) : data(data), width(width), height(height) {}
+    constexpr ImageData(Colour* data, const uint32_t width, const uint32_t height) noexcept : data(data), width(width), height(height) {}
 
-    inline RGB getRGB(const uint32_t x, const uint32_t y) const {
+    constexpr inline RGB getRGB(const uint32_t x, const uint32_t y) const noexcept {
         const auto pos = (y * width + x) * channels;
         return {data[pos], data[pos + 1], data[pos + 2]};
     }
 
-    inline Colour getR(const uint32_t x, const uint32_t y) const {
+    constexpr inline Colour getR(const uint32_t x, const uint32_t y) const noexcept {
         return data[(y * width + x) * channels];
     }
 
-    inline uint32_t getMaxPos() const {
+    constexpr inline uint32_t getMaxPos() const noexcept {
         return width * height * channels;
     }
 
@@ -99,13 +99,13 @@ struct RGBTools {
     uint32_t tolerance;
     uint32_t count = 1;
 
-    RGBTools(RGB rgb, const uint32_t tolerance) : rgb(std::move(rgb)), tolerance(tolerance) {}
+    constexpr RGBTools(RGB rgb, const uint32_t tolerance) noexcept : rgb(std::move(rgb)), tolerance(tolerance) {}
 
-    inline bool withinTolerance(const RGB& rgb) const {
+    constexpr inline bool withinTolerance(const RGB& rgb) const noexcept {
         return this->rgb.getDifference(rgb) <= tolerance;
     }
 
-    inline void addToAverage(const RGB& rgb) {
+    constexpr inline void addToAverage(const RGB& rgb) noexcept {
         const auto r = static_cast<int>(this->rgb.R), g = static_cast<int>(this->rgb.G), b = static_cast<int>(this->rgb.B);
         const auto oR = static_cast<int>(rgb.R), oG = static_cast<int>(rgb.G), oB = static_cast<int>(rgb.B);
         this->rgb.R += static_cast<Colour>((sqrt(((r * r) + (oR * oR)) / 2) - r) / count);
@@ -118,12 +118,12 @@ struct RGBTools {
 struct TraceData {
     uint32_t x = 0, y = 0, colourTolerance = 0;
 
-    TraceData(const uint32_t x, const uint32_t y) : x(x), y(y) {}
-    explicit TraceData(const uint32_t colourTolerance) : colourTolerance(colourTolerance) {}
-    TraceData(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) : x(x), y(y), colourTolerance(colourTolerance) {}
+    constexpr TraceData(const uint32_t x, const uint32_t y) noexcept : x(x), y(y) {}
+    constexpr explicit TraceData(const uint32_t colourTolerance) noexcept : colourTolerance(colourTolerance) {}
+    constexpr TraceData(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) noexcept : x(x), y(y), colourTolerance(colourTolerance) {}
 
 
-    TraceData clamp(const ImageData<4>& data) const {
+    constexpr TraceData clamp(const ImageData<4>& data) const noexcept {
         return {std::clamp(x, 0U, data.width - 1), std::clamp(y, 0U, data.height - 1), colourTolerance};
     }
 };
@@ -132,9 +132,9 @@ struct ExportData {
     int delim;
     double PPOStep, logMinFR, logMaxFR, logFRBottomValue, SPLRatio, FRRatio, SPLBottomValue, SPLBottomPixel, FRBottomPixel;
 
-    ExportData(const int PPO, const int delim, const double lowFRExport,  const double highFRExport,
+    constexpr ExportData(const int PPO, const int delim, const double lowFRExport,  const double highFRExport,
         const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue, const double SPLBottomPixel,
-        const double FRTopValue, const double FRTopPixel, const double FRBottomValue, const double FRBottomPixel):
+        const double FRTopValue, const double FRTopPixel, const double FRBottomValue, const double FRBottomPixel) noexcept :
     delim(delim), PPOStep(log10(pow(2, 1.0 / PPO))), logMinFR(log10(lowFRExport)), logMaxFR(log10(highFRExport)),
     logFRBottomValue(log10(FRBottomValue)), SPLRatio((SPLTopValue - SPLBottomValue) / (SPLTopPixel - SPLBottomPixel)),
     FRRatio((log10(FRTopValue) - logFRBottomValue) / (FRTopPixel - FRBottomPixel)),
@@ -146,15 +146,13 @@ struct ExportString {
     std::string data;
     std::string_view delim{" "};
 
-    explicit ExportString(const int delim = 1) {
-        using namespace usylibpp::strings;
+    constexpr explicit ExportString(const int delim = 1) {
         if (delim == 1) this->delim = "\t";
-        data = concat_strings("* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz)", this->delim, "SPL(dB)");
+        data = ulp::str::concat_strings("* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz)", this->delim, "SPL(dB)");
     }
 
-    void addData(auto&& freq, auto&& spl) {
-        using namespace usylibpp::strings;
-        data += concat_strings("\n", std::to_string(freq), delim, std::to_string(spl));
+    constexpr void addData(auto&& freq, auto&& spl) {
+        data += ulp::str::concat_strings("\n", std::to_string(freq), delim, std::to_string(spl));
     }
 };
 
@@ -204,15 +202,14 @@ struct Trace {
         if (const auto res = clean(); !res.empty()) {
             auto iter = res.begin();
             const auto end = res.end();
-            using namespace usylibpp::strings;
             if (res.size() == 1) {
-                const std::string first{to_string_view_or_default(iter->first)};
-                svg += concat_strings("M", first, " ", to_string_view_or_default(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
+                const std::string first{ulp::str::to_string_view_or_default(iter->first)};
+                svg += ulp::str::concat_strings("M", first, " ", ulp::str::to_string_view_or_default(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
             } else {
                 svg += "M";
                 for (; iter != end; ++iter) {
-                    const std::string first{to_string_view_or_default(iter->first)};
-                    svg += concat_strings(first, " ", to_string_view_or_default(iter->second), " ");
+                    const std::string first{ulp::str::to_string_view_or_default(iter->first)};
+                    svg += ulp::str::concat_strings(first, " ", ulp::str::to_string_view_or_default(iter->second), " ");
                 }
                 if (svg.size() > 1) svg.pop_back();
             }

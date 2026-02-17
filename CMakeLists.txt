@@ -25,6 +25,8 @@ add_executable(usytrace
 
 include(FetchContent)
 
+set(USYLIBPP_ENABLE_WINDOWS OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
     usylibpp
     GIT_REPOSITORY https://github.com/usyless/usylibpp.git
