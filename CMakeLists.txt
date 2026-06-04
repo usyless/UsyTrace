@@ -26,6 +26,7 @@ add_executable(usytrace
 include(FetchContent)
 
 set(USYLIBPP_ENABLE_WINDOWS OFF CACHE BOOL "" FORCE)
+set(USYLIBPP_ENABLE_LINUX OFF CACHE BOOL "" FORCE)
 
 FetchContent_Declare(
     usylibpp
