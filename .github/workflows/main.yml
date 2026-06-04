@@ -14,7 +14,7 @@ jobs:
 
     steps:
     - name: Checkout main repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         path: usytrace
         ref: main
@@ -79,7 +79,7 @@ jobs:
         npm run build:dist
 
     - name: Checkout github pages repo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
       with:
         repository: usyless/usyless.github.io
         token: ${{ secrets.BOT_TOKEN }}
