@@ -5,8 +5,8 @@ import { state } from "./state.js";
 
 // Defaults
 const defaults = {
-    /** @export */ FRHigher: 20000,
-    /** @export */ FRLower: 20,
+    /** @export */ FRHigher: "",
+    /** @export */ FRLower: "",
 
     /** @export */ colourTolerance: 67,
 
