@@ -5,6 +5,7 @@ import { state } from "./state.js";
 
 const tesseract_worker = new Promise(async (resolve, reject) => {
     try {
+        console.time("Initialise Tesseract OCR");
         const tesseract_worker = await Tesseract.createWorker('eng', Tesseract.OEM["LSTM_ONLY"], {
             /** @export */ corePath: './tesseract',
             /** @export */ langPath: './tesseract',
@@ -17,9 +18,10 @@ const tesseract_worker = new Promise(async (resolve, reject) => {
         });
 
         resolve(tesseract_worker);
-        console.info("Successfully loaded Tesseract OCR");
+        console.timeEnd("Initialise Tesseract OCR");
     } catch (error) {
         reject(error);
+        console.timeEnd("Initialise Tesseract OCR");
         console.error("Failed to load Tesseract OCR:", error);
     }
 });
@@ -344,7 +346,7 @@ const worker = {
                     break;
                 }
                 case 'setData': {
-                    console.timeEnd("Initialise image");
+                    console.timeEnd(`Initialise image ${data["image_id"]}`);
                     break;
                 }
                 default: {
@@ -378,7 +380,7 @@ const worker = {
         /** @export */ type: 'removeImage',
         /** @export */ src: src
     }),
-    addImage: (width, height) => {
+    addImage: (width, height, image_id) => {
         global_canvas.width = width;
         global_canvas.height = height;
         global_canvas_ctx_2d.drawImage(image, 0, 0);
@@ -388,7 +390,8 @@ const worker = {
             /** @export */ type: 'setData',
             /** @export */ data: imageData.data,
             /** @export */ width,
-            /** @export */ height
+            /** @export */ height,
+            /** @export */ image_id,
         }, [imageData.data.buffer]);
 
         global_canvas.width = 0;
@@ -886,6 +889,9 @@ window.addEventListener('resize', () => {
     }
 }
 
+let image_id = 0;
+let tesseract_id = 0;
+
 // where everything starts
 image.addEventListener('load', () => {
     document.getElementById('defaultMainText').classList.add('hidden');
@@ -900,8 +906,8 @@ image.addEventListener('load', () => {
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
         waitingOverlay.createOverlay();
-        console.time("Initialise image");
-        worker.addImage(width, height); // implicitly sets as current
+        console.time(`Initialise image ${++image_id}`);
+        worker.addImage(width, height, image_id); // implicitly sets as current
         lines.setPosition(lines.lines["xHigh"], width);
         lines.setPosition(lines.lines["xLow"], 0);
         lines.setPosition(lines.lines["yHigh"], 0);
@@ -916,10 +922,13 @@ image.addEventListener('load', () => {
 
         const src = image.src;
         tesseract_worker.then((t) => {
+            const label = `Initialise image OCR ${++tesseract_id}`;
+            console.time(label);
             t.recognize(src, {}, {
                 /** @export */ blocks: true,
                 /** @export */ text: false,
             }).then((d) => {
+                console.timeEnd(label);
                 const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
                 console.log(words);
             });

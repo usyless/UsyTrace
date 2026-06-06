@@ -40,13 +40,14 @@ Module['onRuntimeInitialized'] = () => {
     const typeMap = {
         /** @export */ setCurrent: ({src}) => api.setCurrent_(src),
         /** @export */ removeImage: ({src}) => api.removeImage_(src),
-        /** @export */ setData: ({src, type, width, height, data}) => {
+        /** @export */ setData: ({src, type, width, height, data, image_id}) => {
             const p = api.create_buffer(parseInt(width, 10), parseInt(height, 10));
             HEAPU8.set(data, p);
             api.addImage_(src, p, parseInt(width, 10), parseInt(height, 10));
             return {
                 /** @export */ src,
-                /** @export */ type
+                /** @export */ type,
+                /** @export */ image_id,
             };
         },
         /** @export */ getHistoryStatus: (data) => {
