@@ -5,15 +5,15 @@ import { state } from "./state.js";
 
 const tesseract_worker = new Promise(async (resolve, reject) => {
     try {
-        const tesseract_worker = await Tesseract.createWorker('eng', Tesseract.OEM["LTSM_ONLY"], {
+        const tesseract_worker = await Tesseract.createWorker('eng', Tesseract.OEM["LSTM_ONLY"], {
             /** @export */ corePath: './tesseract',
             /** @export */ langPath: './tesseract',
             /** @export */ workerPath: './tesseract/worker.min.js'
         });
 
         await tesseract_worker.setParameters({
-            /** @export */ tessedit_char_whitelist: '0123456789,.',
-            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SINGLE_BLOCK"]
+            /** @export */ tessedit_char_whitelist: '0123456789,.k-',
+            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["AUTO"]
         });
 
         resolve(tesseract_worker);
@@ -913,6 +913,16 @@ image.addEventListener('load', () => {
         worker.snapLine(lines.lines["yHigh"], 1);
         worker.snapLine(lines.lines["yLow"], -1, true);
         worker.autoTrace();
+
+        const src = image.src;
+        tesseract_worker.then((t) => {
+            t.recognize(src, undefined, {
+                blocks: true,
+                text: true,
+                hocr: true,
+                tsv: true,
+            }).then(console.log);
+        });
         imageData.initial = false;
     } else {
         worker.setCurrent();
