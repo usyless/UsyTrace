@@ -1,4 +1,4 @@
-const cacheName = 'v83';
+const cacheName = 'v84';
 
 const contentToCache = [
     './favicon.ico',
@@ -15,6 +15,14 @@ const contentToCache = [
 
     './assets/fonts/open-sans-latin-400-normal.woff2',
     './assets/fonts/open-sans-latin-700-normal.woff2',
+
+    './tesseract/tesseract.min.js',
+    './tesseract/tesseract-core.wasm.js',
+    './tesseract/tesseract-core-lstm.wasm.js',
+    './tesseract/tesseract-core-simd.wasm.js',
+    './tesseract/tesseract-core-simd-lstm.wasm.js',
+    './tesseract/worker.min.js',
+    './tesseract/eng.traineddata.gz',
 ].map((c) => `${c}?version=${cacheName}`);
 
 self.addEventListener('install', (e) => {

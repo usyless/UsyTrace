@@ -3,6 +3,27 @@
 import { createPopup, clearPopups, currentOk } from "./popups.js";
 import { state } from "./state.js";
 
+const tesseract_worker = new Promise(async (resolve, reject) => {
+    try {
+        const tesseract_worker = await Tesseract.createWorker('eng', Tesseract.OEM["LTSM_ONLY"], {
+            /** @export */ corePath: './tesseract',
+            /** @export */ langPath: './tesseract',
+            /** @export */ workerPath: './tesseract/worker.min.js'
+        });
+
+        await tesseract_worker.setParameters({
+            /** @export */ tessedit_char_whitelist: '0123456789,.',
+            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SINGLE_BLOCK"]
+        });
+
+        resolve(tesseract_worker);
+        console.info("Successfully loaded Tesseract OCR");
+    } catch (error) {
+        reject(error);
+        console.error("Failed to load Tesseract OCR:", error);
+    }
+});
+
 // Defaults
 const defaults = {
     /** @export */ FRHigher: "",
