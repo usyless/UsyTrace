@@ -916,12 +916,13 @@ image.addEventListener('load', () => {
 
         const src = image.src;
         tesseract_worker.then((t) => {
-            t.recognize(src, undefined, {
-                blocks: true,
-                text: true,
-                hocr: true,
-                tsv: true,
-            }).then(console.log);
+            t.recognize(src, {}, {
+                /** @export */ blocks: true,
+                /** @export */ text: false,
+            }).then((d) => {
+                const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
+                console.log(words);
+            });
         });
         imageData.initial = false;
     } else {
