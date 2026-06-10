@@ -3,6 +3,7 @@
 import { createPopup, clearPopups, currentOk } from "./popups.js";
 import { state } from "./state.js";
 
+/** @type {Promise<tesseract_>} */
 const tesseract_worker = new Promise(async (resolve, reject) => {
     try {
         console.time("Initialise Tesseract OCR");
