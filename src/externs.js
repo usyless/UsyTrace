@@ -1,12 +1,16 @@
 /**
- * @typedef {Object} tesseract_
- * @property {(Object) => *} setParameters
- * @property {(image: *, options: *, output: *) => Promise<Object>} recognize
+ * @typedef {{
+ *   setParameters: function(Object): *,
+ *   recognize: function(*, *, *): !Promise<!Object>
+ * }}
  */
+var tesseract_object;
 
-/** @type {Object} */
-var Tesseract = {};
-/** @return {Promise<tesseract_>} */
-Tesseract.createWorker = function(lang, oem, config) {};
-Tesseract.OEM = {};
-Tesseract.PSM = {};
+/**
+ * @typedef {{
+ *   createWorker: function(*, *, *): !Promise<!tesseract_object>,
+ *   OEM: Object,
+ *   PSM: Object,
+ * }}
+ */
+var Tesseract;
