@@ -63,6 +63,7 @@ function buildJs(debugMode) {
         `npx -y google-closure-compiler ` +
         `--language_in=ECMASCRIPT_2020 --language_out=ECMASCRIPT_2020 ` +
         `--compilation_level ${debugMode ? "SIMPLE" : "ADVANCED"} ` +
+        // `--jscomp_error=reportUnknownTypes ` + // this is strict typing, throws lots of errors
         `--externs=${common.joinWithSrcQuoted("externs.js")} ` +
         `--js ${MINIFIED_JS_FILES.map(common.joinWithSrcQuoted).join(" ")} ` +
         `--js_output_file ${common.joinWithDistQuoted("main.min.js")}`
