@@ -38,22 +38,24 @@ body {
     transition: 0.1s;
 }
 
-::-webkit-scrollbar {
-    width: var(--spacing-larger);
-}
+@supports (-webkit-app-region: inherit) {
+    ::-webkit-scrollbar {
+        width: var(--spacing-larger);
+    }
 
-::-webkit-scrollbar-track {
-    background: var(--secondary);
-}
+    ::-webkit-scrollbar-track {
+        background: var(--secondary);
+    }
 
-::-webkit-scrollbar-thumb {
-    background: var(--tertiary);
-    border-radius: var(--radius);
-}
+    ::-webkit-scrollbar-thumb {
+        background: var(--tertiary);
+        border-radius: var(--radius);
+    }
 
-@media (hover: hover) {
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--quaternary);
+    @media (hover: hover) {
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--quaternary);
+        }
     }
 }
 
