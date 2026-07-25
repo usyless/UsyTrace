@@ -40,8 +40,8 @@ jobs:
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
-        ./emsdk install 6.0.0
-        ./emsdk activate 6.0.0
+        ./emsdk install 6.0.4
+        ./emsdk activate 6.0.4
     
     - name: Install newer CMake version
       if: steps.changes.outputs.recompile == 'true'
