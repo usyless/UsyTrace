@@ -922,17 +922,25 @@ image.addEventListener('load', () => {
         worker.autoTrace();
 
         const src = image.src;
+
+        imageData.words_promise = new Promise((resolve, reject) => {
+            imageData.words_resolve = resolve;
+            imageData.words_reject = reject;
+        });
         tesseract_worker.then((t) => {
             const label = `Initialise image OCR ${++tesseract_id}`;
             console.time(label);
-            t.recognize(src, {}, {
+            return t.recognize(src, {}, {
                 /** @export */ blocks: true,
                 /** @export */ text: false,
             }).then((d) => {
                 console.timeEnd(label);
                 const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
-                console.log(words);
+                imageData.words_resolve(words);
+                console.log('Words detected in image: ', words);
             });
+        }).catch((err) => {
+            imageData.words_reject(err);
         });
         imageData.initial = false;
     } else {
