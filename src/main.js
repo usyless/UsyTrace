@@ -448,7 +448,12 @@ const worker = {
 
             if (words.value) {
                 words.promise.then((data) => {
-                    // actually do stuff with the words here
+                    if (data.length === 0) {
+                        worker.postMessage(data);
+                        return;
+                    }
+
+
                 }).catch(() => {
                     worker.postMessage(data);
                 });
@@ -461,6 +466,7 @@ const worker = {
                 });
 
                 words.promise.then(() => {
+                    clearPopups();
                     worker.exportTrace();
                 }).catch(() => {
                     words.skipped = true;
