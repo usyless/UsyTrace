@@ -18,12 +18,12 @@ const tesseract_worker = new Promise(async (resolve, reject) => {
             /** @export */ tessedit_pageseg_mode: Tesseract.PSM["AUTO"]
         });
 
-        resolve(tesseract_worker);
         console.timeEnd("Initialise Tesseract OCR");
+        resolve(tesseract_worker);
     } catch (error) {
-        reject(error);
         console.timeEnd("Initialise Tesseract OCR");
         console.error("Failed to load Tesseract OCR:", error);
+        reject(error);
     }
 });
 
