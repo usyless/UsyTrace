@@ -27,6 +27,7 @@ jobs:
         working-directory: usytrace
         filters: |
           recompile:
+            - '.github/workflows/main.yml'
             - 'src/wasm/**'
             - 'CMakeLists.txt'
 
