@@ -928,7 +928,7 @@ image.addEventListener('load', () => {
             imageData.words_reject = reject;
         });
         tesseract_worker.then((t) => {
-            const label = `Initialise image OCR ${++tesseract_id}`;
+            const label = `Initialise image ${++tesseract_id} OCR`;
             console.time(label);
             return t.recognize(src, {}, {
                 /** @export */ blocks: true,
