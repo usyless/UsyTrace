@@ -312,6 +312,24 @@ const buttons = {
     for (const button of MODE_BUTTON_IDS) document.getElementById(button).addEventListener('click', cb);
 }
 
+const parseTesseractText = (text) => {
+    let cleaned = text.toLowerCase().trim();
+
+    const hasK = cleaned.endsWith('k');
+    if (hasK) cleaned = cleaned.slice(0, -1);
+
+    cleaned = cleaned.replace(/\s+/g, '');
+
+    if (/[.,]\d{3}$/.test(cleaned)) { // if followed by 3 digits, just remove
+        cleaned = cleaned.replace(/[.,]/g, '');
+    } else {
+        cleaned = cleaned.replace(/,/g, '.'); // replace all comma by dot for parsing
+    }
+
+    const val = parseFloat(cleaned);
+    return isNaN(val) ? null : (hasK ? val * 1000 : val);
+};
+
 const worker = {
     worker: (() => {
         const w = new Worker("./usytrace.js", {type: 'module'});
@@ -467,37 +485,109 @@ const worker = {
         if (hasNullOrEmpty(data)) void createPopup("Please fill in all required values to export (SPL and FR values)");
         else {
             const words = imageMap.get(image.src).words;
-            if (words.skipped) {
-                worker.postMessage(data);
-                return;
-            }
 
-            if (words.value) {
-                words.promise.then((word_data) => {
-                    if (word_data.length === 0) {
-                        worker.postMessage(data);
-                        return;
+            const on_words = (word_data) => {
+                if (word_data.length === 0) {
+                    worker.postMessage(data);
+                    return;
+                }
+
+                const ocrNumbers = word_data.map((word) => ({
+                    val: parseTesseractText(word['text']),
+                    cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
+                    cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2
+                })).filter(w => w.val !== null);
+
+                const SPATIAL_THRESHOLD = 80;
+
+                const findClosest = (pixelTarget, isXAxis) => {
+                    let closest = null;
+                    let minDistance = SPATIAL_THRESHOLD;
+                    for (const word of ocrNumbers) {
+                        const distance = Math.abs((isXAxis ? word.cx : word.cy) - pixelTarget);
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closest = word;
+                        }
+                    }
+                    return closest;
+                };
+
+                const bounds = [
+                    { name: 'FR High', userVal: data.FR.top, ocr: findClosest(data.FR.topPixel, true), isLog: true },
+                    { name: 'FR Low', userVal: data.FR.bottom, ocr: findClosest(data.FR.bottomPixel, true), isLog: true },
+                    { name: 'SPL High', userVal: data.SPL.top, ocr: findClosest(data.SPL.topPixel, false), isLog: false },
+                    { name: 'SPL Low', userVal: data.SPL.bottom, ocr: findClosest(data.SPL.bottomPixel, false), isLog: false }
+                ];
+
+                const validationErrors = [];
+
+                for (const bound of bounds) {
+                    if (!bound.ocr || !bound.userVal) continue;
+
+                    const userVal = parseFloat(bound.userVal);
+                    if (isNaN(userVal)) continue;
+
+                    const ocrVal = bound.ocr.val;
+                    let isClose = false;
+
+                    if (bound.isLog && userVal > 0 && ocrVal > 0) {
+                        const logDiff = Math.abs(Math.log10(userVal) - Math.log10(ocrVal));
+                        isClose = logDiff <= 0.2;
+                    } else {
+                        isClose = Math.abs(userVal - ocrVal) <= 10; // large tolerance - use interpolation
                     }
 
+                    if (!isClose) {
+                        validationErrors.push(`${bound.name}: inputted '${userVal}', but OCR suggests '${ocrVal}'`);
+                    }
+                }
 
-                }).catch(() => {
+                if (validationErrors.length > 0) {
+                    const buttons = document.createElement('div');
+                    buttons.classList.add('popupButtons');
+                    const cancel = document.createElement('button'), confirm = document.createElement('button');
+                    cancel.classList.add('standardButton');
+                    cancel.textContent = 'Cancel';
+                    confirm.classList.add('standardButton');
+                    confirm.textContent = 'Save Anyway';
+                    buttons.append(confirm, cancel);
+
+                    confirm.addEventListener('click', () => {
+                        clearPopups();
+                        worker.postMessage(data);
+                    });
+
+                    cancel.addEventListener('click', clearPopups);
+
+                    void createPopup(
+                        `Detected a potential mismatch between your inputted bounds and the image text:\n\n${validationErrors.join('\n')}\n\nSave anyway or go back?`,
+                        { buttons: buttons }
+                    );
+                    return;
+                }
+
+                worker.postMessage(data);
+            };
+
+            if (words.value) {
+                words.promise.then(on_words).catch((err) => {
+                    console.error(err);
                     worker.postMessage(data);
                 });
             } else {
                 createPopup("Image text detection has not yet finished... Skip?", {
                     buttons: 'Skip'
                 }).then(() => {
-                    words.skipped = true;
-                    worker.exportTrace();
+                    worker.postMessage(data);
                 });
 
-                words.promise.then(() => {
+                words.promise.then((words_data) => {
                     clearPopups();
-                    worker.exportTrace();
+                    on_words(words_data);
                 }).catch(() => {
-                    words.skipped = true;
                     clearPopups();
-                    worker.exportTrace();
+                    worker.postMessage(data);
                 });
             }
         }
@@ -988,8 +1078,7 @@ image.addEventListener('load', () => {
             resolve_: undefined,
             reject_: undefined,
             promise: undefined,
-            value: false,
-            skipped: false
+            value: false
         };
 
         imageData.exportOptions = {
