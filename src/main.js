@@ -184,18 +184,44 @@ image.getMouseCoords = (e) => {
     }
 }
 image.isValid = () => image.src.startsWith('blob:');
-image.saveLines = () => {
-    const imageData = imageMap.get(image.src), lineData = {};
-    if (imageData) {
-        for (const name in lines.lines) lineData[name] = lines.getPosition(lines.lines[name]);
-        imageData.lines = lineData;
-    }
+image.saveLines = (imageMapData) => {
+    const lineData = {};
+    for (const name in lines.lines) lineData[name] = lines.getPosition(lines.lines[name]);
+    imageMapData.lines = lineData;
 }
-image.loadLines = () => {
-    const prev = imageMap.get(image.src).lines;
+image.loadLines = (imageMapData) => {
+    const prev = imageMapData.lines;
     for (const name in lines.lines) lines.setPosition(lines.lines[name], prev[name]);
     lines.initialise();
     lines.showLines();
+}
+
+image.saveExportOptions = (imageMapData) => {
+    const opts = imageMapData.exportOptions;
+    for (const name in opts) {
+        opts[name] = document.getElementById(name)?.value;
+    }
+}
+
+image.loadExportOptions = (imageMapData) => {
+    const opts = imageMapData.exportOptions;
+    for (const name in opts) {
+        document.getElementById(name).value = opts[name];
+    }
+}
+
+image.saveImage = () => {
+    const data = imageMap.get(image.src);
+    if (!data) return;
+    image.saveLines(data);
+    image.saveExportOptions(data);
+}
+
+image.loadImage = () => {
+    const data = imageMap.get(image.src);
+    if (!data) return; // shouldnt ever happen??
+    image.loadLines(data);
+    image.loadExportOptions(data);
 }
 
 const preferences = (() => {
@@ -580,7 +606,7 @@ const imageQueue = {
         img.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            image.saveLines();
+            image.saveImage();
             image.src = src;
             imageQueue.removeSelectedImage();
             img.classList.add('selectedImage');
@@ -966,6 +992,15 @@ image.addEventListener('load', () => {
             skipped: false
         };
 
+        imageData.exportOptions = {
+            /** @export **/ SPLHigher: '',
+            /** @export **/ SPLLower: '',
+            /** @export **/ FRHigher: '',
+            /** @export **/ FRLower: ''
+        };
+
+        image.loadExportOptions(imageData);
+
         imageData.words.promise = new Promise((resolve, reject) => {
             imageData.words.resolve_ = resolve;
             imageData.words.reject_ = reject;
@@ -991,7 +1026,7 @@ image.addEventListener('load', () => {
         imageData.initial = false;
     } else {
         worker.setCurrent();
-        image.loadLines();
+        image.loadImage();
         worker.getCurrentPath();
     }
     lines.updateLineWidth();
