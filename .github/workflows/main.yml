@@ -14,14 +14,14 @@ jobs:
 
     steps:
     - name: Checkout main repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         path: usytrace
         ref: main
         persist-credentials: false
 
     - name: Check if recompile needed
-      uses: dorny/paths-filter@v3
+      uses: dorny/paths-filter@v4
       id: changes
       with:
         working-directory: usytrace
@@ -80,7 +80,7 @@ jobs:
         npm run build:dist
 
     - name: Checkout github pages repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: usyless/usyless.github.io
         token: ${{ secrets.BOT_TOKEN }}
