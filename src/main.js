@@ -14,8 +14,8 @@ const tesseract_worker = new Promise(async (resolve, reject) => {
         });
 
         await tesseract_worker.setParameters({
-            /** @export */ tessedit_char_whitelist: '0123456789,.k-',
-            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["AUTO"]
+            /** @export */ tessedit_char_whitelist: '0123456789,.k-+',
+            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SPARSE_TEXT"]
         });
 
         console.timeEnd("Initialise Tesseract OCR");
@@ -495,51 +495,133 @@ const worker = {
                 const ocrNumbers = word_data.map((word) => ({
                     val: parseTesseractText(word['text']),
                     cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
-                    cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2
-                })).filter(w => w.val !== null);
+                    cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2,
+                    confidence: word['confidence']
+                })).filter(w => (w.val != null) && (w.confidence >= 70));
 
-                const SPATIAL_THRESHOLD = 80;
+                const findBestSequence = (isXAxis, isLog) => {
+                    const alignKey = isXAxis ? 'cy' : 'cx';
+                    const sortKey = isXAxis ? 'cx' : 'cy';
+                    const alignTolerance = isXAxis ? 15 : 30;
 
-                const findClosest = (pixelTarget, isXAxis) => {
-                    let closest = null;
-                    let minDistance = SPATIAL_THRESHOLD;
-                    for (const word of ocrNumbers) {
-                        const distance = Math.abs((isXAxis ? word.cx : word.cy) - pixelTarget);
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            closest = word;
+                    const groups = [];
+                    for (const num of ocrNumbers) {
+                        let placed = false;
+                        for (const group of groups) {
+                            const avgAlign = group.reduce((sum, n) => sum + n[alignKey], 0) / group.length;
+                            if (Math.abs(num[alignKey] - avgAlign) <= alignTolerance) {
+                                group.push(num);
+                                placed = true;
+                                break;
+                            }
+                        }
+                        if (!placed) groups.push([num]);
+                    }
+
+                    let bestSeq = null;
+                    let maxScore = -1;
+
+                    for (const group of groups) {
+                        if (group.length < 2) continue;
+                        group.sort((a, b) => a[sortKey] - b[sortKey]); // order spatially
+
+                        let valid = true;
+                        const scales = [];
+
+                        const group_len = group.length;
+                        for (let i = 0; i < group_len - 1; ++i) {
+                            const p1 = group[i];
+                            const p2 = group[i+1];
+                            const pxDiff = p2[sortKey] - p1[sortKey];
+
+                            if (isXAxis && (p1.val < 1 || p2.val < 1)) {
+                                valid = false;
+                                break;
+                            }
+
+                            if (pxDiff < 10) continue; // prevent division by near zero for overlapping text
+
+                            let valDiff;
+                            if (isLog) {
+                                if (p1.val <= 0 || p2.val <= 0) { valid = false; break; }
+                                valDiff = Math.log10(p2.val) - Math.log10(p1.val);
+                                if (isXAxis && valDiff <= 0) { valid = false; break; } // increases left to right
+                            } else {
+                                valDiff = p2.val - p1.val;
+                                // SPL increases down due to image pixels
+                                if (!isXAxis && valDiff >= 0) { valid = false; break; }
+                            }
+
+                            scales.push(valDiff / pxDiff);
+                        }
+
+                        if (!valid || scales.length === 0) continue;
+
+                        // sequence consistency
+                        const avgScale = scales.reduce((a, b) => a + b, 0) / scales.length;
+                        const isScaleConsistent = scales.every(s => Math.abs(s - avgScale) / Math.abs(avgScale) < 0.25);
+
+                        if (isScaleConsistent) {
+                            const spread = group[group.length - 1][sortKey] - group[0][sortKey];
+                            const score = (group.length * 1000) + spread;
+                            if (score > maxScore) {
+                                maxScore = score;
+                                bestSeq = group;
+                            }
                         }
                     }
-                    return closest;
+                    return bestSeq;
                 };
 
+                const interpolateValue = (pixelTarget, sequence, isXAxis, isLog) => {
+                    if (!sequence) return null;
+
+                    const p1 = sequence[0];
+                    const p2 = sequence[sequence.length - 1];
+                    const sortKey = isXAxis ? 'cx' : 'cy';
+
+                    const px1 = p1[sortKey], px2 = p2[sortKey];
+                    const v1 = p1.val, v2 = p2.val;
+
+                    if (isLog) {
+                        const logV1 = Math.log10(v1);
+                        const logV2 = Math.log10(v2);
+                        const logInterp = logV1 + ((logV2 - logV1) / (px2 - px1)) * (pixelTarget - px1);
+                        return Math.pow(10, logInterp);
+                    } else {
+                        return v1 + ((v2 - v1) / (px2 - px1)) * (pixelTarget - px1);
+                    }
+                };
+
+                const xSeq = findBestSequence(true, true);
+                const ySeq = findBestSequence(false, false);
+
                 const bounds = [
-                    { name: 'FR High', userVal: data.FR.top, ocr: findClosest(data.FR.topPixel, true), isLog: true },
-                    { name: 'FR Low', userVal: data.FR.bottom, ocr: findClosest(data.FR.bottomPixel, true), isLog: true },
-                    { name: 'SPL High', userVal: data.SPL.top, ocr: findClosest(data.SPL.topPixel, false), isLog: false },
-                    { name: 'SPL Low', userVal: data.SPL.bottom, ocr: findClosest(data.SPL.bottomPixel, false), isLog: false }
+                    { name: 'FR High', userVal: data.FR.top, ocrVal: interpolateValue(data.FR.topPixel, xSeq, true, true), isLog: true },
+                    { name: 'FR Low', userVal: data.FR.bottom, ocrVal: interpolateValue(data.FR.bottomPixel, xSeq, true, true), isLog: true },
+                    { name: 'SPL High', userVal: data.SPL.top, ocrVal: interpolateValue(data.SPL.topPixel, ySeq, false, false), isLog: false },
+                    { name: 'SPL Low', userVal: data.SPL.bottom, ocrVal: interpolateValue(data.SPL.bottomPixel, ySeq, false, false), isLog: false }
                 ];
 
                 const validationErrors = [];
 
                 for (const bound of bounds) {
-                    if (!bound.ocr || !bound.userVal) continue;
+                    if (bound.ocrVal === null || !bound.userVal) continue;
 
                     const userVal = parseFloat(bound.userVal);
                     if (isNaN(userVal)) continue;
 
-                    const ocrVal = bound.ocr.val;
                     let isClose = false;
 
-                    if (bound.isLog && userVal > 0 && ocrVal > 0) {
-                        const logDiff = Math.abs(Math.log10(userVal) - Math.log10(ocrVal));
-                        isClose = logDiff <= 0.2;
+                    if (bound.isLog && userVal > 0 && bound.ocrVal > 0) {
+                        const logDiff = Math.abs(Math.log10(userVal) - Math.log10(bound.ocrVal));
+                        isClose = logDiff <= 0.01;
                     } else {
-                        isClose = Math.abs(userVal - ocrVal) <= 10; // large tolerance - use interpolation
+                        isClose = Math.abs(userVal - bound.ocrVal) < 1;
                     }
 
                     if (!isClose) {
-                        validationErrors.push(`${bound.name}: inputted '${userVal}', but OCR suggests '${ocrVal}'`);
+                        validationErrors.push(`${bound.name}: inputted '${userVal}', but OCR suggests roughly '${Math.round(bound.ocrVal * 10) / 10}'`);
                     }
                 }
 
