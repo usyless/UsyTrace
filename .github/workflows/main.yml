@@ -54,6 +54,11 @@ jobs:
         ./cmake-${version}-linux-x86_64.sh --skip-license --prefix=$(pwd)/cmake
         echo "$(pwd)/cmake/bin" >> $GITHUB_PATH
 
+    - name: Download Tesseract
+      working-directory: usytrace
+      run: |
+        npm run download
+
     - name: Build everything due to wasm change
       if: steps.changes.outputs.recompile == 'true'
       run: |
