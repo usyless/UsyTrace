@@ -439,7 +439,36 @@ const worker = {
             }
         }
         if (hasNullOrEmpty(data)) void createPopup("Please fill in all required values to export (SPL and FR values)");
-        else worker.postMessage(data);
+        else {
+            const words = imageMap.get(image.src).words;
+            if (words.skipped) {
+                worker.postMessage(data);
+                return;
+            }
+
+            if (words.value) {
+                words.promise.then((data) => {
+                    // actually do stuff with the words here
+                }).catch(() => {
+                    worker.postMessage(data);
+                });
+            } else {
+                createPopup("Image text detection has not yet finished... Skip?", {
+                    buttons: 'Skip'
+                }).then(() => {
+                    words.skipped = true;
+                    worker.exportTrace();
+                });
+
+                words.promise.then(() => {
+                    worker.exportTrace();
+                }).catch(() => {
+                    words.skipped = true;
+                    clearPopups();
+                    worker.exportTrace();
+                });
+            }
+        }
     },
     addPoint: (x, y) => worker.postMessage({
         /** @export */ type: 'addPoint',
@@ -923,9 +952,17 @@ image.addEventListener('load', () => {
 
         const src = image.src;
 
-        imageData.words_promise = new Promise((resolve, reject) => {
-            imageData.words_resolve = resolve;
-            imageData.words_reject = reject;
+        imageData.words = {
+            resolve_: undefined,
+            reject_: undefined,
+            promise: undefined,
+            value: false,
+            skipped: false
+        };
+
+        imageData.words.promise = new Promise((resolve, reject) => {
+            imageData.words.resolve_ = resolve;
+            imageData.words.reject_ = reject;
         });
         tesseract_worker.then((t) => {
             const label = `Initialise image ${++tesseract_id} OCR`;
@@ -936,11 +973,14 @@ image.addEventListener('load', () => {
             }).then((d) => {
                 console.timeEnd(label);
                 const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
-                imageData.words_resolve(words);
                 console.log('Words detected in image: ', words);
+                imageData.words.value = true;
+                imageData.words.resolve_(words);
             });
         }).catch((err) => {
-            imageData.words_reject(err);
+            console.log('Error detecting words in image: ', err);
+            imageData.words.value = true;
+            imageData.words.reject_(err);
         });
         imageData.initial = false;
     } else {
