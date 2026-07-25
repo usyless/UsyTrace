@@ -12,6 +12,11 @@ Module['onRuntimeInitialized'] = () => {
         create_buffer: Module["_create_buffer"],
         setCurrent_: (src) => Module["_setCurrent"](srcMap.get(src)),
         addImage_: (src, buf, width, height) => srcMap.set(src, Module["_addImage"](buf, width, height)),
+        needsInverse_: (src) => {
+            const ptr = srcMap.get(src);
+            if (ptr) return Module["_needsInverse"](ptr);
+            return -1;
+        },
         removeImage_: (src) => {
             Module["_removeImage"](srcMap.get(src));
             srcMap.delete(src);
@@ -49,6 +54,10 @@ Module['onRuntimeInitialized'] = () => {
                 /** @export */ type,
                 /** @export */ image_id,
             };
+        },
+        /** @export */ needsInverse: (data) => {
+            data["inverse"] = api.needsInverse_(data["src"]);
+            return data;
         },
         /** @export */ getHistoryStatus: (data) => {
             const value = api.historyStatus();

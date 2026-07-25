@@ -392,6 +392,35 @@ const worker = {
                 }
                 case 'setData': {
                     console.timeEnd(`Initialise image ${data["image_id"]}`);
+                    worker.needsInverse(data["src"]); // to initialise tesseract
+                    break;
+                }
+                case 'needsInverse': {
+                    const src = data["src"];
+                    const imageData = imageMap.get(src);
+                    if (!imageData) return; // idk how
+
+                    const needsInverse = data["inverse"];
+                    if (needsInverse === -1) return;
+
+                    tesseract_worker.then((t) => {
+                        const label = `Initialise image ${++tesseract_id} OCR`;
+                        console.time(label);
+                        return t.recognize(src, {}, {
+                            /** @export */ blocks: true,
+                            /** @export */ text: false,
+                        }).then((d) => {
+                            console.timeEnd(label);
+                            const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
+                            console.log('Words detected in image: ', words);
+                            imageData.words.value = true;
+                            imageData.words.resolve_(words);
+                        });
+                    }).catch((err) => {
+                        console.log('Error detecting words in image: ', err);
+                        imageData.words.value = true;
+                        imageData.words.reject_(err);
+                    });
                     break;
                 }
                 default: {
@@ -442,6 +471,10 @@ const worker = {
         global_canvas.width = 0;
         global_canvas.height = 0;
     },
+    needsInverse: (src) => worker.postMessage({
+        /** @export */ type: 'needsInverse',
+        /** @export */ src
+    }),
     clearTrace: () => worker.postMessage({
         /** @export */ type: 'clearTrace'
     }),
@@ -1164,10 +1197,10 @@ image.addEventListener('load', () => {
         };
 
         imageData.exportOptions = {
-            /** @export **/ SPLHigher: '',
-            /** @export **/ SPLLower: '',
-            /** @export **/ FRHigher: '',
-            /** @export **/ FRLower: ''
+            /** @export */ SPLHigher: '',
+            /** @export */ SPLLower: '',
+            /** @export */ FRHigher: '',
+            /** @export */ FRLower: ''
         };
 
         image.loadExportOptions(imageData);
@@ -1176,24 +1209,7 @@ image.addEventListener('load', () => {
             imageData.words.resolve_ = resolve;
             imageData.words.reject_ = reject;
         });
-        tesseract_worker.then((t) => {
-            const label = `Initialise image ${++tesseract_id} OCR`;
-            console.time(label);
-            return t.recognize(src, {}, {
-                /** @export */ blocks: true,
-                /** @export */ text: false,
-            }).then((d) => {
-                console.timeEnd(label);
-                const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
-                console.log('Words detected in image: ', words);
-                imageData.words.value = true;
-                imageData.words.resolve_(words);
-            });
-        }).catch((err) => {
-            console.log('Error detecting words in image: ', err);
-            imageData.words.value = true;
-            imageData.words.reject_(err);
-        });
+
         imageData.initial = false;
     } else {
         worker.setCurrent();

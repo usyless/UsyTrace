@@ -613,9 +613,11 @@ struct Image {
     std::set<uint32_t> vLines;
     std::set<uint32_t> hLines;
 
+    bool neededInverse{false};
+
     Image(ImageData<4>&& _imageData) : imageData(std::move(_imageData)), traceHistory(imageData) {
-        const auto darkMode = (imageData.getBackgroundColour().sum() / 3) < 127;
-        if (darkMode) invertImage(imageData);
+        neededInverse = (imageData.getBackgroundColour().sum() / 3) < 127;
+        if (neededInverse) invertImage(imageData);
 
         {
         auto filteredDataX = ImageData<1>{imageData.width, imageData.height};
@@ -630,7 +632,7 @@ struct Image {
         vLines = detectLines<true>(filteredDataX, 20);
         }
 
-        if (darkMode) invertImage(imageData);
+        if (neededInverse) invertImage(imageData);
 
         this->backgroundColour = RGBTools{imageData.getBackgroundColour(), 10};
     }
@@ -765,6 +767,10 @@ extern "C" {
         auto ptr = new Image{ImageData<4>{data, width, height}};
         currentImage = ptr;
         return ptr;
+    }
+
+    EMSCRIPTEN_KEEPALIVE int needsInverse(Image* ptr) {
+        return ptr->neededInverse;
     }
 
     EMSCRIPTEN_KEEPALIVE void removeImage(Image* ptr) {
