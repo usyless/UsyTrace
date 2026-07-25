@@ -45,7 +45,7 @@ const defaults = {
     /** @export */ SPLLower: ""
 }
 const MAGNIFICATION = 3;
-document.getElementById('restoreDefault').addEventListener('click', () => {
+document.getElementById('restoreDefault')?.addEventListener('click', () => {
     resetToDefault();
     void createPopup("Restored settings to default");
 });
