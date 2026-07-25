@@ -473,8 +473,8 @@ const worker = {
             }
 
             if (words.value) {
-                words.promise.then((data) => {
-                    if (data.length === 0) {
+                words.promise.then((word_data) => {
+                    if (word_data.length === 0) {
                         worker.postMessage(data);
                         return;
                     }
