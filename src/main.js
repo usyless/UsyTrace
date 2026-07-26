@@ -15,7 +15,9 @@ const tesseract_worker = new Promise(async (resolve, reject) => {
 
         await tesseract_worker.setParameters({
             /** @export */ tessedit_char_whitelist: '0123456789,.kK-+',
-            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SPARSE_TEXT"]
+            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SPARSE_TEXT"],
+            /** @export */ user_defined_dpi: '300',
+            /** @export */ preserve_interword_spaces: '0'
         });
 
         console.timeEnd("Initialise Tesseract OCR");
