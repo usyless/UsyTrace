@@ -425,7 +425,6 @@ const worker = {
                 }
                 case 'setData': {
                     console.timeEnd(`Initialise image ${data["image_id"]}`);
-                    worker.needsInverse(data["src"]); // to initialise tesseract
                     break;
                 }
                 case 'needsInverse': {
@@ -434,7 +433,6 @@ const worker = {
                     if (!imageData) return; // idk how
 
                     const needsInverse = data["inverse"];
-                    if (needsInverse === -1) return;
 
                     Promise.all([tesseract_worker, imageData.bitmap]).then(([t, bitmap]) => {
                         const label = `Initialise image ${++tesseract_id} OCR`;

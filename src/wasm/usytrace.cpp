@@ -613,11 +613,14 @@ struct Image {
     std::set<uint32_t> vLines;
     std::set<uint32_t> hLines;
 
-    bool neededInverse{false};
+    Image(ImageData<4>&& _imageData, const uint32_t counter) : imageData(std::move(_imageData)), traceHistory(imageData) {
+        const auto needsInverse = (imageData.getBackgroundColour().sum() / 3) < 127;
 
-    Image(ImageData<4>&& _imageData) : imageData(std::move(_imageData)), traceHistory(imageData) {
-        neededInverse = (imageData.getBackgroundColour().sum() / 3) < 127;
-        if (neededInverse) invertImage(imageData);
+    #ifdef __EMSCRIPTEN__
+        EM_ASM( onImageInverseReady($0, $1), counter, needsInverse );
+    #endif
+
+        if (needsInverse) invertImage(imageData);
 
         {
         auto filteredDataX = ImageData<1>{imageData.width, imageData.height};
@@ -632,7 +635,7 @@ struct Image {
         vLines = detectLines<true>(filteredDataX, 20);
         }
 
-        if (neededInverse) invertImage(imageData);
+        if (needsInverse) invertImage(imageData);
 
         this->backgroundColour = RGBTools{imageData.getBackgroundColour(), 10};
     }
@@ -762,15 +765,11 @@ extern "C" {
         currentImage = ptr;
     }
 
-    EMSCRIPTEN_KEEPALIVE void* addImage(Colour* data, const uint32_t width, const uint32_t height) {
+    EMSCRIPTEN_KEEPALIVE void* addImage(Colour* data, const uint32_t width, const uint32_t height, const uint32_t counter) {
         // Images come in with 4 channels (RGBA)
-        auto ptr = new Image{ImageData<4>{data, width, height}};
+        auto ptr = new Image{ImageData<4>{data, width, height}, counter};
         currentImage = ptr;
         return ptr;
-    }
-
-    EMSCRIPTEN_KEEPALIVE int needsInverse(Image* ptr) {
-        return ptr->neededInverse;
     }
 
     EMSCRIPTEN_KEEPALIVE void removeImage(Image* ptr) {

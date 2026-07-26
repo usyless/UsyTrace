@@ -1,24 +1,28 @@
 const messageQueue = [];
 self.onmessage = (e) => messageQueue.push(e);
 
+const srcMap = new Map();
+const counterToSrc = new Map();
+
 Module['onRuntimeInitialized'] = () => {
     const decode = TextDecoder.prototype.decode.bind(new TextDecoder('utf-8'));
     const readStringFromMemory = (ptr) => decode(new Uint8Array(HEAPU8.buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1]));
 
     const stringReturn = (func) => (...args) => readStringFromMemory(func(...args));
 
-    const srcMap = new Map();
+    let counter = 0;
+
     const api = {
         create_buffer: Module["_create_buffer"],
         setCurrent_: (src) => Module["_setCurrent"](srcMap.get(src)),
-        addImage_: (src, buf, width, height) => srcMap.set(src, Module["_addImage"](buf, width, height)),
-        needsInverse_: (src) => {
-            const ptr = srcMap.get(src);
-            if (ptr) return Module["_needsInverse"](ptr);
-            return -1;
+        addImage_: (src, buf, width, height) => {
+            counterToSrc.set(++counter, src);
+            const ptr = Module["_addImage"](buf, width, height, counter);
+            srcMap.set(src, ptr);
         },
         removeImage_: (src) => {
-            Module["_removeImage"](srcMap.get(src));
+            const ptr = srcMap.get(src);
+            Module["_removeImage"](ptr);
             srcMap.delete(src);
         },
         historyStatus: Module["_historyStatus"],
@@ -116,3 +120,15 @@ Module['onRuntimeInitialized'] = () => {
     for (const e of messageQueue) messageListener(e);
     messageQueue.length = 0;
 };
+
+function onImageInverseReady(counter, inverse) {
+    const src = counterToSrc.get(counter);
+    if (!src) return;
+    counterToSrc.delete(counter);
+
+    postMessage({
+        /** @export */ type: 'needsInverse',
+        /** @export */ src,
+        /** @export */ inverse
+    });
+}
