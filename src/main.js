@@ -607,7 +607,7 @@ const worker = {
                 const findBestSequence = (isXAxis, isLog) => {
                     const alignKey = isXAxis ? 'cy' : 'cx';
                     const sortKey = isXAxis ? 'cx' : 'cy';
-                    const alignTolerance = isXAxis ? 15 : 30;
+                    const alignTolerance = isXAxis ? 20 : 40;
 
                     const groups = [];
                     for (const num of ocrNumbers) {
@@ -630,48 +630,68 @@ const worker = {
                         if (group.length < 2) continue;
                         group.sort((a, b) => a[sortKey] - b[sortKey]); // order spatially
 
-                        let valid = true;
-                        const scales = [];
+                        const validGroup = group.filter(p => !(isLog && p.val <= 0));
 
-                        const group_len = group.length;
-                        for (let i = 0; i < group_len - 1; ++i) {
-                            const p1 = group[i];
-                            const p2 = group[i+1];
-                            const pxDiff = p2[sortKey] - p1[sortKey];
+                        if (validGroup.length < 2) continue;
 
-                            if (isXAxis && (p1.val < 1 || p2.val < 1)) {
-                                valid = false;
-                                break;
+                        const transitions = [];
+                        for (let i = 0; i < validGroup.length; ++i) {
+                            for (let j = i + 1; j < validGroup.length; ++j) {
+                                const p1 = validGroup[i];
+                                const p2 = validGroup[j];
+                                const pxDiff = p2[sortKey] - p1[sortKey];
+
+                                if (pxDiff < 5) continue;
+
+                                let valDiff;
+                                if (isLog) {
+                                    if (p1.val <= 0 || p2.val <= 0) continue;
+                                    valDiff = Math.log10(p2.val) - Math.log10(p1.val);
+                                } else {
+                                    valDiff = p2.val - p1.val;
+                                }
+
+                                const scale = valDiff / pxDiff;
+                                transitions.push({ scale });
                             }
-
-                            if (pxDiff < 10) continue; // prevent division by near zero for overlapping text
-
-                            let valDiff;
-                            if (isLog) {
-                                if (p1.val <= 0 || p2.val <= 0) { valid = false; break; }
-                                valDiff = Math.log10(p2.val) - Math.log10(p1.val);
-                                if (isXAxis && valDiff <= 0) { valid = false; break; } // increases left to right
-                            } else {
-                                valDiff = p2.val - p1.val;
-                                // SPL increases down due to image pixels
-                                if (!isXAxis && valDiff >= 0) { valid = false; break; }
-                            }
-
-                            scales.push(valDiff / pxDiff);
                         }
 
-                        if (!valid || scales.length === 0) continue;
+                        if (transitions.length === 0) continue;
 
-                        // sequence consistency
-                        const avgScale = scales.reduce((a, b) => a + b, 0) / scales.length;
-                        const isScaleConsistent = scales.every(s => Math.abs(s - avgScale) / Math.abs(avgScale) < 0.25);
+                        transitions.sort((a, b) => a.scale - b.scale);
+                        const medianScale = transitions[Math.floor(transitions.length / 2)].scale;
 
-                        if (isScaleConsistent) {
-                            const spread = group[group.length - 1][sortKey] - group[0][sortKey];
-                            const score = (group.length * 1000) + spread;
+                        const inliers = [];
+                        if (validGroup.length > 0) {
+                            inliers.push(validGroup[0]);
+                            let lastInlier = validGroup[0];
+
+                            for (let i = 1; i < validGroup.length; i++) {
+                                const current = validGroup[i];
+                                const pxDiff = current[sortKey] - lastInlier[sortKey];
+
+                                if (pxDiff < 5) continue;
+
+                                let valDiff = isLog ? Math.log10(current.val) - Math.log10(lastInlier.val) : current.val - lastInlier.val;
+                                const localScale = valDiff / pxDiff;
+
+                                const scaleDeviation = Math.abs(localScale - medianScale) / Math.abs(medianScale || 1);
+
+                                const directionMatch = (Math.sign(localScale) === Math.sign(medianScale));
+
+                                if (scaleDeviation < 0.40 && directionMatch) {
+                                    inliers.push(current);
+                                    lastInlier = current;
+                                }
+                            }
+                        }
+
+                        if (inliers.length >= 2) {
+                            const spread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
+                            const score = (inliers.length * 1000) + spread;
                             if (score > maxScore) {
                                 maxScore = score;
-                                bestSeq = group;
+                                bestSeq = inliers;
                             }
                         }
                     }
@@ -679,7 +699,7 @@ const worker = {
                 };
 
                 const interpolateValue = (pixelTarget, sequence, isXAxis, isLog) => {
-                    if (!sequence) return null;
+                    if (!sequence || sequence.length < 2) return null;
 
                     const p1 = sequence[0];
                     const p2 = sequence[sequence.length - 1];
@@ -690,9 +710,7 @@ const worker = {
 
                     if (isLog) {
                         const logV1 = Math.log10(v1);
-                        const logV2 = Math.log10(v2);
-                        const logInterp = logV1 + ((logV2 - logV1) / (px2 - px1)) * (pixelTarget - px1);
-                        return Math.pow(10, logInterp);
+                        return Math.pow(10, logV1 + ((Math.log10(v2) - logV1) / (px2 - px1)) * (pixelTarget - px1));
                     } else {
                         return v1 + ((v2 - v1) / (px2 - px1)) * (pixelTarget - px1);
                     }
