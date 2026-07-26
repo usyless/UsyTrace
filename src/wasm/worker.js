@@ -1,7 +1,6 @@
 const messageQueue = [];
 self.onmessage = (e) => messageQueue.push(e);
 
-const srcMap = new Map();
 const counterToSrc = new Map();
 
 Module['onRuntimeInitialized'] = () => {
@@ -11,6 +10,8 @@ Module['onRuntimeInitialized'] = () => {
     const stringReturn = (func) => (...args) => readStringFromMemory(func(...args));
 
     let counter = 0;
+
+    const srcMap = new Map();
 
     const api = {
         create_buffer: Module["_create_buffer"],
