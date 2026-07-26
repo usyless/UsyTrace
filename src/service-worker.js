@@ -1,4 +1,4 @@
-const cacheName = 'v84';
+const cacheName = 'v85';
 
 const contentToCache = [
     './favicon.ico',
@@ -21,6 +21,8 @@ const contentToCache = [
     './tesseract/tesseract-core-lstm.wasm.js',
     './tesseract/tesseract-core-simd.wasm.js',
     './tesseract/tesseract-core-simd-lstm.wasm.js',
+    './tesseract/tesseract-core-relaxedsimd.wasm.js',
+    './tesseract/tesseract-core-relaxedsimd-lstm.wasm.js',
     './tesseract/worker.min.js',
     './tesseract/eng.traineddata.gz',
 ].map((c) => `${c}?version=${cacheName}`);
