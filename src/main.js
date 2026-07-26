@@ -631,67 +631,64 @@ const worker = {
                         group.sort((a, b) => a[sortKey] - b[sortKey]); // order spatially
 
                         const validGroup = group.filter(p => !(isLog && p.val <= 0));
-
                         if (validGroup.length < 2) continue;
 
-                        const transitions = [];
-                        for (let i = 0; i < validGroup.length; ++i) {
-                            for (let j = i + 1; j < validGroup.length; ++j) {
+                        let groupBestSeq = [];
+
+                        const validgroup_length = validGroup.length;
+                        for (let i = 0; i < validgroup_length; ++i) {
+                            for (let j = i + 1; j < validgroup_length; ++j) {
                                 const p1 = validGroup[i];
                                 const p2 = validGroup[j];
                                 const pxDiff = p2[sortKey] - p1[sortKey];
 
                                 if (pxDiff < 5) continue;
 
-                                let valDiff;
-                                if (isLog) {
-                                    if (p1.val <= 0 || p2.val <= 0) continue;
-                                    valDiff = Math.log10(p2.val) - Math.log10(p1.val);
-                                } else {
-                                    valDiff = p2.val - p1.val;
+                                let valDiff = isLog ? Math.log10(p2.val) - Math.log10(p1.val) : p2.val - p1.val;
+                                const targetScale = valDiff / pxDiff;
+
+                                if (isXAxis && targetScale <= 0) continue;
+                                if (!isXAxis && targetScale >= 0) continue;
+
+                                const inliers = [p1];
+                                let lastInlier = p1;
+
+                                for (let k = 0; k < validgroup_length; ++k) {
+                                    if (k === i) continue;
+                                    const current = validGroup[k];
+
+                                    if (current[sortKey] <= lastInlier[sortKey]) continue;
+
+                                    const localPxDiff = current[sortKey] - lastInlier[sortKey];
+                                    if (localPxDiff < 5) continue;
+
+                                    const localValDiff = isLog ? Math.log10(current.val) - Math.log10(lastInlier.val) : current.val - lastInlier.val;
+                                    const localScale = localValDiff / localPxDiff;
+
+                                    const scaleDeviation = Math.abs(localScale - targetScale) / Math.abs(targetScale || 1);
+
+                                    if (scaleDeviation < 0.40) {
+                                        inliers.push(current);
+                                        lastInlier = current;
+                                    }
                                 }
 
-                                const scale = valDiff / pxDiff;
-                                transitions.push({ scale });
-                            }
-                        }
-
-                        if (transitions.length === 0) continue;
-
-                        transitions.sort((a, b) => a.scale - b.scale);
-                        const medianScale = transitions[Math.floor(transitions.length / 2)].scale;
-
-                        const inliers = [];
-                        if (validGroup.length > 0) {
-                            inliers.push(validGroup[0]);
-                            let lastInlier = validGroup[0];
-
-                            for (let i = 1; i < validGroup.length; i++) {
-                                const current = validGroup[i];
-                                const pxDiff = current[sortKey] - lastInlier[sortKey];
-
-                                if (pxDiff < 5) continue;
-
-                                let valDiff = isLog ? Math.log10(current.val) - Math.log10(lastInlier.val) : current.val - lastInlier.val;
-                                const localScale = valDiff / pxDiff;
-
-                                const scaleDeviation = Math.abs(localScale - medianScale) / Math.abs(medianScale || 1);
-
-                                const directionMatch = (Math.sign(localScale) === Math.sign(medianScale));
-
-                                if (scaleDeviation < 0.40 && directionMatch) {
-                                    inliers.push(current);
-                                    lastInlier = current;
+                                if (inliers.length > groupBestSeq.length) {
+                                    groupBestSeq = inliers;
+                                } else if (inliers.length === groupBestSeq.length && inliers.length >= 2) {
+                                    const currentSpread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
+                                    const bestSpread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
+                                    if (currentSpread > bestSpread) groupBestSeq = inliers;
                                 }
                             }
                         }
 
-                        if (inliers.length >= 2) {
-                            const spread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
-                            const score = (inliers.length * 1000) + spread;
+                        if (groupBestSeq.length >= 2) {
+                            const spread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
+                            const score = (groupBestSeq.length * 1000) + spread;
                             if (score > maxScore) {
                                 maxScore = score;
-                                bestSeq = inliers;
+                                bestSeq = groupBestSeq;
                             }
                         }
                     }
