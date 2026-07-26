@@ -1,7 +1,7 @@
 /**
  * @typedef {{
  *   setParameters: function(Object): *,
- *   recognize: function(*, *, *, [string]): !Promise<!Object>
+ *   recognize: function(*, *, *): !Promise<!Object>
  * }}
  */
 var tesseract_object;
