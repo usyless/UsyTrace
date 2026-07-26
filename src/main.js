@@ -3,6 +3,32 @@
 import { createPopup, clearPopups, currentOk } from "./popups.js";
 import { state } from "./state.js";
 
+/** @type {Promise<tesseract_object>} */
+const tesseract_worker = new Promise(async (resolve, reject) => {
+    try {
+        console.time("Initialise Tesseract OCR");
+        const tesseract_worker = await Tesseract.createWorker('eng', Tesseract.OEM["LSTM_ONLY"], {
+            /** @export */ corePath: './tesseract',
+            /** @export */ langPath: './tesseract',
+            /** @export */ workerPath: './tesseract/worker.min.js'
+        });
+
+        await tesseract_worker.setParameters({
+            /** @export */ tessedit_char_whitelist: '0123456789,.kK-+',
+            /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SPARSE_TEXT"],
+            /** @export */ user_defined_dpi: '300',
+            /** @export */ preserve_interword_spaces: '0'
+        });
+
+        console.timeEnd("Initialise Tesseract OCR");
+        resolve(tesseract_worker);
+    } catch (error) {
+        console.timeEnd("Initialise Tesseract OCR");
+        console.error("Failed to load Tesseract OCR:", error);
+        reject(error);
+    }
+});
+
 // Defaults
 const defaults = {
     /** @export */ FRHigher: "",
@@ -21,7 +47,7 @@ const defaults = {
     /** @export */ SPLLower: ""
 }
 const MAGNIFICATION = 3;
-document.getElementById('restoreDefault').addEventListener('click', () => {
+document.getElementById('restoreDefault')?.addEventListener('click', () => {
     resetToDefault();
     void createPopup("Restored settings to default");
 });
@@ -36,6 +62,27 @@ function resetToDefault() {
 
 const global_canvas = document.createElement('canvas');
 const global_canvas_ctx_2d = global_canvas.getContext('2d');
+
+const global_canvas_2 = document.createElement('canvas');
+const global_canvas_ctx_2d_2 = global_canvas_2.getContext('2d');
+global_canvas_ctx_2d_2.imageSmoothingEnabled = false;
+
+// safari check
+const safari = !('filter' in CanvasRenderingContext2D.prototype);
+
+const safariInverse = () => {
+    // should only fire for safari, which does not support 2d context filter
+    // i ain't implementing the other filters :serioussssly:
+    console.log("Using fallback invert mode");
+    const imageData = global_canvas_ctx_2d.getImageData(0, 0, global_canvas.width, global_canvas.height),
+        data = imageData.data, l = data.length;
+    for (let i = 0; i < l; i += 4) {
+        data[i] = 255 - data[i];
+        data[i + 1] = 255 - data[i + 1];
+        data[i + 2] = 255 - data[i + 2];
+    }
+    global_canvas_ctx_2d.putImageData(imageData, 0, 0);
+};
 
 // Global Variables
 let sizeRatio, width, height, lineWidth, CURRENT_MODE = null, MODE_RESET_CB = null;
@@ -149,6 +196,16 @@ const erasing = {
 }
 erasing.init();
 
+/** @type {HTMLImageElement & {
+ * getMouseCoords: (MouseEvent) => any,
+ * isValid: () => boolean,
+ * saveLines: (any) => void,
+ * loadLines: (any) => void,
+ * saveExportOptions: (any) => void,
+ * loadExportOptions: (any) => void,
+ * saveImage: () => void,
+ * loadImage: () => void
+ }} */
 const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
     const r = image.getBoundingClientRect(), x = e.clientX, y = e.clientY;
@@ -160,18 +217,44 @@ image.getMouseCoords = (e) => {
     }
 }
 image.isValid = () => image.src.startsWith('blob:');
-image.saveLines = () => {
-    const imageData = imageMap.get(image.src), lineData = {};
-    if (imageData) {
-        for (const name in lines.lines) lineData[name] = lines.getPosition(lines.lines[name]);
-        imageData.lines = lineData;
-    }
+image.saveLines = (imageMapData) => {
+    const lineData = {};
+    for (const name in lines.lines) lineData[name] = lines.getPosition(lines.lines[name]);
+    imageMapData.lines = lineData;
 }
-image.loadLines = () => {
-    const prev = imageMap.get(image.src).lines;
+image.loadLines = (imageMapData) => {
+    const prev = imageMapData.lines;
     for (const name in lines.lines) lines.setPosition(lines.lines[name], prev[name]);
     lines.initialise();
     lines.showLines();
+}
+
+image.saveExportOptions = (imageMapData) => {
+    const opts = imageMapData.exportOptions;
+    for (const name in opts) {
+        opts[name] = document.getElementById(name)?.value;
+    }
+}
+
+image.loadExportOptions = (imageMapData) => {
+    const opts = imageMapData.exportOptions;
+    for (const name in opts) {
+        document.getElementById(name).value = opts[name];
+    }
+}
+
+image.saveImage = () => {
+    const data = imageMap.get(image.src);
+    if (!data) return;
+    image.saveLines(data);
+    image.saveExportOptions(data);
+}
+
+image.loadImage = () => {
+    const data = imageMap.get(image.src);
+    if (!data) return; // shouldnt ever happen??
+    image.loadLines(data);
+    image.loadExportOptions(data);
 }
 
 const preferences = (() => {
@@ -262,6 +345,24 @@ const buttons = {
     for (const button of MODE_BUTTON_IDS) document.getElementById(button).addEventListener('click', cb);
 }
 
+const parseTesseractText = (text) => {
+    let cleaned = text.toLowerCase().trim();
+
+    const hasK = cleaned.endsWith('k');
+    if (hasK) cleaned = cleaned.slice(0, -1);
+
+    cleaned = cleaned.replace(/\s+/g, '');
+
+    if (/[.,]\d{3}$/.test(cleaned)) { // if followed by 3 digits, just remove
+        cleaned = cleaned.replace(/[.,]/g, '');
+    } else {
+        cleaned = cleaned.replace(/,/g, '.'); // replace all comma by dot for parsing
+    }
+
+    const val = parseFloat(cleaned);
+    return isNaN(val) ? null : (hasK ? val * 1000 : val);
+};
+
 const worker = {
     worker: (() => {
         const w = new Worker("./usytrace.js", {type: 'module'});
@@ -323,7 +424,73 @@ const worker = {
                     break;
                 }
                 case 'setData': {
-                    console.timeEnd("Initialise image");
+                    console.timeEnd(`Initialise image ${data["image_id"]}`);
+                    break;
+                }
+                case 'needsInverse': {
+                    const src = data["src"];
+                    const imageData = imageMap.get(src);
+                    if (!imageData) return; // idk how
+
+                    const needsInverse = data["inverse"];
+
+                    Promise.all([tesseract_worker, imageData.bitmap]).then(([t, bitmap]) => {
+                        const label = `Initialise image ${++tesseract_id} OCR`;
+                        console.time(label);
+
+                        if (needsInverse) {
+                            global_canvas.width = imageData.width;
+                            global_canvas.height = imageData.height;
+
+                            console.log('Inversing image for tesseract');
+                            if (!safari) global_canvas_ctx_2d.filter = 'invert(100%)';
+                            global_canvas_ctx_2d.drawImage(bitmap, 0, 0);
+                            if (!safari) global_canvas_ctx_2d.filter = 'none';
+
+                            if (safari) safariInverse();
+
+                            global_canvas_2.width = imageData.width * 2.5;
+                            global_canvas_2.height = imageData.height * 2.5;
+
+                            global_canvas_ctx_2d_2.drawImage(global_canvas, 0, 0, imageData.width * 2.5, imageData.height * 2.5);
+
+                            global_canvas.width = 0;
+                            global_canvas.height = 0;
+                        } else {
+                            global_canvas_2.width = imageData.width * 2.5;
+                            global_canvas_2.height = imageData.height * 2.5;
+
+                            global_canvas_ctx_2d_2.drawImage(bitmap, 0, 0, imageData.width * 2.5, imageData.height * 2.5);
+                        }
+                        bitmap.close();
+                        delete imageData.bitmap;
+
+                        return t.recognize(global_canvas_2, {}, {
+                            /** @export */ blocks: true,
+                            /** @export */ text: false,
+                        }).then((d) => {
+                            global_canvas_2.width = 0;
+                            global_canvas_2.height = 0;
+
+                            console.timeEnd(label);
+                            const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3).map((word) => {
+                                word['bbox']['x0'] /= 2.5;
+                                word['bbox']['x1'] /= 2.5;
+                                word['bbox']['y0'] /= 2.5;
+                                word['bbox']['y1'] /= 2.5;
+                                return word;
+                            });
+                            console.log('Words detected in image: ', words);
+                            imageData.words.value = true;
+                            imageData.words.resolve_(words);
+                        });
+                    }).catch((err) => {
+                        global_canvas_2.width = 0;
+                        global_canvas_2.height = 0;
+                        console.log('Error detecting words in image: ', err);
+                        imageData.words.value = true;
+                        imageData.words.reject_(err);
+                    });
                     break;
                 }
                 default: {
@@ -357,7 +524,7 @@ const worker = {
         /** @export */ type: 'removeImage',
         /** @export */ src: src
     }),
-    addImage: (width, height) => {
+    addImage: (width, height, image_id) => {
         global_canvas.width = width;
         global_canvas.height = height;
         global_canvas_ctx_2d.drawImage(image, 0, 0);
@@ -367,12 +534,17 @@ const worker = {
             /** @export */ type: 'setData',
             /** @export */ data: imageData.data,
             /** @export */ width,
-            /** @export */ height
+            /** @export */ height,
+            /** @export */ image_id,
         }, [imageData.data.buffer]);
 
         global_canvas.width = 0;
         global_canvas.height = 0;
     },
+    needsInverse: (src) => worker.postMessage({
+        /** @export */ type: 'needsInverse',
+        /** @export */ src
+    }),
     clearTrace: () => worker.postMessage({
         /** @export */ type: 'clearTrace'
     }),
@@ -414,7 +586,211 @@ const worker = {
             }
         }
         if (hasNullOrEmpty(data)) void createPopup("Please fill in all required values to export (SPL and FR values)");
-        else worker.postMessage(data);
+        else {
+            const words = imageMap.get(image.src).words;
+
+            const on_words = (word_data) => {
+                if (word_data.length === 0) {
+                    worker.postMessage(data);
+                    return;
+                }
+
+                const ocrNumbers = word_data.map((word) => ({
+                    val: parseTesseractText(word['text']),
+                    cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
+                    cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2,
+                    confidence: word['confidence']
+                })).filter(w => (w.val != null) && (w.confidence >= 70));
+
+                const findBestSequence = (isXAxis, isLog) => {
+                    const alignKey = isXAxis ? 'cy' : 'cx';
+                    const sortKey = isXAxis ? 'cx' : 'cy';
+                    const alignTolerance = isXAxis ? 20 : 40;
+
+                    const groups = [];
+                    for (const num of ocrNumbers) {
+                        let placed = false;
+                        for (const group of groups) {
+                            const avgAlign = group.reduce((sum, n) => sum + n[alignKey], 0) / group.length;
+                            if (Math.abs(num[alignKey] - avgAlign) <= alignTolerance) {
+                                group.push(num);
+                                placed = true;
+                                break;
+                            }
+                        }
+                        if (!placed) groups.push([num]);
+                    }
+
+                    let bestSeq = null;
+                    let maxScore = -1;
+
+                    for (const group of groups) {
+                        if (group.length < 2) continue;
+                        group.sort((a, b) => a[sortKey] - b[sortKey]); // order spatially
+
+                        const validGroup = group.filter(p => !(isLog && p.val <= 0));
+                        if (validGroup.length < 2) continue;
+
+                        let groupBestSeq = [];
+
+                        const validgroup_length = validGroup.length;
+                        for (let i = 0; i < validgroup_length; ++i) {
+                            for (let j = i + 1; j < validgroup_length; ++j) {
+                                const p1 = validGroup[i];
+                                const p2 = validGroup[j];
+                                const pxDiff = p2[sortKey] - p1[sortKey];
+
+                                if (pxDiff < 5) continue;
+
+                                let valDiff = isLog ? Math.log10(p2.val) - Math.log10(p1.val) : p2.val - p1.val;
+                                const targetScale = valDiff / pxDiff;
+
+                                if (isXAxis && targetScale <= 0) continue;
+                                if (!isXAxis && targetScale >= 0) continue;
+
+                                const inliers = [p1];
+                                let lastInlier = p1;
+
+                                for (let k = 0; k < validgroup_length; ++k) {
+                                    if (k === i) continue;
+                                    const current = validGroup[k];
+
+                                    if (current[sortKey] <= lastInlier[sortKey]) continue;
+
+                                    const localPxDiff = current[sortKey] - lastInlier[sortKey];
+                                    if (localPxDiff < 5) continue;
+
+                                    const localValDiff = isLog ? Math.log10(current.val) - Math.log10(lastInlier.val) : current.val - lastInlier.val;
+                                    const localScale = localValDiff / localPxDiff;
+
+                                    const scaleDeviation = Math.abs(localScale - targetScale) / Math.abs(targetScale || 1);
+
+                                    if (scaleDeviation < 0.40) {
+                                        inliers.push(current);
+                                        lastInlier = current;
+                                    }
+                                }
+
+                                if (inliers.length > groupBestSeq.length) {
+                                    groupBestSeq = inliers;
+                                } else if (inliers.length === groupBestSeq.length && inliers.length >= 2) {
+                                    const currentSpread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
+                                    const bestSpread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
+                                    if (currentSpread > bestSpread) groupBestSeq = inliers;
+                                }
+                            }
+                        }
+
+                        if (groupBestSeq.length >= 2) {
+                            const spread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
+                            const score = (groupBestSeq.length * 1000) + spread;
+                            if (score > maxScore) {
+                                maxScore = score;
+                                bestSeq = groupBestSeq;
+                            }
+                        }
+                    }
+                    return bestSeq;
+                };
+
+                const interpolateValue = (pixelTarget, sequence, isXAxis, isLog) => {
+                    if (!sequence || sequence.length < 2) return null;
+
+                    const p1 = sequence[0];
+                    const p2 = sequence[sequence.length - 1];
+                    const sortKey = isXAxis ? 'cx' : 'cy';
+
+                    const px1 = p1[sortKey], px2 = p2[sortKey];
+                    const v1 = p1.val, v2 = p2.val;
+
+                    if (isLog) {
+                        const logV1 = Math.log10(v1);
+                        return Math.pow(10, logV1 + ((Math.log10(v2) - logV1) / (px2 - px1)) * (pixelTarget - px1));
+                    } else {
+                        return v1 + ((v2 - v1) / (px2 - px1)) * (pixelTarget - px1);
+                    }
+                };
+
+                const xSeq = findBestSequence(true, true);
+                const ySeq = findBestSequence(false, false);
+
+                const bounds = [
+                    { name: 'FR High', userVal: data.FR.top, ocrVal: interpolateValue(data.FR.topPixel, xSeq, true, true), isLog: true },
+                    { name: 'FR Low', userVal: data.FR.bottom, ocrVal: interpolateValue(data.FR.bottomPixel, xSeq, true, true), isLog: true },
+                    { name: 'SPL High', userVal: data.SPL.top, ocrVal: interpolateValue(data.SPL.topPixel, ySeq, false, false), isLog: false },
+                    { name: 'SPL Low', userVal: data.SPL.bottom, ocrVal: interpolateValue(data.SPL.bottomPixel, ySeq, false, false), isLog: false }
+                ];
+
+                const validationErrors = [];
+
+                for (const bound of bounds) {
+                    if (bound.ocrVal === null || !bound.userVal) continue;
+
+                    const userVal = parseFloat(bound.userVal);
+                    if (isNaN(userVal)) continue;
+
+                    let isClose = false;
+
+                    if (bound.isLog && userVal > 0 && bound.ocrVal > 0) {
+                        const logDiff = Math.abs(Math.log10(userVal) - Math.log10(bound.ocrVal));
+                        isClose = logDiff <= 0.01;
+                    } else {
+                        isClose = Math.abs(userVal - bound.ocrVal) < 1;
+                    }
+
+                    if (!isClose) {
+                        validationErrors.push(`${bound.name}: inputted '${userVal}', but OCR suggests roughly '${Math.round(bound.ocrVal * 10) / 10}'`);
+                    }
+                }
+
+                if (validationErrors.length > 0) {
+                    const buttons = document.createElement('div');
+                    buttons.classList.add('popupButtons');
+                    const cancel = document.createElement('button'), confirm = document.createElement('button');
+                    cancel.classList.add('standardButton');
+                    cancel.textContent = 'Cancel';
+                    confirm.classList.add('standardButton');
+                    confirm.textContent = 'Save Anyway';
+                    buttons.append(confirm, cancel);
+
+                    confirm.addEventListener('click', () => {
+                        clearPopups();
+                        worker.postMessage(data);
+                    });
+
+                    cancel.addEventListener('click', clearPopups);
+
+                    void createPopup(
+                        `Detected a potential mismatch between your inputted bounds and the image text:\n\n${validationErrors.join('\n')}\n\nSave anyway or go back?`,
+                        { buttons: buttons }
+                    );
+                    return;
+                }
+
+                worker.postMessage(data);
+            };
+
+            if (words.value) {
+                words.promise.then(on_words).catch((err) => {
+                    console.error(err);
+                    worker.postMessage(data);
+                });
+            } else {
+                createPopup("Image text detection has not yet finished... Skip?", {
+                    buttons: 'Skip'
+                }).then(() => {
+                    worker.postMessage(data);
+                });
+
+                words.promise.then((words_data) => {
+                    clearPopups();
+                    on_words(words_data);
+                }).catch(() => {
+                    clearPopups();
+                    worker.postMessage(data);
+                });
+            }
+        }
     },
     addPoint: (x, y) => worker.postMessage({
         /** @export */ type: 'addPoint',
@@ -509,18 +885,19 @@ const imageQueue = {
     scrollToSelected: () => {
         (imageQueue.currentlySelected())?.scrollIntoView({inline: 'center', behavior: 'smooth'});
     },
-    addImage: (src, display=false) => {
+    addImage: (blob, src, display=false) => {
         const img = document.createElement('img'),
             a = document.getElementById('imageQueueInner');
         img.src = src;
         imageMap.set(img.src, {
-            initial: true
+            initial: true,
+            bitmap: createImageBitmap(blob)
         });
         img.addEventListener('dragstart', (e) => e.preventDefault());
         img.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            image.saveLines();
+            image.saveImage();
             image.src = src;
             imageQueue.removeSelectedImage();
             img.classList.add('selectedImage');
@@ -574,8 +951,6 @@ document.getElementById('editImage').addEventListener('click', () => {
         img.src = image.src;
 
         const activeFilters = new Set();
-        // safari check
-        const safari = !('filter' in CanvasRenderingContext2D.prototype);
         const filters = !safari ? {
             /** @export */ Invert: {
                 property: 'invert',
@@ -667,24 +1042,13 @@ document.getElementById('editImage').addEventListener('click', () => {
 
             if (!safari) global_canvas_ctx_2d.filter = img.style.filter;
             global_canvas_ctx_2d.drawImage(img, 0, 0);
+            if (!safari) global_canvas_ctx_2d.filter = 'none';
 
-            if (safari) {
-                // should only fire for safari, which does not support 2d context filter
-                // i ain't implementing the other filters :serioussssly:
-                console.log("Using fallback invert mode");
-                const imageData = global_canvas_ctx_2d.getImageData(0, 0, width, height),
-                    data = imageData.data, l = data.length;
-                for (let i = 0; i < l; i += 4) {
-                    data[i] = 255 - data[i];
-                    data[i + 1] = 255 - data[i + 1];
-                    data[i + 2] = 255 - data[i + 2];
-                }
-                global_canvas_ctx_2d.putImageData(imageData, 0, 0);
-            }
+            if (safari) safariInverse();
 
             const currentlySelected = imageQueue.currentlySelected();
             global_canvas.toBlob((b) => {
-                imageQueue.addImage(URL.createObjectURL(b), true);
+                imageQueue.addImage(b, URL.createObjectURL(b), true);
                 currentlySelected?.__usytrace_remove();
                 clearPopups();
 
@@ -707,7 +1071,7 @@ fileInput.loadFiles = (files) => {
     if (validFiles.length > 0) {
         clearPopups();
         validFiles.forEach((file, index) => {
-            imageQueue.addImage(URL.createObjectURL(file), index === lastId);
+            imageQueue.addImage(file, URL.createObjectURL(file), index === lastId);
         });
     }
     else void createPopup("Invalid image/file(s) added!");
@@ -865,6 +1229,9 @@ window.addEventListener('resize', () => {
     }
 }
 
+let image_id = 0;
+let tesseract_id = 0;
+
 // where everything starts
 image.addEventListener('load', () => {
     document.getElementById('defaultMainText').classList.add('hidden');
@@ -879,8 +1246,8 @@ image.addEventListener('load', () => {
     const imageData = imageMap.get(image.src);
     if (imageData.initial) {
         waitingOverlay.createOverlay();
-        console.time("Initialise image");
-        worker.addImage(width, height); // implicitly sets as current
+        console.time(`Initialise image ${++image_id}`);
+        worker.addImage(width, height, image_id); // implicitly sets as current
         lines.setPosition(lines.lines["xHigh"], width);
         lines.setPosition(lines.lines["xLow"], 0);
         lines.setPosition(lines.lines["yHigh"], 0);
@@ -892,10 +1259,35 @@ image.addEventListener('load', () => {
         worker.snapLine(lines.lines["yHigh"], 1);
         worker.snapLine(lines.lines["yLow"], -1, true);
         worker.autoTrace();
+
+        imageData.words = {
+            resolve_: undefined,
+            reject_: undefined,
+            promise: undefined,
+            value: false
+        };
+
+        imageData.width = image.naturalWidth;
+        imageData.height = image.naturalHeight;
+
+        imageData.exportOptions = {
+            /** @export */ SPLHigher: '',
+            /** @export */ SPLLower: '',
+            /** @export */ FRHigher: '',
+            /** @export */ FRLower: ''
+        };
+
+        image.loadExportOptions(imageData);
+
+        imageData.words.promise = new Promise((resolve, reject) => {
+            imageData.words.resolve_ = resolve;
+            imageData.words.reject_ = reject;
+        });
+
         imageData.initial = false;
     } else {
         worker.setCurrent();
-        image.loadLines();
+        image.loadImage();
         worker.getCurrentPath();
     }
     lines.updateLineWidth();

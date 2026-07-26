@@ -14,19 +14,20 @@ jobs:
 
     steps:
     - name: Checkout main repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         path: usytrace
         ref: main
         persist-credentials: false
 
     - name: Check if recompile needed
-      uses: dorny/paths-filter@v3
+      uses: dorny/paths-filter@v4
       id: changes
       with:
         working-directory: usytrace
         filters: |
           recompile:
+            - '.github/workflows/main.yml'
             - 'src/wasm/**'
             - 'CMakeLists.txt'
 
@@ -40,18 +41,23 @@ jobs:
       run: |
         git clone https://github.com/emscripten-core/emsdk.git
         cd emsdk
-        ./emsdk install 4.0.22
-        ./emsdk activate 4.0.22
+        ./emsdk install 6.0.4
+        ./emsdk activate 6.0.4
     
     - name: Install newer CMake version
       if: steps.changes.outputs.recompile == 'true'
       run: |
-        version=4.2.1
+        version=4.4.0
         wget https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-linux-x86_64.sh
         chmod +x cmake-${version}-linux-x86_64.sh
         mkdir $(pwd)/cmake
         ./cmake-${version}-linux-x86_64.sh --skip-license --prefix=$(pwd)/cmake
         echo "$(pwd)/cmake/bin" >> $GITHUB_PATH
+
+    - name: Download Tesseract
+      working-directory: usytrace
+      run: |
+        npm run download
 
     - name: Build everything due to wasm change
       if: steps.changes.outputs.recompile == 'true'
@@ -79,7 +85,7 @@ jobs:
         npm run build:dist
 
     - name: Checkout github pages repo
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
       with:
         repository: usyless/usyless.github.io
         token: ${{ secrets.BOT_TOKEN }}

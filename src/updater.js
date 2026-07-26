@@ -1,4 +1,4 @@
-if ("serviceWorker" in navigator && !["localhost", "127.0.0.1"].includes(location.hostname)) {
+if ("serviceWorker" in navigator && !['localhost', '127.0.0.1'].includes(location.hostname)) {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         window.location.reload();
     });
@@ -30,4 +30,23 @@ if ("serviceWorker" in navigator && !["localhost", "127.0.0.1"].includes(locatio
             });
         });
     });
+
+    document.getElementById('forceRefresh')?.addEventListener('click', async () => {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+
+        if (registrations && registrations.length) {
+            for (const registration of registrations) {
+                await registration.unregister();
+            }
+        }
+
+        if (window.caches) {
+            const cacheNames = await window.caches.keys();
+            await Promise.all(cacheNames.map(name => window.caches.delete(name)));
+        }
+
+        window.location.reload();
+    });
+} else {
+    document.getElementById('forceRefresh').disabled = true;
 }

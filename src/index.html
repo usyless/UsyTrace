@@ -152,6 +152,9 @@
         <button id="about" class="sidebarSection standardButton">
             <b>About/Contact</b>
         </button>
+        <button id="forceRefresh" class="sidebarSection standardButton">
+            <b>Force Refresh Website (To fix update/offline usage bugs)</b>
+        </button>
     </div>
 
     <div id="main-content">
@@ -168,13 +171,13 @@
                 </svg>
                 <svg id="lines" class="canvasSizing hidden">
                     <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xLow" data-other="xHigh"></line>
-                    <text x="0" y="0" dx="1em" text-anchor="middle">Low</text>
+                    <text x="0" y="0" dx="1.05em" text-anchor="middle" font-family="Open Sans" font-weight="700">Low</text>
                     <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xHigh" data-other="xLow"></line>
-                    <text x="0" y="0" dx="-1em" text-anchor="middle">High</text>
+                    <text x="0" y="0" dx="-1.2em" text-anchor="middle" font-family="Open Sans" font-weight="700">High</text>
                     <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yHigh" data-other="yLow"></line>
-                    <text x="0" y="0" dy="0.6em" text-anchor="middle">High</text>
+                    <text x="0" y="0" dy="0.9em" text-anchor="middle" font-family="Open Sans" font-weight="700">High</text>
                     <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yLow" data-other="yHigh"></line>
-                    <text x="0" y="0" text-anchor="middle">Low</text>
+                    <text x="0" y="0" dy="-0.2em" text-anchor="middle" font-family="Open Sans" font-weight="700">Low</text>
                 </svg>
                 <svg id="erasing" class="canvasSizing hidden removePointerEvents">
                     <rect x="0" y="0" width="0" height="100%" fill="red" opacity="0.3"></rect>
@@ -199,6 +202,7 @@
 </div>
 
 <div class="waiting-overlay" data-for="trace"></div>
-<script src="main.min.js" type="module"></script>
+<script src="./tesseract/tesseract.min.js"></script>
+<script src="./main.min.js" type="module"></script>
 </body>
 </html>

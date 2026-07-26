@@ -1,19 +1,29 @@
 const messageQueue = [];
 self.onmessage = (e) => messageQueue.push(e);
 
+const counterToSrc = new Map();
+
 Module['onRuntimeInitialized'] = () => {
     const decode = TextDecoder.prototype.decode.bind(new TextDecoder('utf-8'));
     const readStringFromMemory = (ptr) => decode(new Uint8Array(HEAPU8.buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1]));
 
     const stringReturn = (func) => (...args) => readStringFromMemory(func(...args));
 
+    let counter = 0;
+
     const srcMap = new Map();
+
     const api = {
         create_buffer: Module["_create_buffer"],
         setCurrent_: (src) => Module["_setCurrent"](srcMap.get(src)),
-        addImage_: (src, buf, width, height) => srcMap.set(src, Module["_addImage"](buf, width, height)),
+        addImage_: (src, buf, width, height) => {
+            counterToSrc.set(++counter, src);
+            const ptr = Module["_addImage"](buf, width, height, counter);
+            srcMap.set(src, ptr);
+        },
         removeImage_: (src) => {
-            Module["_removeImage"](srcMap.get(src));
+            const ptr = srcMap.get(src);
+            Module["_removeImage"](ptr);
             srcMap.delete(src);
         },
         historyStatus: Module["_historyStatus"],
@@ -40,14 +50,19 @@ Module['onRuntimeInitialized'] = () => {
     const typeMap = {
         /** @export */ setCurrent: ({src}) => api.setCurrent_(src),
         /** @export */ removeImage: ({src}) => api.removeImage_(src),
-        /** @export */ setData: ({src, type, width, height, data}) => {
+        /** @export */ setData: ({src, type, width, height, data, image_id}) => {
             const p = api.create_buffer(parseInt(width, 10), parseInt(height, 10));
             HEAPU8.set(data, p);
             api.addImage_(src, p, parseInt(width, 10), parseInt(height, 10));
             return {
                 /** @export */ src,
-                /** @export */ type
+                /** @export */ type,
+                /** @export */ image_id,
             };
+        },
+        /** @export */ needsInverse: (data) => {
+            data["inverse"] = api.needsInverse_(data["src"]);
+            return data;
         },
         /** @export */ getHistoryStatus: (data) => {
             const value = api.historyStatus();
@@ -106,3 +121,15 @@ Module['onRuntimeInitialized'] = () => {
     for (const e of messageQueue) messageListener(e);
     messageQueue.length = 0;
 };
+
+function onImageInverseReady(counter, inverse) {
+    const src = counterToSrc.get(counter);
+    if (!src) return;
+    counterToSrc.delete(counter);
+
+    postMessage({
+        /** @export */ type: 'needsInverse',
+        /** @export */ src,
+        /** @export */ inverse
+    });
+}
