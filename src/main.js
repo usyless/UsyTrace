@@ -14,7 +14,7 @@ const tesseract_worker = new Promise(async (resolve, reject) => {
         });
 
         await tesseract_worker.setParameters({
-            /** @export */ tessedit_char_whitelist: '0123456789,.k-+',
+            /** @export */ tessedit_char_whitelist: '0123456789,.kK-+',
             /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SPARSE_TEXT"]
         });
 
@@ -60,6 +60,27 @@ function resetToDefault() {
 
 const global_canvas = document.createElement('canvas');
 const global_canvas_ctx_2d = global_canvas.getContext('2d');
+
+const global_canvas_2 = document.createElement('canvas');
+const global_canvas_ctx_2d_2 = global_canvas_2.getContext('2d');
+global_canvas_ctx_2d_2.imageSmoothingEnabled = false;
+
+// safari check
+const safari = !('filter' in CanvasRenderingContext2D.prototype);
+
+const safariInverse = () => {
+    // should only fire for safari, which does not support 2d context filter
+    // i ain't implementing the other filters :serioussssly:
+    console.log("Using fallback invert mode");
+    const imageData = global_canvas_ctx_2d.getImageData(0, 0, global_canvas.width, global_canvas.height),
+        data = imageData.data, l = data.length;
+    for (let i = 0; i < l; i += 4) {
+        data[i] = 255 - data[i];
+        data[i + 1] = 255 - data[i + 1];
+        data[i + 2] = 255 - data[i + 2];
+    }
+    global_canvas_ctx_2d.putImageData(imageData, 0, 0);
+};
 
 // Global Variables
 let sizeRatio, width, height, lineWidth, CURRENT_MODE = null, MODE_RESET_CB = null;
@@ -173,6 +194,16 @@ const erasing = {
 }
 erasing.init();
 
+/** @type {HTMLImageElement & {
+ * getMouseCoords: (MouseEvent) => any,
+ * isValid: () => boolean,
+ * saveLines: (any) => void,
+ * loadLines: (any) => void,
+ * saveExportOptions: (any) => void,
+ * loadExportOptions: (any) => void,
+ * saveImage: () => void,
+ * loadImage: () => void
+ }} */
 const image = document.getElementById('uploadedImage');
 image.getMouseCoords = (e) => {
     const r = image.getBoundingClientRect(), x = e.clientX, y = e.clientY;
@@ -403,20 +434,59 @@ const worker = {
                     const needsInverse = data["inverse"];
                     if (needsInverse === -1) return;
 
-                    tesseract_worker.then((t) => {
+                    Promise.all([tesseract_worker, imageData.bitmap]).then(([t, bitmap]) => {
                         const label = `Initialise image ${++tesseract_id} OCR`;
                         console.time(label);
-                        return t.recognize(src, {}, {
+
+                        if (needsInverse) {
+                            global_canvas.width = imageData.width;
+                            global_canvas.height = imageData.height;
+
+                            console.log('Inversing image for tesseract');
+                            if (!safari) global_canvas_ctx_2d.filter = 'invert(100%)';
+                            global_canvas_ctx_2d.drawImage(bitmap, 0, 0);
+                            if (!safari) global_canvas_ctx_2d.filter = 'none';
+
+                            if (safari) safariInverse();
+
+                            global_canvas_2.width = imageData.width * 2.5;
+                            global_canvas_2.height = imageData.height * 2.5;
+
+                            global_canvas_ctx_2d_2.drawImage(global_canvas, 0, 0, imageData.width * 2.5, imageData.height * 2.5);
+
+                            global_canvas.width = 0;
+                            global_canvas.height = 0;
+                        } else {
+                            global_canvas_2.width = imageData.width * 2.5;
+                            global_canvas_2.height = imageData.height * 2.5;
+
+                            global_canvas_ctx_2d_2.drawImage(bitmap, 0, 0, imageData.width * 2.5, imageData.height * 2.5);
+                        }
+                        bitmap.close();
+                        delete imageData.bitmap;
+
+                        return t.recognize(global_canvas_2, {}, {
                             /** @export */ blocks: true,
                             /** @export */ text: false,
                         }).then((d) => {
+                            global_canvas_2.width = 0;
+                            global_canvas_2.height = 0;
+
                             console.timeEnd(label);
-                            const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
+                            const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3).map((word) => {
+                                word['bbox']['x0'] /= 2.5;
+                                word['bbox']['x1'] /= 2.5;
+                                word['bbox']['y0'] /= 2.5;
+                                word['bbox']['y1'] /= 2.5;
+                                return word;
+                            });
                             console.log('Words detected in image: ', words);
                             imageData.words.value = true;
                             imageData.words.resolve_(words);
                         });
                     }).catch((err) => {
+                        global_canvas_2.width = 0;
+                        global_canvas_2.height = 0;
                         console.log('Error detecting words in image: ', err);
                         imageData.words.value = true;
                         imageData.words.reject_(err);
@@ -800,12 +870,13 @@ const imageQueue = {
     scrollToSelected: () => {
         (imageQueue.currentlySelected())?.scrollIntoView({inline: 'center', behavior: 'smooth'});
     },
-    addImage: (src, display=false) => {
+    addImage: (blob, src, display=false) => {
         const img = document.createElement('img'),
             a = document.getElementById('imageQueueInner');
         img.src = src;
         imageMap.set(img.src, {
-            initial: true
+            initial: true,
+            bitmap: createImageBitmap(blob)
         });
         img.addEventListener('dragstart', (e) => e.preventDefault());
         img.addEventListener('click', (e) => {
@@ -865,8 +936,6 @@ document.getElementById('editImage').addEventListener('click', () => {
         img.src = image.src;
 
         const activeFilters = new Set();
-        // safari check
-        const safari = !('filter' in CanvasRenderingContext2D.prototype);
         const filters = !safari ? {
             /** @export */ Invert: {
                 property: 'invert',
@@ -958,24 +1027,13 @@ document.getElementById('editImage').addEventListener('click', () => {
 
             if (!safari) global_canvas_ctx_2d.filter = img.style.filter;
             global_canvas_ctx_2d.drawImage(img, 0, 0);
+            if (!safari) global_canvas_ctx_2d.filter = 'none';
 
-            if (safari) {
-                // should only fire for safari, which does not support 2d context filter
-                // i ain't implementing the other filters :serioussssly:
-                console.log("Using fallback invert mode");
-                const imageData = global_canvas_ctx_2d.getImageData(0, 0, width, height),
-                    data = imageData.data, l = data.length;
-                for (let i = 0; i < l; i += 4) {
-                    data[i] = 255 - data[i];
-                    data[i + 1] = 255 - data[i + 1];
-                    data[i + 2] = 255 - data[i + 2];
-                }
-                global_canvas_ctx_2d.putImageData(imageData, 0, 0);
-            }
+            if (safari) safariInverse();
 
             const currentlySelected = imageQueue.currentlySelected();
             global_canvas.toBlob((b) => {
-                imageQueue.addImage(URL.createObjectURL(b), true);
+                imageQueue.addImage(b, URL.createObjectURL(b), true);
                 currentlySelected?.__usytrace_remove();
                 clearPopups();
 
@@ -998,7 +1056,7 @@ fileInput.loadFiles = (files) => {
     if (validFiles.length > 0) {
         clearPopups();
         validFiles.forEach((file, index) => {
-            imageQueue.addImage(URL.createObjectURL(file), index === lastId);
+            imageQueue.addImage(file, URL.createObjectURL(file), index === lastId);
         });
     }
     else void createPopup("Invalid image/file(s) added!");
@@ -1187,14 +1245,15 @@ image.addEventListener('load', () => {
         worker.snapLine(lines.lines["yLow"], -1, true);
         worker.autoTrace();
 
-        const src = image.src;
-
         imageData.words = {
             resolve_: undefined,
             reject_: undefined,
             promise: undefined,
             value: false
         };
+
+        imageData.width = image.naturalWidth;
+        imageData.height = image.naturalHeight;
 
         imageData.exportOptions = {
             /** @export */ SPLHigher: '',
