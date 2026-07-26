@@ -391,16 +391,16 @@ const worker = {
                             }
                         ]}).then((r) => {
                         if (r !== false) {
-                            const a = document.createElement("a"),
-                                url = URL.createObjectURL(new Blob([data["export"]], {
-                                    /** @export */ type: "text/plain;charset=utf-8"
-                                }));
+                            const a = document.createElement("a");
+                            const url = URL.createObjectURL(new Blob([data["export"]], {
+                                /** @export */ type: "text/csv;charset=utf-8"
+                            }));
                             a.href = url;
                             a.classList.add('hidden');
                             document.body.appendChild(a);
 
-                            if (!(r?.endsWith(".txt")) && (r?.length > 0)) r += ".txt";
-                            a.download = r || "trace.txt";
+                            if (!(r?.endsWith(".csv")) && (r?.length > 0)) r += ".csv";
+                            a.download = r || "trace.csv";
                             a.click();
 
                             setTimeout(() => {
