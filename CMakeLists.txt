@@ -72,7 +72,6 @@ if(NOT CMAKE_EXPORT_COMPILE_COMMANDS)
         -sENVIRONMENT=worker
         -sINCOMING_MODULE_JS_API=onRuntimeInitialized
         -sEXPORTED_RUNTIME_METHODS=[]
-        -sMEMORY64=0
         -sSTRICT
 
         $<$<CONFIG:Debug>:
