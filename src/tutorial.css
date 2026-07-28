@@ -1,15 +1,229 @@
 @import "shared.css";
 
+:root {
+    --tutorial-accent: red;
+    --tutorial-scrim: rgba(0, 0, 0, 0.55);
+    --tutorial-ease: cubic-bezier(0.25, 1, 0.5, 1);
+    --tutorial-glide: 320ms;
+    --tutorial-fade: 140ms;
+    --tutorial-margin: 12px;
+}
+
+#tutorial-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+}
+
+#tutorial-overlay {
+    z-index: 10000;
+    padding: var(--tutorial-margin);
+    opacity: 1;
+    transition: opacity 200ms ease-out;
+}
+
+#tutorial-overlay.is-leaving {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.tutorialWelcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    row-gap: var(--spacing-largest);
+    max-width: min(34em, 100%);
+    max-height: 100%;
+    overflow-y: auto;
+    animation: tutorial-welcome-in 420ms var(--tutorial-ease) both;
+}
+
+.tutorialWelcomeLogo {
+    width: min(15em, 34vh);
+    aspect-ratio: 1;
+    height: auto;
+    pointer-events: none;
+}
+
+.tutorialWelcome h1 {
+    margin: 0;
+    font-size: clamp(1.8em, 5vw, 2.6em);
+}
+
+.tutorialWelcome p {
+    margin: 0;
+    max-width: 46ch;
+    font-size: 1.1em;
+    line-height: 1.5;
+    text-wrap: pretty;
+}
+
+.tutorialWelcomeButtons {
+    width: 100%;
+    max-width: 26em;
+    margin-top: var(--spacing-larger);
+}
+
+@keyframes tutorial-welcome-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#tutorial-spotlight {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    left: var(--tutX, 0px);
+    top: var(--tutY, 0px);
+    width: var(--tutW, 0px);
+    height: var(--tutH, 0px);
+    border: var(--border-width) solid var(--tutorial-accent);
+    border-radius: var(--radius);
+    box-shadow: 0 0 0 9999px var(--tutorial-scrim);
+    transition: left var(--tutorial-glide) var(--tutorial-ease), top var(--tutorial-glide) var(--tutorial-ease), width var(--tutorial-glide) var(--tutorial-ease), height var(--tutorial-glide) var(--tutorial-ease);
+    animation: tutorial-spotlight-in 300ms ease-out both;
+}
+
+@keyframes tutorial-spotlight-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+#tutorial-tooltip {
+    position: fixed;
+    z-index: 10000;
+    left: var(--tutX, 0px);
+    top: var(--tutY, 0px);
+
+    display: flex;
+    flex-direction: column;
+    width: max-content;
+    max-width: min(22em, calc(100vw - var(--tutorial-margin) * 2));
+    max-height: calc(100vh - var(--tutorial-margin) * 2);
+
+    padding: var(--spacing-largest);
+    background-color: var(--primary);
+    border: var(--border-width) solid var(--tertiary);
+    border-radius: var(--radius-larger);
+    box-shadow: 0 0 10px 3px rgba(0, 0, 0, 0.3);
+
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 180ms ease-out, transform 180ms var(--tutorial-ease);
+}
+
+#tutorial-tooltip.is-swapping {
+    opacity: 0;
+    transform: translateY(6px);
+    pointer-events: none;
+    transition-duration: var(--tutorial-fade);
+}
+
+.tutorialContent {
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing-largest);
+    min-height: 0;
+}
+
 .headContainer {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
     column-gap: var(--spacing-largest);
 }
 
-.headContainer h1 {
-    width: 100%;
-    flex-grow: 1;
-    flex-basis: 100%;
+.headContainer h2 {
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.tutorialProgress {
+    color: var(--disabled);
+    font-size: 0.85em;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.tutorialText {
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing-largest);
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    text-wrap: pretty;
+}
+
+.tutorialBlock {
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing-smaller);
+}
+
+.tutorialBlock h3 {
+    margin: 0;
+    font-size: 1em;
+}
+
+.tutorialBlock p {
+    margin: 0;
+    line-height: 1.45;
+}
+
+.tutorialFooter {
+    display: flex;
+    flex-direction: column;
+    row-gap: var(--spacing);
+}
+
+.tutorialSkip {
+    background: none;
+    border: none;
+    outline: none;
+    padding: var(--spacing-smaller);
+    border-radius: var(--radius-smaller);
+    color: var(--disabled);
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: 0.1s;
+}
+
+@media (hover: hover) {
+    .tutorialSkip:hover {
+        color: var(--text-primary);
+        background-color: var(--secondary);
+    }
+}
+
+.tutorialSkip:active {
+    background-color: var(--tertiary);
+}
+
+#tutorial-tooltip button:focus-visible, #tutorial-overlay button:focus-visible {
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
+}
+
+#tutorial-spotlight.is-instant {
+    transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #tutorial-overlay, .tutorialWelcome, #tutorial-spotlight, #tutorial-tooltip {
+        animation: none;
+        transition: none;
+    }
 }
