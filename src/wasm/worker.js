@@ -86,7 +86,7 @@ Module['onRuntimeInitialized'] = () => {
         },
 
         /** @export */ addPoint: (data) => defaultTraceResponse(data, api.point(parseInt(data["x"], 10), parseInt(data["y"], 10))),
-        /** @export */ autoTrace: (data) => defaultTraceResponse(data, api.auto(data["colourTolerance"], data["traceAlgorithm"])),
+        /** @export */ autoTrace: (data) => defaultTraceResponse(data, api.auto(data["colourTolerance"])),
         /** @export */ trace: (data) => defaultTraceResponse(data, api.trace_(parseInt(data["x"], 10), parseInt(data["y"], 10), data["colourTolerance"], data["traceAlgorithm"])),
         /** @export */ offsetTrace: (data) => defaultTraceResponse(data, api.offsetTrace(parseInt(data["direction"], 10), parseInt(data["magnitude"], 10))),
 

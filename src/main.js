@@ -802,8 +802,7 @@ const worker = {
     autoTrace: () => {
         worker.postMessage({
             /** @export */ type: 'autoTrace', 
-            /** @export */ colourTolerance: preferences.colourTolerance(),
-            /** @export */ traceAlgorithm: preferences.traceAlgorithm()
+            /** @export */ colourTolerance: preferences.colourTolerance()
         });
     },
     trace: (x, y) => {

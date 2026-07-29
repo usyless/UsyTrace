@@ -325,18 +325,19 @@ struct Image {
         return (traceHistory.undoAvailable() << 1) | traceHistory.redoAvailable();
     }
 
-    inline std::string autoTrace(const TraceAlgorithm algorithm, const TraceData&& traceData) {
+    inline std::string autoTrace(const TraceData&& traceData) {
         const auto traceOneData = Algorithms::Normal::getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         const auto traceTwoData = Algorithms::Normal::getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
 
-        auto traceOne = Trace{imageData}.newTrace(algorithm, context(), traceOneData, true);
-        auto traceTwo = Trace{imageData}.newTrace(algorithm, context(), traceTwoData, true);
+        std::array<Trace, 4> traces{
+            Trace{imageData}.newTrace(TraceAlgorithm::Normal, context(), traceOneData, true),
+            Trace{imageData}.newTrace(TraceAlgorithm::Normal, context(), traceTwoData, true),
+            Trace{imageData}.newTrace(TraceAlgorithm::Experimental, context(), traceOneData, true),
+            Trace{imageData}.newTrace(TraceAlgorithm::Experimental, context(), traceTwoData, true),
+        };
 
-        if (traceOne.size() > traceTwo.size()) {
-            traceHistory.add(traceOne.standardSmooth(static_cast<int>(imageData.width)));
-        } else {
-            traceHistory.add(traceTwo.standardSmooth(static_cast<int>(imageData.width)));
-        }
+        const auto& largestTrace = *std::ranges::max_element(traces, {}, &Trace::size);
+        traceHistory.add(largestTrace.standardSmooth(static_cast<int>(imageData.width)));
         return traceHistory.getLatest().toSVG();
     }
 
@@ -395,7 +396,7 @@ struct Image {
 
     inline std::string eraseRegion(uint32_t begin, uint32_t end) {
         auto result = traceHistory.getLatest().eraseRegion(begin, end);
-        if (result.size() != traceHistory.getLatest().size()) {
+        if (result.trace.size() != traceHistory.getLatest().trace.size()) { // explicitly use size
             traceHistory.add(std::move(result));
         }
         return traceHistory.getLatest().toSVG();
@@ -472,8 +473,8 @@ extern "C" {
         return ReturnedString::make(currentImage->point(TraceData{x, y}));
     }
 
-    EMSCRIPTEN_KEEPALIVE void* autoTrace(const uint32_t colourTolerance, const TraceAlgorithm algorithm) {
-        return ReturnedString::make(currentImage->autoTrace(algorithm, TraceData{colourTolerance}));
+    EMSCRIPTEN_KEEPALIVE void* autoTrace(const uint32_t colourTolerance) {
+        return ReturnedString::make(currentImage->autoTrace(TraceData{colourTolerance}));
     }
 
     EMSCRIPTEN_KEEPALIVE void* eraseRegion(uint32_t begin, uint32_t end) {

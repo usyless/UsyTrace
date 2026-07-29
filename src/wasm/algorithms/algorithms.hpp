@@ -34,7 +34,7 @@ struct Trace {
 
     std::vector<std::pair<uint32_t, uint32_t>> clean() const {
         std::vector<std::pair<uint32_t, uint32_t>> simplifiedTrace{};
-        if (!trace.empty()) {
+        if (trace.size() > 2) {
             simplifiedTrace.reserve(trace.size());
             if (trace.size() > 2) {
                 auto iter = trace.begin();
@@ -222,7 +222,10 @@ struct Trace {
     }
 
     size_t size() const noexcept {
-        return trace.size();
+        if (trace.empty()) return 0;
+        if (trace.size() == 1) return 1;
+
+        return standardSmooth(static_cast<int>(imageData.width)).clean().size();
     }
 
     bool empty() const noexcept {
