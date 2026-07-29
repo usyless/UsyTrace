@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <set>
 #include <optional>
+#include <cmath>
 
 using Colour = uint8_t;
 using frTrace = std::map<uint32_t, uint32_t>;
@@ -40,8 +41,6 @@ struct RGB {
         return R + G + B;
     }
 
-    // Might be able to do silly thing with this pointer here
-    // Although probably undefined behaviour due to padding
     constexpr inline int toBin() const noexcept {
         return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
     }
@@ -74,10 +73,15 @@ struct ImageData {
 
     inline RGB getBackgroundColour() const {
         std::unordered_map<int, uint32_t> colours{};
+        colours.reserve(1024);
         const auto mY = height, mX = width;
         const uint32_t xJump = std::max<uint32_t>(1, mX / 100), yJump = std::max<uint32_t>(1, mY / 100);
 
-        for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[getRGB(x, y).toBin()];
+        for (uint32_t y = 0; y < mY; y += yJump) {
+            for (uint32_t x = 0; x < mX; x += xJump) {
+                ++colours[getRGB(x, y).toBin()];
+            }
+        }
         if (colours.empty()) return {255, 255, 255};
         const auto bin = std::max_element(colours.begin(), colours.end(),
             [] (const std::pair<int, uint32_t>& a, const std::pair<int, uint32_t>& b) { return a.second < b.second; })->first;
@@ -116,7 +120,6 @@ struct TraceData {
     constexpr TraceData(const uint32_t x, const uint32_t y) noexcept : x(x), y(y) {}
     constexpr explicit TraceData(const uint32_t colourTolerance) noexcept : colourTolerance(colourTolerance) {}
     constexpr TraceData(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) noexcept : x(x), y(y), colourTolerance(colourTolerance) {}
-
 
     constexpr TraceData clamp(const ImageData<4>& data) const noexcept {
         return TraceData{std::clamp(x, 0U, data.width - 1), std::clamp(y, 0U, data.height - 1), colourTolerance};

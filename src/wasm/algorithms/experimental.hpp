@@ -38,7 +38,6 @@ struct ColourModel {
     float tolerance = 0.1f;
     float minRelevantSq = 0.0f;
 
-    // Tolerance and background must both be set before this is called.
     void setReferences(const ColourVec* colours, const size_t count) noexcept {
         referenceCount = std::min(count, maxReferences);
         float minRelevant = 0.0f;
@@ -103,11 +102,13 @@ inline std::vector<ColourCluster> analyseColours(const ImageData<4>& image, cons
     const auto bins = std::make_unique<Bin[]>(binCount);
 
     const auto width = image.width, height = image.height;
+    const float bgDistSq = backgroundDistance * backgroundDistance;
+
     for (uint32_t y = 0; y < height; ++y) {
         for (uint32_t x = 0; x < width; ++x) {
             const auto rgb = image.getRGB(x, y);
             const ColourVec p{rgb};
-            if (colourDistanceSq(p, background) < backgroundDistance * backgroundDistance) continue;
+            if (colourDistanceSq(p, background) < bgDistSq) continue;
             auto& bin = bins[((rgb.R >> (8 - bits)) << (2 * bits)) | ((rgb.G >> (8 - bits)) << bits) | (rgb.B >> (8 - bits))];
             bin.r += p.r;
             bin.g += p.g;
@@ -120,6 +121,8 @@ inline std::vector<ColourCluster> analyseColours(const ImageData<4>& image, cons
 
     const uint32_t minimumCount = std::max<uint32_t>(24, (width * height) / 20000);
     std::vector<ColourCluster> found;
+    found.reserve(binCount / 16);
+
     for (uint32_t i = 0; i < binCount; ++i) {
         const auto& bin = bins[i];
         if (bin.count < minimumCount) continue;
@@ -129,10 +132,13 @@ inline std::vector<ColourCluster> analyseColours(const ImageData<4>& image, cons
     std::sort(found.begin(), found.end(), [] (const ColourCluster& a, const ColourCluster& b) { return a.count > b.count; });
 
     std::vector<ColourCluster> clusters;
+    clusters.reserve(maxClusters);
+    const float mergeDistSq = mergeDistance * mergeDistance;
+
     for (const auto& candidate : found) {
         bool merged = false;
         for (auto& cluster : clusters) {
-            if (colourDistanceSq(cluster.colour, candidate.colour) >= mergeDistance * mergeDistance) continue;
+            if (colourDistanceSq(cluster.colour, candidate.colour) >= mergeDistSq) continue;
             const auto total = cluster.count + candidate.count;
             cluster.colour = cluster.colour + (candidate.colour - cluster.colour) * (static_cast<float>(candidate.count) / static_cast<float>(total));
             cluster.count = total;
@@ -147,23 +153,23 @@ inline std::vector<ColourCluster> analyseColours(const ImageData<4>& image, cons
 }
 
 namespace tracing {
-    constexpr float minPixelScore     = 0.25f;  // below this a pixel is not evidence at all
-    constexpr float minRunWeight      = 0.6f;   // total score a run needs to be worth considering
-    constexpr size_t maxRunsPerColumn = 4;      // only the strongest runs in a column are kept
-    constexpr float hitReward         = 1.0f;   // earned for every column the path explains
-    constexpr float gapCost           = 0.35f;   // paid for every column the path skips over
+    constexpr float minPixelScore     = 0.25f;  
+    constexpr float minRunWeight      = 0.6f;   
+    constexpr size_t maxRunsPerColumn = 4;      
+    constexpr float hitReward         = 1.0f;   
+    constexpr float gapCost           = 0.35f;   
     constexpr float smoothnessWeight  = 1.0f;
-    constexpr float bendSharpness     = 4.0f;   // how much dearer, past the allowance
+    constexpr float bendSharpness     = 4.0f;   
     constexpr float thicknessWeight   = 0.5f;
-    constexpr float slopeCarry        = 0.45f;  // how much of the old slope survives into the new one
-    constexpr float softSlope         = 6.0f;   // pixels per column before steepness starts costing
+    constexpr float slopeCarry        = 0.45f;  
+    constexpr float softSlope         = 6.0f;   
     constexpr float slopeWeight       = 0.04f;
-    constexpr float deviationLimit    = 12.0f;  // hard cut off, in multiples of the curvature allowance
-    constexpr float maxLeap           = 0.20f;  // and never further than this much of the plot in one step
-    constexpr float rulePenalty       = 0.60f;  // per column spent sitting on a detected grid rule
+    constexpr float deviationLimit    = 12.0f;  
+    constexpr float maxLeap           = 0.20f;  
+    constexpr float rulePenalty       = 0.60f;  
     constexpr float minTolerance      = 0.05f;
     constexpr float maxTolerance      = 0.25f;
-    constexpr float toleranceFraction = 0.45f;  // of the gap to the nearest other ink colour
+    constexpr float toleranceFraction = 0.45f;  
     constexpr int maxRefinePasses     = 6;
     constexpr float infinite          = 1e30f;
 }
@@ -177,9 +183,9 @@ inline bool onHorizontalRule(const std::set<uint32_t>& horizontalLines, const fl
 }
 
 struct Candidate {
-    float centre = 0.0f;    // score weighted centre of the run, sub pixel
-    float peak = 0.0f;      // strongest membership score in the run
-    float weight = 0.0f;    // total membership mass of the run
+    float centre = 0.0f;    
+    float peak = 0.0f;      
+    float weight = 0.0f;    
     uint32_t x = 0;
     uint32_t top = 0, bottom = 0;
 
@@ -195,7 +201,7 @@ struct PathState {
 };
 
 struct TracedPath {
-    std::vector<std::pair<uint32_t, float>> points;  // (x, y) ascending in x
+    std::vector<std::pair<uint32_t, float>> points;  
     float cost = tracing::infinite;
 
     inline bool empty() const noexcept { return points.empty(); }
@@ -205,13 +211,18 @@ struct Tracer {
     const ImageData<4>& image;
     ColourModel model;
     float lineWidth = 2.0f;
-    float curveAllowance = 2.0f;    // how sharply the curve may bend, pixels per column
-    uint32_t maxGap = 8;            // longest break in the line the path may cross
-    uint32_t columnStride = 1;      // scan every nth column; see scan()
-    const std::set<uint32_t>* rules = nullptr;  // detected horizontal rules, if known
+    float curveAllowance = 2.0f;    
+    uint32_t maxGap = 8;            
+    uint32_t columnStride = 1;      
+    const std::set<uint32_t>* rules = nullptr;  
 
     mutable std::vector<float> scores;
     mutable std::vector<Candidate> scratch;
+
+    mutable std::vector<Candidate> scanCandidates;
+    mutable std::vector<PathState> scanStates;
+    mutable std::vector<uint32_t> scanColumnStart;
+    mutable std::vector<float> scanColumnMinCost;
 
     Tracer(const ImageData<4>& image, ColourModel model)
         : image(image), model(std::move(model)), scores(image.height) {
@@ -298,11 +309,11 @@ struct Tracer {
         const float strideAllowance = curveAllowance * strideF;
         const uint32_t strideGap = std::max<uint32_t>(1, maxGap / stride);
 
-        std::vector<Candidate> candidates;
-        std::vector<PathState> states;
-        std::vector<uint32_t> columnStart(count + 1, 0);
-        std::vector<float> columnMinCost(count, tracing::infinite);
-        candidates.reserve(static_cast<size_t>(count) * 4);
+        scanCandidates.clear();
+        scanStates.clear();
+        scanColumnStart.assign(count + 1, 0);
+        scanColumnMinCost.assign(count, tracing::infinite);
+        scanCandidates.reserve(static_cast<size_t>(count) * 4);
 
         const float anchorRadius = std::max(4.0f, lineWidth * 3.0f);
         float best = tracing::infinite, floorCost = tracing::infinite;
@@ -310,17 +321,17 @@ struct Tracer {
         bool found = false;
 
         for (uint32_t s = 0; s < count; ++s) {
-            columnStart[s] = static_cast<uint32_t>(candidates.size());
+            scanColumnStart[s] = static_cast<uint32_t>(scanCandidates.size());
             const uint32_t offset = s * stride;
-            candidatesForColumn((direction > 0) ? firstColumn + offset : firstColumn - offset, candidates);
-            columnStart[s + 1] = static_cast<uint32_t>(candidates.size());
-            states.resize(candidates.size());
+            candidatesForColumn((direction > 0) ? firstColumn + offset : firstColumn - offset, scanCandidates);
+            scanColumnStart[s + 1] = static_cast<uint32_t>(scanCandidates.size());
+            scanStates.resize(scanCandidates.size());
 
             float columnMin = tracing::infinite;
-            for (uint32_t j = columnStart[s]; j < columnStart[s + 1]; ++j) {
-                const auto& candidate = candidates[j];
+            for (uint32_t j = scanColumnStart[s]; j < scanColumnStart[s + 1]; ++j) {
+                const auto& candidate = scanCandidates[j];
                 const float unary = unaryCost(candidate);
-                auto& state = states[j];
+                auto& state = scanStates[j];
 
                 if (!anchored || (s == 0 && std::abs(candidate.centre - anchorY) <= anchorRadius)) state.cost = unary;
 
@@ -328,17 +339,17 @@ struct Tracer {
                     const uint32_t previousColumn = s - gap;
                     const float gapPenalty = tracing::gapCost * static_cast<float>(gap - 1);
                     if (state.cost <= floorCost + gapPenalty + unary) break;
-                    if (columnMinCost[previousColumn] >= tracing::infinite) continue;
+                    if (scanColumnMinCost[previousColumn] >= tracing::infinite) continue;
 
                     const float gapF = static_cast<float>(gap);
                     const float allowance = strideAllowance * gapF;
                     const float limit = std::min(allowance * tracing::deviationLimit + 4.0f,
                                                  static_cast<float>(image.height) * tracing::maxLeap);
 
-                    for (uint32_t i = columnStart[previousColumn]; i < columnStart[previousColumn + 1]; ++i) {
-                        const auto& previous = states[i];
+                    for (uint32_t i = scanColumnStart[previousColumn]; i < scanColumnStart[previousColumn + 1]; ++i) {
+                        const auto& previous = scanStates[i];
                         if (previous.cost >= tracing::infinite) continue;
-                        const auto& previousCandidate = candidates[i];
+                        const auto& previousCandidate = scanCandidates[i];
 
                         const float predicted = previousCandidate.centre + (previous.hasSlope ? previous.slope * gapF : 0.0f);
                         const float deviation = std::abs(candidate.centre - predicted);
@@ -348,7 +359,7 @@ struct Tracer {
                         const float bend = deviation / allowance;
                         float smoothness = tracing::smoothnessWeight
                                          * ((bend <= 1.0f) ? bend : 1.0f + tracing::bendSharpness * (bend - 1.0f));
-                        if (!previous.hasSlope) smoothness *= 0.5f;  // nothing to extrapolate from yet
+                        if (!previous.hasSlope) smoothness *= 0.5f;
                         const float total = previous.cost + unary + gapPenalty + smoothness
                                           + tracing::slopeWeight * std::max(0.0f, std::abs(slope) / strideF - tracing::softSlope);
                         if (total >= state.cost) continue;
@@ -368,7 +379,7 @@ struct Tracer {
                     found = true;
                 }
             }
-            columnMinCost[s] = columnMin;
+            scanColumnMinCost[s] = columnMin;
             floorCost = std::min(floorCost, columnMin);
         }
 
@@ -377,9 +388,9 @@ struct Tracer {
         TracedPath path;
         path.cost = best;
         for (uint32_t index = bestIndex;;) {
-            path.points.emplace_back(candidates[index].x, candidates[index].centre);
-            if (states[index].previousColumn < 0) break;
-            index = states[index].previousIndex;
+            path.points.emplace_back(scanCandidates[index].x, scanCandidates[index].centre);
+            if (scanStates[index].previousColumn < 0) break;
+            index = scanStates[index].previousIndex;
         }
 
         if (direction > 0) std::reverse(path.points.begin(), path.points.end());
@@ -558,7 +569,6 @@ inline std::optional<std::pair<uint32_t, float>> findAnchor(const Tracer& tracer
             float bestDistance = radius, bestY = 0.0f;
             bool hit = false;
             for (const auto& candidate : column) {
-                // The whole run counts as a hit, not just its centre.
                 const float distance = std::max({0.0f, static_cast<float>(candidate.top) - target, target - static_cast<float>(candidate.bottom)});
                 if (distance > bestDistance) continue;
                 bestDistance = distance;
@@ -579,7 +589,8 @@ inline frTrace toTrace(const std::vector<std::pair<uint32_t, float>>& points, co
     const auto maxRow = static_cast<float>(height - 1);
     for (const auto& [x, y] : points) {
         if (x < minimumX) continue;
-        result[x] = static_cast<uint32_t>(std::clamp(std::round(y), 0.0f, maxRow));
+        const uint32_t clampedY = static_cast<uint32_t>(std::clamp(std::round(y), 0.0f, maxRow));
+        result.emplace_hint(result.end(), x, clampedY);
     }
     return result;
 }
@@ -588,8 +599,6 @@ inline TracedPath traceThroughAnchor(Tracer& tracer, const uint32_t anchorX, con
     return tracer.converge([&] {
         auto right = tracer.scan(anchorX, 1, true, anchorY);
         if (!traceLeft) return right;
-        // The leftward scan already comes back ascending in x and ends on the
-        // anchor column, which the rightward one also covers.
         auto left = tracer.scan(anchorX, -1, true, anchorY);
         if (left.empty()) return right;
         left.points.pop_back();
@@ -612,7 +621,6 @@ inline frTrace traceFromPoint(const TraceContext& context, const uint32_t x, con
 
     dropRuleDetours(path.points, context.horizontalLines, image.height);
     Tracer::interpolateGaps(path.points);
-    // Tracing rightwards must leave the trace to the left of the click alone.
     return toTrace(path.points, image.height, traceLeft ? 0 : x);
 }
 

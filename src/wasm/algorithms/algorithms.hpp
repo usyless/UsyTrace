@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <string>
 #include <algorithm>
-#include <numeric>
 
 #include <usylibpp/strings.hpp>
 
@@ -36,24 +35,30 @@ struct Trace {
     std::vector<std::pair<uint32_t, uint32_t>> clean() const {
         std::vector<std::pair<uint32_t, uint32_t>> simplifiedTrace{};
         if (!trace.empty()) {
+            simplifiedTrace.reserve(trace.size());
             if (trace.size() > 2) {
                 auto iter = trace.begin();
                 simplifiedTrace.emplace_back(iter->first, iter->second);
-                std::vector<uint32_t> identity{};
                 const auto end = trace.end();
-                for(++iter; iter != end; ++iter) {
-                    identity.clear();
+                for (++iter; iter != end; ++iter) {
+                    uint64_t sumKey = iter->first;
+                    uint32_t count = 1;
                     auto previousKey = iter->first;
                     const auto previousValue = iter->second;
-                    do {
-                        identity.emplace_back(iter->first);
-                    } while(++iter != end && iter->second == previousValue && iter->first == ++previousKey);
+                    while (++iter != end && iter->second == previousValue && iter->first == previousKey + 1) {
+                        previousKey = iter->first;
+                        sumKey += previousKey;
+                        ++count;
+                    }
                     --iter;
-                    if (identity.size() == 1) simplifiedTrace.emplace_back(identity[0], previousValue);
-                    else simplifiedTrace.emplace_back(reduce(identity.begin(), identity.end()) / identity.size(), previousValue);
+                    simplifiedTrace.emplace_back(static_cast<uint32_t>(sumKey / count), previousValue);
                 }
-                if (simplifiedTrace.back().first != trace.rbegin()->first) simplifiedTrace.emplace_back(trace.rbegin()->first, trace.rbegin()->second);
-            } else std::copy(trace.begin(), trace.end(), std::back_inserter(simplifiedTrace));
+                if (simplifiedTrace.back().first != trace.rbegin()->first) {
+                    simplifiedTrace.emplace_back(trace.rbegin()->first, trace.rbegin()->second);
+                }
+            } else {
+                std::copy(trace.begin(), trace.end(), std::back_inserter(simplifiedTrace));
+            }
         }
         return simplifiedTrace;
     }
@@ -61,6 +66,7 @@ struct Trace {
     std::string toSVG() const {
         std::string svg;
         if (const auto res = clean(); !res.empty()) {
+            svg.reserve(res.size() * 16 + 32);
             auto iter = res.begin();
             const auto end = res.end();
             if (res.size() == 1) {
@@ -100,7 +106,9 @@ struct Trace {
                     context.clusters.emplace(Algorithms::Experimental::analyseColours(imageData, ColourVec{context.background}));
                 }
                 newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
-                for (const auto& [x, y] : Algorithms::Experimental::traceFromPoint(context, traceData.x, traceData.y, traceLeft)) newTrace.insert_or_assign(x, y);
+                for (const auto& [x, y] : Algorithms::Experimental::traceFromPoint(context, traceData.x, traceData.y, traceLeft)) {
+                    newTrace.insert_or_assign(x, y);
+                }
 
                 break;
             }
@@ -137,7 +145,7 @@ struct Trace {
                     smoothed += other->second * weight;
                     sumWeights += weight;
                 }
-                newTrace[it->first] = static_cast<uint32_t>((smoothed / sumWeights) + 0.5);
+                newTrace.emplace_hint(newTrace.end(), it->first, static_cast<uint32_t>((smoothed / sumWeights) + 0.5));
             }
         }
         return {imageData, std::move(newTrace)};
@@ -150,8 +158,11 @@ struct Trace {
 
     Trace eraseRegion(uint32_t begin, uint32_t end) const {
         frTrace newTrace{trace};
+        const auto lower = newTrace.lower_bound(begin);
         const auto higher = newTrace.upper_bound(end);
-        for (auto lower = newTrace.lower_bound(begin); lower != higher;) lower = newTrace.erase(lower);
+        if (lower != higher) {
+            newTrace.erase(lower, higher);
+        }
         return {imageData, std::move(newTrace)};
     }
 
@@ -173,7 +184,7 @@ struct Trace {
                 for (const auto [key, val] : trace) {
                     const auto newVal = val + magnitude;
                     if (newVal > image_height_bound) continue;
-                    newTrace[key] = newVal;
+                    newTrace.emplace_hint(newTrace.end(), key, newVal);
                 }
                 break;
             }
@@ -182,7 +193,7 @@ struct Trace {
                 for (const auto [key, val] : trace) {
                     const auto newVal = static_cast<int>(val) - static_cast<int>(magnitude);
                     if (newVal < 0) continue;
-                    newTrace[key] = newVal;
+                    newTrace.emplace_hint(newTrace.end(), key, static_cast<uint32_t>(newVal));
                 }
                 break;
             }
@@ -191,7 +202,7 @@ struct Trace {
                 for (const auto [key, val] : trace) {
                     const auto newKey = static_cast<int>(key) - static_cast<int>(magnitude);
                     if (newKey < 0) continue;
-                    newTrace[newKey] = val;
+                    newTrace.emplace_hint(newTrace.end(), static_cast<uint32_t>(newKey), val);
                 }
                 break;
             }
@@ -201,11 +212,10 @@ struct Trace {
                 for (const auto [key, val] : trace) {
                     const auto newKey = key + magnitude;
                     if (newKey > image_width_bound) continue;
-                    newTrace[newKey] = val;
+                    newTrace.emplace_hint(newTrace.end(), newKey, val);
                 }
                 break;
             }
-
         }
 
         return {imageData, std::move(newTrace)};

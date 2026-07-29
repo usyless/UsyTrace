@@ -3,7 +3,6 @@
 #include <cmath>
 #include <iterator>
 #include <memory>
-#include <numeric>
 #include <stack>
 #include <vector>
 #include <set>
@@ -121,19 +120,21 @@ struct TraceHistory {
 };
 
 auto contiguousLinearInterpolation(const std::vector<std::pair<double, double>>& FRxSPL) {
-    const auto firstF = FRxSPL.front().first, lastF = FRxSPL.back().first,
-    firstV = FRxSPL.front().second, lastV = FRxSPL.back().second;
+    const auto firstF = FRxSPL.front().first;
+    const auto lastF = FRxSPL.back().first;
+    const auto firstV = FRxSPL.front().second;
+    const auto lastV = FRxSPL.back().second;
     const auto l = FRxSPL.size();
 
     uint32_t pos = 0;
     return [&FRxSPL, firstF, lastF, firstV, lastV, l, pos] (const double freq) mutable {
         if (freq <= firstF) return firstV;
         if (freq >= lastF) return lastV;
-        std::pair<double, double> lower, upper;
+        std::pair<double, double> lower{}, upper{};
         for (; pos < l; ++pos) {
-            if (FRxSPL.at(pos).first < freq) lower = FRxSPL.at(pos);
+            if (FRxSPL[pos].first < freq) lower = FRxSPL[pos];
             else {
-                upper = FRxSPL.at(pos--);
+                upper = FRxSPL[pos--];
                 break;
             }
         }
@@ -147,8 +148,6 @@ void padOutputData(const ImageData<4>& original, ImageData<1>& output) {
     const auto maxWidthOrig = width * original.channels, maxWidthOut = width * output.channels;
     const auto data = original.data.get();
     auto outputData = output.data.get();
-    // CAN ONLY TAKE 3x3 KERNELS FOR NOW DUE TO THIS
-    // also cant just copy memory as input is 4 channels, output is 1
     // Copy top and bottom rows
     for (size_t x = 0; x < width; ++x) {
         size_t orx = x * 4;
@@ -187,11 +186,12 @@ void applySobel(const ImageData<4>& original, ImageData<1>& outX, ImageData<1>& 
     };
 
     for (size_t y = 1; y < heightBound; ++y) {
-        size_t origY = y * maxWidthOrig, 
-                outY = y * maxWidthOut;
+        size_t origY = y * maxWidthOrig;
+        size_t outYPos = y * maxWidthOut;
         for (size_t x = 1; x < widthBound; ++x) {
-            int Xsum = 0, Ysum = 0;
-            size_t origX = x * 4; // 4 channels assumed
+            int Xsum = 0;
+            int Ysum = 0;
+            size_t origX = x * 4;
 
             for (int k = -1; k <= 1; ++k) {
                 size_t yPos = origY + (k * maxWidthOrig) + origX;
@@ -199,7 +199,7 @@ void applySobel(const ImageData<4>& original, ImageData<1>& outX, ImageData<1>& 
                 const auto knY = yFilter[k + 1];
 
                 for (int l = -1; l <= 1; ++l) {
-                    const size_t pos = yPos + (l * 4); // 4 channels assumed
+                    const size_t pos = yPos + (l * 4);
                     int sum = data[pos] + data[pos + 1] + data[pos + 2];
 
                     Xsum += sum * knX[l + 1];
@@ -207,7 +207,7 @@ void applySobel(const ImageData<4>& original, ImageData<1>& outX, ImageData<1>& 
                 }
             }
 
-            const size_t pos = outY + x; // 1 channel assumed
+            const size_t pos = outYPos + x;
             outputDataX[pos] = std::clamp(Xsum * 2 / 3, 0, 255);
             outputDataY[pos] = std::clamp(Ysum * 2 / 3, 0, 255);
         }
@@ -244,16 +244,27 @@ std::set<uint32_t> detectLines(const ImageData<1>& imageData, const uint32_t tol
     const auto upperBound = static_cast<uint32_t>(otherDirection * 0.7), lowerBound = static_cast<uint32_t>(otherDirection * 0.3);
     const auto bound = (upperBound - lowerBound) - static_cast<uint32_t>(0.9 * (upperBound - lowerBound));
     
-    std::vector<uint32_t> valid{};
+    uint64_t validSum = 0;
+    uint32_t validCount = 0;
+
     for (uint32_t pos = 0; pos < length; ++pos) {
-        auto failedCount = 0;
-        for (auto j = lowerBound; j <= upperBound; ++j) if (comparator(pos, j) && ++failedCount > bound) break;
-        if (failedCount <= bound) valid.emplace_back(pos);
-        else if (!valid.empty()) {
-            lines.insert(std::reduce(valid.begin(), valid.end()) / valid.size());
-            valid.clear();
+        uint32_t failedCount = 0;
+        for (auto j = lowerBound; j <= upperBound; ++j) {
+            if (comparator(pos, j) && ++failedCount > bound) break;
+        }
+        if (failedCount <= bound) {
+            validSum += pos;
+            ++validCount;
+        } else if (validCount > 0) {
+            lines.emplace_hint(lines.end(), static_cast<uint32_t>(validSum / validCount));
+            validSum = 0;
+            validCount = 0;
         }
     }
+    if (validCount > 0) {
+        lines.emplace_hint(lines.end(), static_cast<uint32_t>(validSum / validCount));
+    }
+
     return lines;
 }
 
@@ -279,13 +290,11 @@ struct Image {
         {
         auto filteredDataX = ImageData<1>{imageData.width, imageData.height};
         padOutputData(imageData, filteredDataX);
-        {
         auto filteredDataY = ImageData<1>{imageData.width, imageData.height};
         padOutputData(imageData, filteredDataY);
 
         applySobel(imageData, filteredDataX, filteredDataY);
         hLines = detectLines<false>(filteredDataY, 20);
-        }
         vLines = detectLines<true>(filteredDataX, 20);
         }
 
@@ -335,7 +344,7 @@ struct Image {
         return traceHistory.add(traceHistory.getLatest().offsetTrace(direction, magnitude)).toSVG();
     }
 
-    std::string exportTrace(const ExportData&& exportData) const {
+    std::string exportTrace(const ExportData& exportData) const {
         const auto FRBottomPixel = exportData.FRBottomPixel, FRRatio = exportData.FRRatio,
         logFRBottomValue = exportData.logFRBottomValue, SPLBottomPixel = exportData.SPLBottomPixel,
         SPLRatio = exportData.SPLRatio, SPLBottomValue = exportData.SPLBottomValue,
@@ -343,29 +352,31 @@ struct Image {
         auto str = ExportString{exportData.delim};
 
         std::vector<std::pair<double, double>> FRxSPL{};
-        for (const auto& [x, y] : traceHistory.getLatest().clean()) {
+        const auto cleanTrace = traceHistory.getLatest().clean();
+        FRxSPL.reserve(cleanTrace.size());
+
+        for (const auto& [x, y] : cleanTrace) {
             FRxSPL.emplace_back(pow(10, (x - FRBottomPixel) * FRRatio + logFRBottomValue), (y - SPLBottomPixel) * SPLRatio + SPLBottomValue);
         }
 
-        if(!FRxSPL.empty()) {
+        if (!FRxSPL.empty()) {
             auto interp = contiguousLinearInterpolation(FRxSPL);
-            for(auto v = exportData.logMinFR; ; v += PPOStep) {
+            for (auto v = exportData.logMinFR; ; v += PPOStep) {
                 const auto freq = pow(10, v);
                 str.addData(freq, interp(freq));
                 if (v >= logMaxFR) break;
             }
         }
 
-        auto ret = std::move(str.data);
-        return ret;
+        return std::move(str.data);
     }
 
     uint32_t snapLine(uint32_t pos, const int lineDir, const int moveDir) const {
-        auto lines = (lineDir == 1) ? vLines : hLines;
+        const auto& lines = (lineDir == 1) ? vLines : hLines;
         pos += moveDir;
         auto bound = lines.upper_bound(pos);
-        bound = (moveDir != 1 && bound != lines.begin()) ? prev(bound) : bound;
-        if (bound == lines.end()) return pos -= moveDir;
+        bound = (moveDir != 1 && bound != lines.begin()) ? std::prev(bound) : bound;
+        if (bound == lines.end()) return pos - moveDir;
         return *bound;
     }
 
@@ -426,7 +437,6 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE void* addImage(Colour* data, const uint32_t width, const uint32_t height, const uint32_t counter) {
-        // Images come in with 4 channels (RGBA)
         auto ptr = new Image{ImageData<4>{data, width, height}, counter};
         currentImage = ptr;
         return ptr;
