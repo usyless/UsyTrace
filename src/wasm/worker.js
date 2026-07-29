@@ -5,7 +5,7 @@ const counterToSrc = new Map();
 
 Module['onRuntimeInitialized'] = () => {
     const decode = TextDecoder.prototype.decode.bind(new TextDecoder('utf-8'));
-    const readStringFromMemory = (ptr) => decode(new Uint8Array(HEAPU8.buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1]));
+    const readStringFromMemory = (ptr) => ptr ? decode(new Uint8Array(HEAPU8.buffer, HEAPU32[ptr / 4], HEAPU32[(ptr / 4) + 1])) : "";
 
     const stringReturn = (func) => (...args) => readStringFromMemory(func(...args));
 
@@ -86,8 +86,8 @@ Module['onRuntimeInitialized'] = () => {
         },
 
         /** @export */ addPoint: (data) => defaultTraceResponse(data, api.point(parseInt(data["x"], 10), parseInt(data["y"], 10))),
-        /** @export */ autoTrace: (data) => defaultTraceResponse(data, api.auto(parseInt(data["colourTolerance"], 10))),
-        /** @export */ trace: (data) => defaultTraceResponse(data, api.trace_(parseInt(data["x"], 10), parseInt(data["y"], 10), parseInt(data["colourTolerance"], 10))),
+        /** @export */ autoTrace: (data) => defaultTraceResponse(data, api.auto(data["colourTolerance"], data["traceAlgorithm"])),
+        /** @export */ trace: (data) => defaultTraceResponse(data, api.trace_(parseInt(data["x"], 10), parseInt(data["y"], 10), data["colourTolerance"], data["traceAlgorithm"])),
         /** @export */ offsetTrace: (data) => defaultTraceResponse(data, api.offsetTrace(parseInt(data["direction"], 10), parseInt(data["magnitude"], 10))),
 
         /** @export */ snapLine: (data) => {

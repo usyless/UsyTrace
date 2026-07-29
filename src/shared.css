@@ -113,13 +113,17 @@ button.altButton:active {
     background: var(--quaternary);
 }
 
-.standardButton:disabled {
+:disabled, [disabled] {
     cursor: not-allowed;
     color: var(--disabled);
+
+    * {
+        color: inherit;
+    }
 }
 
 @media (hover: hover) {
-    .standardButton:disabled:hover {
+    :disabled:hover, [disabled]:hover {
         background-color: var(--primary);
     }
 }

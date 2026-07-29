@@ -75,6 +75,10 @@ const tutorialSteps = [
         header: 'Trace Settings',
         blocks: [
             {
+                heading: 'Trace Algorithm',
+                body: 'Whether to use the regular or the new experimental algorithm for tracing, they both have their advantages and disadvtnages, colour tolerance is disabled in the experimental one.'
+            },
+            {
                 heading: 'Colour Tolerance',
                 body: 'How far a pixel may drift from the line colour and still count as part of the line. Raise it when the trace stops short, lower it when the trace jumps onto a neighbouring line.'
             }

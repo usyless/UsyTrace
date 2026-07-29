@@ -225,6 +225,57 @@ input[type="number"]:focus-visible, select:focus-visible {
     cursor: crosshair;
 }
 
+#imageContainerInner {
+    --overlay-x: green;
+    --overlay-y: blue;
+    --overlay-trace: #e0219a;
+}
+
+#trace path {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.calCore {
+    stroke-width: var(--overlayScale, 1);
+}
+
+.calLineX .calCore {
+    stroke: var(--overlay-x);
+}
+
+.calLineY .calCore {
+    stroke: var(--overlay-y);
+}
+
+#lines text {
+    font-family: 'Open Sans', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: calc(var(--overlayScale, 1) * 18px);
+    letter-spacing: calc(var(--overlayScale, 1) * 0.2px);
+    stroke-width: calc(var(--overlayScale, 1) * 3px);
+    stroke-linejoin: round;
+    stroke-opacity: 0.95;
+    user-select: none;
+}
+
+.calLineX text {
+    fill: var(--overlay-x);
+}
+
+.calLineY text {
+    fill: var(--overlay-y);
+}
+
+#erasing rect {
+    fill: var(--overlay-trace);
+    fill-opacity: 0.18;
+    stroke: var(--overlay-trace);
+    stroke-width: calc(var(--overlayScale, 1) * 2px);
+    stroke-dasharray: calc(var(--overlayScale, 1) * 6px) calc(var(--overlayScale, 1) * 5px);
+}
+
 #imageQueueContainer {
     width: 100%;
     height: var(--image-queue-height);

@@ -1,7 +1,8 @@
 #include <algorithm>
-#include <functional>
+#include <chrono>
+#include <cmath>
 #include <iterator>
-#include <map>
+#include <memory>
 #include <numeric>
 #include <stack>
 #include <vector>
@@ -16,123 +17,18 @@
     #define EMSCRIPTEN_KEEPALIVE __attribute__((used))
 #endif
 
-using Colour = uint8_t;
-using frTrace = std::map<uint32_t, uint32_t>;
+#include "structures.hpp"
+#include "algorithms/algorithms.hpp"
 
-struct RGB {
-    Colour R, G, B;
-
-    constexpr RGB(const Colour r, const Colour g, const Colour b) noexcept : R(r), G(g), B(b) {}
-
-    static constexpr inline Colour biggestDifference(const RGB& rgb) noexcept {
-        return std::abs(static_cast<int>(std::max(std::max(rgb.R, rgb.G), rgb.B)) - std::min(std::min(rgb.R, rgb.G), rgb.B));
-    }
-
-    constexpr inline double getDifference(const RGB& rgb) const noexcept {
-        const int rmean = (static_cast<int>(R) + rgb.R) / 2;
-        const int rdiff = static_cast<int>(R) - rgb.R;
-        const int gdiff = static_cast<int>(G) - rgb.G;
-        const int bdiff = static_cast<int>(B) - rgb.B;
-        return sqrt((512 + rmean) * ((rdiff * rdiff) >> 8) + 4 * (gdiff * gdiff) + (((767 - rmean) * (bdiff * bdiff)) >> 8));
-    }
-
-    constexpr bool operator==(const RGB& rgb) const noexcept {
-        return R == rgb.R && G == rgb.G && B == rgb.B;
-    }
-
-    constexpr bool operator<(const RGB& rgb) const noexcept {
-        return R < rgb.R || G < rgb.G || B < rgb.B;
-    }
-
-    constexpr inline uint32_t sum() const noexcept {
-        return R + G + B;
-    }
-
-    // Might be able to do silly thing with this pointer here
-    // Although probably undefined behaviour due to padding
-    constexpr inline int toBin() const noexcept {
-        return (static_cast<int>(R) << 16) | (static_cast<int>(G) << 8) | static_cast<int>(B);
-    }
-};
-
-template <uint32_t Channels>
-struct ImageData {
-    std::unique_ptr<Colour[]> data;
-    const uint32_t width, height;
-
-    static constexpr size_t channels = Channels;
-
-    ImageData(const uint32_t width, const uint32_t height) : width(width), height(height) {
-        data.reset(ImageData<Channels>::allocate_buffer(width, height));
-    }
-    constexpr ImageData(Colour* data, const uint32_t width, const uint32_t height) noexcept : data(data), width(width), height(height) {}
-
-    constexpr inline RGB getRGB(const uint32_t x, const uint32_t y) const noexcept {
-        const auto pos = (y * width + x) * channels;
-        return {data[pos], data[pos + 1], data[pos + 2]};
-    }
-
-    constexpr inline Colour getR(const uint32_t x, const uint32_t y) const noexcept {
-        return data[(y * width + x) * channels];
-    }
-
-    constexpr inline uint32_t getMaxPos() const noexcept {
-        return width * height * channels;
-    }
-
-    inline RGB getBackgroundColour() {
-        std::map<RGB, uint32_t> colours{};
-        const auto mY = height, mX = width;
-        const long xJump = std::max<uint32_t>(1, mX / 100), yJump = std::max<uint32_t>(1, mY / 100);
-
-        for (uint32_t y = 0; y < mY; y += yJump) for (uint32_t x = 0; x < mX; x += xJump) ++colours[getRGB(x, y)];
-        return std::max_element(colours.begin(),colours.end(),[] (const std::pair<RGB, uint32_t>& a, const std::pair<RGB, uint32_t>& b){ return a.second < b.second; } )->first;
-    }
-
-    static Colour* allocate_buffer(const uint32_t width, const uint32_t height) {
-        return new Colour[width * height * Channels];
-    }
-};
-
-struct RGBTools {
-    RGB rgb;
-    uint32_t tolerance;
-    uint32_t count = 1;
-
-    constexpr RGBTools(RGB rgb, const uint32_t tolerance) noexcept : rgb(std::move(rgb)), tolerance(tolerance) {}
-
-    constexpr inline bool withinTolerance(const RGB& rgb) const noexcept {
-        return this->rgb.getDifference(rgb) <= tolerance;
-    }
-
-    constexpr inline void addToAverage(const RGB& rgb) noexcept {
-        const auto r = static_cast<int>(this->rgb.R), g = static_cast<int>(this->rgb.G), b = static_cast<int>(this->rgb.B);
-        const auto oR = static_cast<int>(rgb.R), oG = static_cast<int>(rgb.G), oB = static_cast<int>(rgb.B);
-        this->rgb.R += static_cast<Colour>((sqrt(((r * r) + (oR * oR)) / 2) - r) / count);
-        this->rgb.G += static_cast<Colour>((sqrt(((g * g) + (oG * oG)) / 2) - g) / count);
-        this->rgb.B += static_cast<Colour>((sqrt(((b * b) + (oB * oB)) / 2) - b) / count);
-        ++count;
-    }
-};
-
-struct TraceData {
-    uint32_t x = 0, y = 0, colourTolerance = 0;
-
-    constexpr TraceData(const uint32_t x, const uint32_t y) noexcept : x(x), y(y) {}
-    constexpr explicit TraceData(const uint32_t colourTolerance) noexcept : colourTolerance(colourTolerance) {}
-    constexpr TraceData(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) noexcept : x(x), y(y), colourTolerance(colourTolerance) {}
-
-
-    constexpr TraceData clamp(const ImageData<4>& data) const noexcept {
-        return {std::clamp(x, 0U, data.width - 1), std::clamp(y, 0U, data.height - 1), colourTolerance};
-    }
+enum class delim_t : std::uint8_t {
+    Tab = 1
 };
 
 struct ExportData {
-    int delim;
+    delim_t delim;
     double PPOStep, logMinFR, logMaxFR, logFRBottomValue, SPLRatio, FRRatio, SPLBottomValue, SPLBottomPixel, FRBottomPixel;
 
-    constexpr ExportData(const int PPO, const int delim, const double lowFRExport,  const double highFRExport,
+    constexpr ExportData(const int PPO, const delim_t delim, const double lowFRExport,  const double highFRExport,
         const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue, const double SPLBottomPixel,
         const double FRTopValue, const double FRTopPixel, const double FRBottomValue, const double FRBottomPixel) noexcept :
     delim(delim), PPOStep(log10(pow(2, 1.0 / PPO))), logMinFR(log10(lowFRExport)), logMaxFR(log10(highFRExport)),
@@ -146,226 +42,13 @@ struct ExportString {
     std::string data;
     std::string_view delim{" "};
 
-    constexpr explicit ExportString(const int delim = 1) {
-        if (delim == 1) this->delim = "\t";
+    constexpr explicit ExportString(const delim_t delim = delim_t::Tab) {
+        if (delim == delim_t::Tab) this->delim = "\t";
         data = ulp::str::concat_strings("* Exported with UsyTrace, available at https://usyless.uk/trace\n* Freq(Hz)", this->delim, "SPL(dB)");
     }
 
     constexpr void addData(auto&& freq, auto&& spl) {
         data += ulp::str::concat_strings("\n", std::to_string(freq), delim, std::to_string(spl));
-    }
-};
-
-struct Trace {
-    frTrace trace;
-    const ImageData<4>& imageData;
-
-    Trace(const ImageData<4>& data) : imageData(data) {}
-    Trace(const ImageData<4>& data, frTrace&& _trace) : trace(std::move(_trace)), imageData(data) {}
-
-    Trace(Trace&& other) noexcept : trace(std::move(other.trace)), imageData(other.imageData) {}
-    Trace& operator=(Trace&& other) noexcept { 
-        if (this != &other) trace = std::move(other.trace);
-        return *this;
-    }
-
-    Trace(const Trace&) = delete;
-    Trace& operator=(const Trace&) = delete;
-
-    std::vector<std::pair<uint32_t, uint32_t>> clean() const {
-        std::vector<std::pair<uint32_t, uint32_t>> simplifiedTrace{};
-        if (!trace.empty()) {
-            if (trace.size() > 2) {
-                auto iter = trace.begin();
-                simplifiedTrace.emplace_back(iter->first, iter->second);
-                std::vector<uint32_t> identity{};
-                const auto end = trace.end();
-                for(++iter; iter != end; ++iter) {
-                    identity.clear();
-                    auto previousKey = iter->first;
-                    const auto previousValue = iter->second;
-                    do {
-                        identity.emplace_back(iter->first);
-                    } while(++iter != end && iter->second == previousValue && iter->first == ++previousKey);
-                    --iter;
-                    if (identity.size() == 1) simplifiedTrace.emplace_back(identity[0], previousValue);
-                    else simplifiedTrace.emplace_back(reduce(identity.begin(), identity.end()) / identity.size(), previousValue);
-                }
-                if (simplifiedTrace.back().first != trace.rbegin()->first) simplifiedTrace.emplace_back(trace.rbegin()->first, trace.rbegin()->second);
-            } else std::copy(trace.begin(), trace.end(), std::back_inserter(simplifiedTrace));
-        }
-        return simplifiedTrace;
-    }
-
-    std::string toSVG() const {
-        std::string svg;
-        if (const auto res = clean(); !res.empty()) {
-            auto iter = res.begin();
-            const auto end = res.end();
-            if (res.size() == 1) {
-                const std::string first{ulp::str::to_string_view_or_default(iter->first)};
-                svg += ulp::str::concat_strings("M", first, " ", ulp::str::to_string_view_or_default(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
-            } else {
-                svg += "M";
-                for (; iter != end; ++iter) {
-                    const std::string first{ulp::str::to_string_view_or_default(iter->first)};
-                    svg += ulp::str::concat_strings(first, " ", ulp::str::to_string_view_or_default(iter->second), " ");
-                }
-                if (svg.size() > 1) svg.pop_back();
-            }
-        }
-        return svg;
-    }
-
-    static void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& trace, const ImageData<4>& imageData, const uint32_t maxLineHeight, const uint32_t maxJump, RGBTools& colour) {
-        std::vector<uint32_t> yValues{};
-        uint32_t currJump = 0;
-        const uint32_t maxHeight = imageData.height - 1;
-        for (const auto width = imageData.width; startX >= 0 && startX < width; startX += step) {
-            yValues.clear();
-            auto max = static_cast<int>((maxLineHeight + (currJump * 2)) / 2);
-            auto low = (max > startY) ? -static_cast<int>(startY) : -max;
-            if (startY + max > maxHeight) max = maxHeight - startY;
-            for (; low <= max; ++low) {
-                const auto y = startY + low;
-                if (colour.withinTolerance(imageData.getRGB(startX, y))) yValues.emplace_back(y);
-            }
-            if (!yValues.empty()) {
-                currJump = 0;
-                startY = yValues[yValues.size() / 2]; // is sorted already
-                trace[startX] = startY;
-                RGB newRGB = imageData.getRGB(startX, startY);
-                if (colour.withinTolerance(newRGB)) colour.addToAverage(newRGB);
-                continue;
-            }
-            if (currJump < maxJump) ++currJump;
-            else break;
-        }
-    }
-
-    Trace newTrace(const TraceData& _traceData, const bool traceLeft=false) const {
-        const auto traceData = _traceData.clamp(imageData);
-
-        const auto maxLineHeight = std::max<uint32_t>(0, imageData.height / 20);
-        const auto maxJump = std::max<uint32_t>(0, imageData.width / 50);
-        auto baselineColour = RGBTools(imageData.getRGB(traceData.x, traceData.y), traceData.colourTolerance);
-
-        frTrace newTrace{trace};
-        newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
-
-        if (traceLeft) Trace::traceFor(traceData.x - 1, traceData.y, -1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
-        Trace::traceFor(traceData.x, traceData.y, 1, newTrace, imageData, maxLineHeight, maxJump, baselineColour);
-
-        return {imageData, std::move(newTrace)};
-    }
-
-    // Gaussian smoothing
-    Trace smooth(int windowSize, const double sigma) const {
-        frTrace newTrace{};
-        const double multi = -0.5 / (sigma * sigma);
-        if (windowSize % 2 == 0) {
-            ++windowSize;
-        }
-        if (trace.size() > windowSize) {
-            int halfWindow = windowSize / 2;
-
-            const auto end = prev(trace.end(), halfWindow);
-            for (auto it = next(trace.begin(), halfWindow); it != end; ++it) {
-                double smoothed = 0.0;
-                double sumWeights = 0.0;
-
-                double currX = it->first;
-                for (int i = -halfWindow; i <= halfWindow; ++i) {
-                    const auto other = next(it, i);
-                    double distance = other->first - currX;
-                    double weight = exp(multi * (distance * distance));
-                    smoothed += other->second * weight;
-                    sumWeights += weight;
-                }
-                newTrace[it->first] = static_cast<uint32_t>(smoothed / sumWeights);
-            }
-        }
-        return {imageData, std::move(newTrace)};
-    }
-
-    inline Trace standardSmooth(int width) const {
-        const int windowSize = std::max(width / 150, 2);
-        return smooth(windowSize, static_cast<double>(windowSize) / 2.0);
-    }
-
-    Trace eraseRegion(uint32_t begin, uint32_t end) const {
-        frTrace newTrace{trace};
-        const auto higher = newTrace.upper_bound(end);
-        for (auto lower = newTrace.lower_bound(begin); lower != higher;) lower = newTrace.erase(lower);
-        return {imageData, std::move(newTrace)};
-    }
-
-    Trace addPoint(const TraceData& _traceData) const {
-        const auto traceData = _traceData.clamp(imageData);
-
-        frTrace newTrace{trace};
-        newTrace[traceData.x] = traceData.y;
-        return {imageData, std::move(newTrace)};
-    }
-
-    Trace offsetTrace(uint8_t direction, uint32_t magnitude) const {
-        frTrace newTrace{};
-
-        switch (direction) {
-            case 0: {
-                // down
-                const auto image_height_bound = imageData.height - 1;
-                for (const auto [key, val] : trace) {
-                    const auto newVal = val + magnitude;
-                    if (newVal > image_height_bound) continue;
-                    newTrace[key] = newVal;
-                }
-                break;
-            }
-            case 1: {
-                // up
-                for (const auto [key, val] : trace) {
-                    const auto newVal = static_cast<int>(val) - static_cast<int>(magnitude);
-                    if (newVal < 0) continue;
-                    newTrace[key] = newVal;
-                }
-                break;
-            }
-            case 2: {
-                // left
-                for (const auto [key, val] : trace) {
-                    const auto newKey = static_cast<int>(key) - static_cast<int>(magnitude);
-                    if (newKey < 0) continue;
-                    newTrace[newKey] = val;
-                }
-                break;
-            }
-            case 3: {
-                // right
-                const auto image_width_bound = imageData.width - 1;
-                for (const auto [key, val] : trace) {
-                    const auto newKey = key + magnitude;
-                    if (newKey > image_width_bound) continue;
-                    newTrace[newKey] = val;
-                }
-                break;
-            }
-
-        }
-
-        return {imageData, std::move(newTrace)};
-    }
-
-    size_t size() const noexcept {
-        return trace.size();
-    }
-
-    bool empty() const noexcept {
-        return trace.empty();
-    }
-
-    bool operator==(const Trace& other) const {
-        return trace == other.trace;
     }
 };
 
@@ -437,7 +120,7 @@ struct TraceHistory {
     }
 };
 
-std::function<double(double)> contiguousLinearInterpolation(const std::vector<std::pair<double, double>>& FRxSPL) {
+auto contiguousLinearInterpolation(const std::vector<std::pair<double, double>>& FRxSPL) {
     const auto firstF = FRxSPL.front().first, lastF = FRxSPL.back().first,
     firstV = FRxSPL.front().second, lastV = FRxSPL.back().second;
     const auto l = FRxSPL.size();
@@ -457,28 +140,6 @@ std::function<double(double)> contiguousLinearInterpolation(const std::vector<st
         if (lower.second == upper.second) return lower.second;
         return (upper.second - lower.second) * ((freq - lower.first) / (upper.first - lower.first)) + lower.second;
     };
-}
-
-Trace getPotentialTrace(const ImageData<4>& imageData, TraceData traceData, const std::function<uint32_t(RGB)>& differenceFunc) {
-    auto bestY = 0, currentDiff = 0;
-    const auto middleX = imageData.width / 2;
-    const auto yRange = imageData.height / 5;
-    const auto middleY = imageData.height / 2;
-    auto y = middleY - yRange;
-
-    for(const auto endY = middleY + yRange; y <= endY; ++y) {
-        if (const auto diff = differenceFunc(imageData.getRGB(middleX, y)); diff >= std::max(10, currentDiff)) {
-            bestY = y;
-            currentDiff = diff;
-        }
-    }
-
-    if (bestY > 0) {
-        traceData.x = middleX;
-        traceData.y = bestY;
-        return Trace{imageData}.newTrace(traceData, true);
-    }
-    return {imageData};
 }
 
 void padOutputData(const ImageData<4>& original, ImageData<1>& output) {
@@ -558,38 +219,28 @@ void invertImage(ImageData<4>& data) {
     auto* pixels = reinterpret_cast<uint32_t*>(data.data.get());
 
     for (size_t i = 0; i < pixelCount; ++i) pixels[i] = ~pixels[i];
-
-    // since its 32 bit original is fine
-    // could probably do something cursed like this if 64 bit
-    // currently no performance gain (microoptimisation hell)?
-
-    // const size_t pixelCountActual = static_cast<size_t>(data.width) * data.height;
-    // const bool isEven = (pixelCountActual % 2 == 0);
-    // const size_t pixelCountEven = ((isEven) ? pixelCountActual : pixelCountActual - 1) / 2; 
-    // auto* pixels_long = reinterpret_cast<uint64_t*>(data.data.get());
-
-
-    // for (size_t i = 0; i < pixelCountEven; ++i) pixels_long[i] = ~pixels_long[i];
-    // if (!isEven) {
-    //     auto* pixels = reinterpret_cast<uint32_t*>(data.data.get());
-    //     pixels[pixelCountActual - 1] = ~pixels[pixelCountActual - 1];
-    // }
 }
 
 template <bool vertical>
 std::set<uint32_t> detectLines(const ImageData<1>& imageData, const uint32_t tolerance) {
     std::set<uint32_t> lines{};
     uint32_t length, otherDirection;
-    std::function<bool(uint32_t, uint32_t)> comparator;
     if constexpr (vertical) { // vertical line, representing x axis
         length = imageData.width;
         otherDirection = imageData.height;
-        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t x, const uint32_t y) { return data.getR(x, y) < tolerance; };
     } else {
         length = imageData.height;
         otherDirection = imageData.width;
-        comparator = [&data = imageData, &tolerance = tolerance] (const uint32_t y, const uint32_t x) { return data.getR(x, y) < tolerance; };
     }
+
+    auto comparator = [&imageData, tolerance](const uint32_t x, const uint32_t y) {
+        if constexpr (vertical) {
+            return imageData.getR(x, y) < tolerance;
+        } else {
+            return imageData.getR(y, x) < tolerance;
+        }
+    };
+
     const auto upperBound = static_cast<uint32_t>(otherDirection * 0.7), lowerBound = static_cast<uint32_t>(otherDirection * 0.3);
     const auto bound = (upperBound - lowerBound) - static_cast<uint32_t>(0.9 * (upperBound - lowerBound));
     
@@ -609,12 +260,15 @@ std::set<uint32_t> detectLines(const ImageData<1>& imageData, const uint32_t tol
 struct Image {
     ImageData<4> imageData;
     TraceHistory traceHistory;
-    RGBTools backgroundColour{RGB{0,0,0}, 0};
+    RGB backgroundColour{255, 255, 255};
+    std::optional<std::vector<ColourCluster>> colourClusters;
     std::set<uint32_t> vLines;
     std::set<uint32_t> hLines;
 
     Image(ImageData<4>&& _imageData, const uint32_t counter) : imageData(std::move(_imageData)), traceHistory(imageData) {
-        const auto needsInverse = (imageData.getBackgroundColour().sum() / 3) < 127;
+        this->backgroundColour = imageData.getBackgroundColour();
+
+        const auto needsInverse = (this->backgroundColour.sum() / 3) < 127;
 
     #ifdef __EMSCRIPTEN__
         EM_ASM( onImageInverseReady($0, $1), counter, needsInverse );
@@ -636,12 +290,17 @@ struct Image {
         }
 
         if (needsInverse) invertImage(imageData);
-
-        this->backgroundColour = RGBTools{imageData.getBackgroundColour(), 10};
     }
 
-    inline std::string trace(const TraceData&& traceData) {
-        return traceHistory.add(traceHistory.getLatest().newTrace(traceData)).toSVG();
+    inline TraceContext context() {
+        if (!colourClusters) {
+            colourClusters.emplace(Algorithms::Experimental::analyseColours(imageData, ColourVec{backgroundColour}));
+        }
+        return {imageData, ColourVec{backgroundColour}, colourClusters, hLines};
+    }
+
+    inline std::string trace(const TraceAlgorithm algorithm, const TraceData&& traceData) {
+        return traceHistory.add(traceHistory.getLatest().newTrace(algorithm, context(), traceData)).toSVG();
     }
 
     inline std::string point(const TraceData&& traceData) {
@@ -660,9 +319,13 @@ struct Image {
         return (traceHistory.undoAvailable() << 1) | traceHistory.redoAvailable();
     }
 
-    inline std::string autoTrace(const TraceData&& traceData) {
-        auto traceOne = getPotentialTrace(imageData, traceData, RGB::biggestDifference);
-        auto traceTwo = getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour.rgb] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
+    inline std::string autoTrace(const TraceAlgorithm algorithm, const TraceData&& traceData) {
+        auto traceOneData = Algorithms::Normal::getPotentialTrace(imageData, traceData, RGB::biggestDifference);
+        auto traceTwoData = Algorithms::Normal::getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
+
+        auto traceOne = Trace{imageData}.newTrace(algorithm, context(), traceOneData, true);
+        auto traceTwo = Trace{imageData}.newTrace(algorithm, context(), traceTwoData, true);
+
         if (traceOne.size() > traceTwo.size()) {
             traceHistory.add(traceOne.standardSmooth(static_cast<int>(imageData.width)));
         } else {
@@ -688,7 +351,7 @@ struct Image {
         }
 
         if(!FRxSPL.empty()) {
-            const auto interp = contiguousLinearInterpolation(FRxSPL);
+            auto interp = contiguousLinearInterpolation(FRxSPL);
             for(auto v = exportData.logMinFR; ; v += PPOStep) {
                 const auto freq = pow(10, v);
                 str.addData(freq, interp(freq));
@@ -782,8 +445,8 @@ extern "C" {
     }
 
     // Tracing
-    EMSCRIPTEN_KEEPALIVE void* trace(const uint32_t x, const uint32_t y, const uint32_t colourTolerance) {
-        return ReturnedString::make(currentImage->trace(TraceData{x, y, colourTolerance}));
+    EMSCRIPTEN_KEEPALIVE void* trace(const uint32_t x, const uint32_t y, const uint32_t colourTolerance, const TraceAlgorithm algorithm) {
+        return ReturnedString::make(currentImage->trace(algorithm, TraceData{x, y, colourTolerance}));
     }
 
     EMSCRIPTEN_KEEPALIVE void* undo() {
@@ -802,8 +465,8 @@ extern "C" {
         return ReturnedString::make(currentImage->point(TraceData{x, y}));
     }
 
-    EMSCRIPTEN_KEEPALIVE void* autoTrace(const uint32_t colourTolerance) {
-        return ReturnedString::make(currentImage->autoTrace(TraceData{colourTolerance}));
+    EMSCRIPTEN_KEEPALIVE void* autoTrace(const uint32_t colourTolerance, const TraceAlgorithm algorithm) {
+        return ReturnedString::make(currentImage->autoTrace(algorithm, TraceData{colourTolerance}));
     }
 
     EMSCRIPTEN_KEEPALIVE void* eraseRegion(uint32_t begin, uint32_t end) {
@@ -819,7 +482,7 @@ extern "C" {
     }
 
     // Exporting
-    EMSCRIPTEN_KEEPALIVE void* exportTrace(const int PPO, const int delim, const double lowFRExport,
+    EMSCRIPTEN_KEEPALIVE void* exportTrace(const int PPO, const delim_t delim, const double lowFRExport,
         const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
         const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
         const double FRBottomPixel) {

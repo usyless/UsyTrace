@@ -116,8 +116,17 @@
         </div>
         <div class="sidebarSection" id="traceSettings">
             <h3>Trace Settings</h3>
-            <label for="colourTolerance" title="Maximum variation in colour of the line, increase if whole line is not being traced">Colour Tolerance</label>
-            <input type="number" id="colourTolerance" min="1" title="Maximum variation in colour of the line, increase if whole line is not being traced"/>
+            <div>
+                <label for="traceAlgorithm" title="Type of trace algorithm to use">Trace Algorithm</label>
+                <select name="traceAlgorithm" id="traceAlgorithm">
+                    <option value="0">Default</option>
+                    <option value="1">Experimental</option>
+                </select>
+            </div>
+            <div>
+                <label for="colourTolerance" title="Maximum variation in colour of the line, increase if whole line is not being traced">Colour Tolerance</label>
+                <input type="number" id="colourTolerance" min="1" title="Maximum variation in colour of the line, increase if whole line is not being traced"/>
+            </div>
         </div>
         <div class="sidebarSection" id="exportSettings">
             <h3>Export Settings</h3>
@@ -127,7 +136,7 @@
                     <option value="6">6</option>
                     <option value="12">12</option>
                     <option value="24">24</option>
-                    <option value="48">48</option>
+                    <option value="48">48 (Default)</option>
                     <option value="96">96</option>
                 </select>
             </div>
@@ -170,17 +179,25 @@
                     <path stroke="#ff0000" fill="transparent" d=""></path>
                 </svg>
                 <svg id="lines" class="canvasSizing hidden">
-                    <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xLow" data-other="xHigh"></line>
-                    <text x="0" y="0" dx="1.05em" text-anchor="middle" font-family="Open Sans" font-weight="700">Low</text>
-                    <line x1="0" x2="0" y1="0" y2="0" stroke="green" data-direction="x" id="xHigh" data-other="xLow"></line>
-                    <text x="0" y="0" dx="-1.2em" text-anchor="middle" font-family="Open Sans" font-weight="700">High</text>
-                    <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yHigh" data-other="yLow"></line>
-                    <text x="0" y="0" dy="0.9em" text-anchor="middle" font-family="Open Sans" font-weight="700">High</text>
-                    <line x1="0" x2="0" y1="0" y2="0" stroke="blue" data-direction="y" id="yLow" data-other="yHigh"></line>
-                    <text x="0" y="0" dy="-0.2em" text-anchor="middle" font-family="Open Sans" font-weight="700">Low</text>
+                    <g class="calLine calLineX" data-direction="x" id="xLow" data-other="xHigh">
+                        <line class="calCore" x1="0" x2="0" y1="0" y2="0"></line>
+                        <text x="0" y="0" dx="0.7em" text-anchor="start">Low</text>
+                    </g>
+                    <g class="calLine calLineX" data-direction="x" id="xHigh" data-other="xLow">
+                        <line class="calCore" x1="0" x2="0" y1="0" y2="0"></line>
+                        <text x="0" y="0" dx="-0.7em" text-anchor="end">High</text>
+                    </g>
+                    <g class="calLine calLineY" data-direction="y" id="yHigh" data-other="yLow">
+                        <line class="calCore" x1="0" x2="0" y1="0" y2="0"></line>
+                        <text x="0" y="0" dy="1.3em" text-anchor="middle">High</text>
+                    </g>
+                    <g class="calLine calLineY" data-direction="y" id="yLow" data-other="yHigh">
+                        <line class="calCore" x1="0" x2="0" y1="0" y2="0"></line>
+                        <text x="0" y="0" dy="-0.7em" text-anchor="middle">Low</text>
+                    </g>
                 </svg>
                 <svg id="erasing" class="canvasSizing hidden removePointerEvents">
-                    <rect x="0" y="0" width="0" height="100%" fill="red" opacity="0.3"></rect>
+                    <rect x="0" y="0" width="0" height="100%"></rect>
                 </svg>
                 <h1 id="defaultMainText">Please Load Images (Drop onto the page, or paste with Ctrl+V)</h1>
             </div>

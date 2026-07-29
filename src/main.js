@@ -34,6 +34,7 @@ const defaults = {
     /** @export */ FRHigher: "",
     /** @export */ FRLower: "",
 
+    /** @export */ traceAlgorithm: 0,
     /** @export */ colourTolerance: 67,
 
     /** @export */ line_move_speed: 100,
@@ -54,6 +55,31 @@ document.getElementById('restoreDefault')?.addEventListener('click', () => {
 function resetToDefault() {
     for (const val in defaults) document.getElementById(val).value = defaults[val];
 }
+
+const updateTraceAlgorithm = (() => {
+    const elem = document.getElementById('traceAlgorithm');
+    const tol = document.getElementById('colourTolerance');
+    const tolLabel = document.querySelector('[for="colourTolerance"]');
+    return () => {
+        let int = parseInt(elem.value, 10);
+        if (Number.isNaN(int) || int < 0 || int > 1) {
+            elem.value = "0";
+            int = 0;
+        }
+
+        if (int === 0) {
+            tol.disabled = false;
+            tolLabel.removeAttribute('disabled');
+            return;
+        } else if (int === 1) {
+            tol.disabled = true;
+            tolLabel.setAttribute('disabled', "");
+            return;
+        }
+    }
+})();
+document.getElementById('traceAlgorithm').addEventListener('change', updateTraceAlgorithm);
+updateTraceAlgorithm();
 
 // const global_canvas = 'OffscreenCanvas' in window ? new OffscreenCanvas(0, 0) : document.createElement('canvas');
 // if (!global_canvas.toBlob && global_canvas.convertToBlob) {
@@ -113,15 +139,14 @@ const lines = {
     },
     updateLinePosition: (line, position) => {
         const attr = line.dataset["direction"];
-        line.nextElementSibling.setAttribute(attr, position);
-        line.setAttribute(`${attr}1`, position);
-        line.setAttribute(`${attr}2`, position);
+        line.firstElementChild.setAttribute(`${attr}1`, position);
+        line.firstElementChild.setAttribute(`${attr}2`, position);
+        line.lastElementChild.setAttribute(attr, position);
     },
     updateLineWidth: () => {
-        for (const line of lines.parent.querySelectorAll('line')) line.setAttribute('stroke-width', sizeRatio);
-        for (const text of lines.parent.querySelectorAll('text')) text.setAttribute('font-size', `${1.3 * sizeRatio}em`);
+        document.getElementById('imageContainerInner').style.setProperty('--overlayScale', sizeRatio.toString());
     },
-    getPosition: (line) => parseFloat(line.getAttribute(`${line.dataset["direction"]}1`)),
+    getPosition: (line) => parseFloat(line.firstElementChild.getAttribute(`${line.dataset["direction"]}1`)),
     setPosition: (line, position) => {
         const ls = lines.lines, otherLinePos = lines.getPosition(ls[line.dataset["other"]]), sizeAttr = line.dataset["direction"] === 'x' ? width : height;
         if (line === ls["xHigh"] || line === ls["yLow"]) lines.updateLinePosition(line, Math.max(otherLinePos + 1, Math.min(sizeAttr - 1, position)));
@@ -130,16 +155,16 @@ const lines = {
     showLines: () => lines.parent.classList.remove('hidden'),
     hideLines: () => lines.parent.classList.add('hidden'), // potentially disable line keybinds
     initialiseTextPosition: () => {
-        lines.lines["xHigh"].nextElementSibling.setAttribute('y', (height / 2).toString());
-        lines.lines["xLow"].nextElementSibling.setAttribute('y', (height / 2).toString());
-        lines.lines["yHigh"].nextElementSibling.setAttribute('x', (width / 2).toString());
-        lines.lines["yLow"].nextElementSibling.setAttribute('x', (width / 2).toString());
+        lines.lines["xHigh"].lastElementChild.setAttribute('y', (height / 2).toString());
+        lines.lines["xLow"].lastElementChild.setAttribute('y', (height / 2).toString());
+        lines.lines["yHigh"].lastElementChild.setAttribute('x', (width / 2).toString());
+        lines.lines["yLow"].lastElementChild.setAttribute('x', (width / 2).toString());
     },
     initialise: () => {
         for (const line of lines.lineArray) {
             const [otherDir, sizeAttr] = line.dataset["direction"] === 'x' ? ['y', height] : ['x', width];
-            line.setAttribute(`${otherDir}1`, "0");
-            line.setAttribute(`${otherDir}2`, sizeAttr);
+            line.firstElementChild.setAttribute(`${otherDir}1`, "0");
+            line.firstElementChild.setAttribute(`${otherDir}2`, sizeAttr);
         }
         lines.initialiseTextPosition();
     },
@@ -264,6 +289,7 @@ const preferences = (() => {
     const e_FRLower = document.getElementById('FRLower');
     const e_snapToLines = document.getElementById('snapToLines');
     const e_line_move_speed = document.getElementById('line_move_speed');
+    const e_traceAlgorithm = document.getElementById('traceAlgorithm');
     const e_colourTolerance = document.getElementById('colourTolerance');
     const e_PPO = document.getElementById('PPO');
     const e_delimitation = document.getElementById('delimitation');
@@ -279,6 +305,7 @@ const preferences = (() => {
         snapToLines: () => e_snapToLines.checked,
         line_move_speed: () => parseInt(e_line_move_speed.value, 10) || defaults.line_move_speed,
 
+        traceAlgorithm: () => parseInt(e_traceAlgorithm.value, 10) || defaults.traceAlgorithm,
         colourTolerance: () => parseInt(e_colourTolerance.value, 10) || defaults.colourTolerance,
 
         PPO: () => e_PPO.value || defaults.PPO,
@@ -800,7 +827,8 @@ const worker = {
     autoTrace: () => {
         worker.postMessage({
             /** @export */ type: 'autoTrace', 
-            /** @export */ colourTolerance: preferences.colourTolerance()
+            /** @export */ colourTolerance: preferences.colourTolerance(),
+            /** @export */ traceAlgorithm: preferences.traceAlgorithm()
         });
     },
     trace: (x, y) => {
@@ -808,7 +836,8 @@ const worker = {
             /** @export */ type: 'trace',
             /** @export */ x,
             /** @export */ y,
-            /** @export */ colourTolerance: preferences.colourTolerance()
+            /** @export */ colourTolerance: preferences.colourTolerance(),
+            /** @export */ traceAlgorithm: preferences.traceAlgorithm()
         });
     },
     offsetTrace: (direction, magnitude) => worker.postMessage({
@@ -1358,7 +1387,7 @@ image.addEventListener('error', () => {
     document.addEventListener('keydown', (e) => {
         if (state.keyBindsEnabled) {
             const cb = keydownMap[e.key.toLowerCase()];
-            if (!e.target.closest('input') && cb) {
+            if (cb && !e.target.closest('input')) {
                 e.preventDefault();
                 cb(e);
             }
@@ -1367,7 +1396,7 @@ image.addEventListener('error', () => {
     document.addEventListener('keyup', (e) => {
         if (state.keyBindsEnabled) {
             const cb = keyupMap[e.key.toLowerCase()];
-            if (!e.target.closest('input') && cb) {
+            if (cb && !e.target.closest('input')) {
                 e.preventDefault();
                 cb(e);
             }
