@@ -85,6 +85,10 @@ struct Trace {
     }
 
     Trace newTrace(const TraceAlgorithm algorithm, auto&& context, const TraceData& _traceData, const bool traceLeft = false) const {
+        if (_traceData.x == std::numeric_limits<uint32_t>::max() || _traceData.y == std::numeric_limits<uint32_t>::max()) {
+            return Trace{imageData};
+        }
+        
         const auto traceData = _traceData.clamp(imageData);
         frTrace newTrace{trace};
 
