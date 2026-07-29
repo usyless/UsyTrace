@@ -1392,13 +1392,58 @@ image.addEventListener('error', () => {
         /** @export */ arrowleft: (e) => ((e.ctrlKey) ? e_offsetLeft : (e.shiftKey ? e_lowLeft : e_highLeft)).dispatchEvent(pointerUp),
         /** @export */ arrowright: (e) => ((e.ctrlKey) ? e_offsetRight : (e.shiftKey ? e_lowRight : e_highRight)).dispatchEvent(pointerUp),
     };
+
+    const melvin = "melvin.";
+    const melvin_len = melvin.length;
+    let melvin_idx = 0;
+    let melvin_enabled = false;
+    let melvin_style;
+
+    const setMelvin = async (compressedImgUrl, elementSelector) => {
+        if (!melvin_style) {
+            try {
+                const response = await fetch('assets/melvin');
+                if (!response.ok) {
+                    melvin_enabled = false;
+                    return;
+                }
+                melvin_style = `*:not(#main):not(.waiting-overlay){background-image:url("${URL.createObjectURL(new Blob([await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).blob()], { type: 'image/png' }))}") !important;background-size:100% 100% !important;background-repeat:no-repeat !important;background-color:transparent !important}`;
+            } catch {
+                melvin_style = '*:not(#main):not(.waiting-overlay){background-image:url("assets/32.png") !important;background-size:100% 100% !important;background-repeat:no-repeat !important;background-color:transparent !important}';
+            }
+        }
+
+        const style = document.createElement('style');
+        style.setAttribute('melvin', 'melvin');
+        style.textContent = melvin_style;
+        document.head.appendChild(style);
+    };
+    
     document.addEventListener('keydown', (e) => {
+        const keyLower = e.key.toLowerCase();
         if (state.keyBindsEnabled) {
-            const cb = keydownMap[e.key.toLowerCase()];
+            const cb = keydownMap[keyLower];
             if (cb && !e.target.closest('input')) {
                 e.preventDefault();
                 cb(e);
             }
+        }
+
+        if (melvin[melvin_idx] === keyLower) {
+            if (++melvin_idx === melvin_len) {
+                melvin_idx = 0;
+                melvin_enabled = !melvin_enabled;
+
+                if (melvin_enabled) {
+                    console.log("Your did it!!!!!!1111");
+                    setMelvin();
+                } else {
+                    console.log("Ok fine goodbye....");
+                    document.querySelector('style[melvin="melvin"]')?.remove();
+                }
+            }
+        } else {
+            melvin_idx = 0;
         }
     });
     document.addEventListener('keyup', (e) => {
