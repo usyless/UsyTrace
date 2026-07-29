@@ -44,7 +44,7 @@ inline void traceFor(uint32_t startX, uint32_t startY, const int step, frTrace& 
 inline TraceData getPotentialTrace(const ImageData<4>& imageData, TraceData traceData, auto&& differenceFunc) {
     auto bestY = 0, currentDiff = 0;
     const auto middleX = imageData.width / 2;
-    const auto yRange = imageData.height / 5;
+    const auto yRange = imageData.height / 4;
     const auto middleY = imageData.height / 2;
     auto y = middleY - yRange;
 
