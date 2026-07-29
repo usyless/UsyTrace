@@ -150,6 +150,6 @@ struct ColourCluster {
 struct TraceContext {
     const ImageData<4>& image;
     ColourVec background;
-    const std::optional<std::vector<ColourCluster>>& clusters;
+    std::optional<std::vector<ColourCluster>>& clusters;
     const std::set<uint32_t>& horizontalLines;
 };

@@ -78,7 +78,7 @@ struct Trace {
         return svg;
     }
 
-    Trace newTrace(const TraceAlgorithm algorithm, const TraceContext& context, const TraceData& _traceData, const bool traceLeft = false) const {
+    Trace newTrace(const TraceAlgorithm algorithm, TraceContext&& context, const TraceData& _traceData, const bool traceLeft = false) const {
         const auto traceData = _traceData.clamp(imageData);
         frTrace newTrace{trace};
 
@@ -96,6 +96,9 @@ struct Trace {
                 break;
             }
             case TraceAlgorithm::Experimental: {
+                if (!context.clusters) {
+                    context.clusters.emplace(Algorithms::Experimental::analyseColours(imageData, ColourVec{context.background}));
+                }
                 newTrace.erase(newTrace.lower_bound(traceData.x), newTrace.end());
                 for (const auto& [x, y] : Algorithms::Experimental::traceFromPoint(context, traceData.x, traceData.y, traceLeft)) newTrace.insert_or_assign(x, y);
 

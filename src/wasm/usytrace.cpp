@@ -293,9 +293,6 @@ struct Image {
     }
 
     inline TraceContext context() {
-        if (!colourClusters) {
-            colourClusters.emplace(Algorithms::Experimental::analyseColours(imageData, ColourVec{backgroundColour}));
-        }
         return {imageData, ColourVec{backgroundColour}, colourClusters, hLines};
     }
 
@@ -320,8 +317,8 @@ struct Image {
     }
 
     inline std::string autoTrace(const TraceAlgorithm algorithm, const TraceData&& traceData) {
-        auto traceOneData = Algorithms::Normal::getPotentialTrace(imageData, traceData, RGB::biggestDifference);
-        auto traceTwoData = Algorithms::Normal::getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
+        const auto traceOneData = Algorithms::Normal::getPotentialTrace(imageData, traceData, RGB::biggestDifference);
+        const auto traceTwoData = Algorithms::Normal::getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
 
         auto traceOne = Trace{imageData}.newTrace(algorithm, context(), traceOneData, true);
         auto traceTwo = Trace{imageData}.newTrace(algorithm, context(), traceTwoData, true);
