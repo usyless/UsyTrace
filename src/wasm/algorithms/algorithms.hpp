@@ -84,7 +84,7 @@ struct Trace {
         return svg;
     }
 
-    Trace newTrace(const TraceAlgorithm algorithm, TraceContext&& context, const TraceData& _traceData, const bool traceLeft = false) const {
+    Trace newTrace(const TraceAlgorithm algorithm, auto&& context, const TraceData& _traceData, const bool traceLeft = false) const {
         const auto traceData = _traceData.clamp(imageData);
         frTrace newTrace{trace};
 

@@ -329,11 +329,12 @@ struct Image {
         const auto traceOneData = Algorithms::Normal::getPotentialTrace(imageData, traceData, RGB::biggestDifference);
         const auto traceTwoData = Algorithms::Normal::getPotentialTrace(imageData, traceData, [&bgRGB = backgroundColour] (const RGB& rgb) { return bgRGB.getDifference(rgb); });
 
+        auto ctx = context();
         std::array<Trace, 4> traces{
-            Trace{imageData}.newTrace(TraceAlgorithm::Normal, context(), traceOneData, true),
-            Trace{imageData}.newTrace(TraceAlgorithm::Normal, context(), traceTwoData, true),
-            Trace{imageData}.newTrace(TraceAlgorithm::Experimental, context(), traceOneData, true),
-            Trace{imageData}.newTrace(TraceAlgorithm::Experimental, context(), traceTwoData, true),
+            Trace{imageData}.newTrace(TraceAlgorithm::Normal, ctx, traceOneData, true),
+            Trace{imageData}.newTrace(TraceAlgorithm::Normal, ctx, traceTwoData, true),
+            Trace{imageData}.newTrace(TraceAlgorithm::Experimental, ctx, traceOneData, true),
+            Trace{imageData}.newTrace(TraceAlgorithm::Experimental, ctx, traceTwoData, true),
         };
 
         const auto& largestTrace = *std::ranges::max_element(traces, {}, &Trace::size);
