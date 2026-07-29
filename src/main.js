@@ -939,7 +939,6 @@ const imageQueue = {
 }
 document.getElementById('removeImage').addEventListener('click', () => imageQueue.currentlySelected()?.__usytrace_remove());
 document.getElementById('toggleImageQueue').addEventListener('click', imageQueue.toggle);
-const editImage_filter_regexp = new RegExp(`${filter}\\(.*\\)`, 'g');
 document.getElementById('editImage').addEventListener('click', () => {
     if (image.isValid()) {
         const elem = document.createElement('div');
@@ -996,7 +995,7 @@ document.getElementById('editImage').addEventListener('click', () => {
         };
 
         const removeFilter = (filter) => {
-            img.style.filter = img.style.filter.replaceAll(editImage_filter_regexp, '');
+            img.style.filter = img.style.filter.replaceAll(new RegExp(`${filter}\\(.*\\)`, 'g'), '');
         }
         for (const filter in filters) {
             const button = document.createElement('button');
