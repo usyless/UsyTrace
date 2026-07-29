@@ -56,31 +56,6 @@ function resetToDefault() {
     for (const val in defaults) document.getElementById(val).value = defaults[val];
 }
 
-const updateTraceAlgorithm = (() => {
-    const elem = document.getElementById('traceAlgorithm');
-    const tol = document.getElementById('colourTolerance');
-    const tolLabel = document.querySelector('[for="colourTolerance"]');
-    return () => {
-        let int = parseInt(elem.value, 10);
-        if (Number.isNaN(int) || int < 0 || int > 1) {
-            elem.value = "0";
-            int = 0;
-        }
-
-        if (int === 0) {
-            tol.disabled = false;
-            tolLabel.removeAttribute('disabled');
-            return;
-        } else if (int === 1) {
-            tol.disabled = true;
-            tolLabel.setAttribute('disabled', "");
-            return;
-        }
-    }
-})();
-document.getElementById('traceAlgorithm').addEventListener('change', updateTraceAlgorithm);
-updateTraceAlgorithm();
-
 // const global_canvas = 'OffscreenCanvas' in window ? new OffscreenCanvas(0, 0) : document.createElement('canvas');
 // if (!global_canvas.toBlob && global_canvas.convertToBlob) {
 //     global_canvas.toBlob = function (callback, type, quality) { this.convertToBlob({ type, quality }).then(callback); };
@@ -1092,6 +1067,40 @@ document.getElementById('editImage').addEventListener('click', () => {
 // Initialise the page
 resetToDefault();
 initAll();
+
+const updateTraceAlgorithm = (() => {
+    const elem = document.getElementById('traceAlgorithm');
+    const tol = document.getElementById('colourTolerance');
+    const tolLabel = document.querySelector('[for="colourTolerance"]');
+
+    try {
+        elem.value = parseInt(window.localStorage.getItem('traceAlgorithm') ?? 0, 10).toString();
+    } catch {}
+
+    return () => {
+        let int = parseInt(elem.value, 10);
+        if (Number.isNaN(int) || int < 0 || int > 1) {
+            elem.value = "0";
+            int = 0;
+        }
+
+        try {
+            window.localStorage.setItem('traceAlgorithm', int.toString());
+        } catch {}
+
+        if (int === 0) {
+            tol.disabled = false;
+            tolLabel.removeAttribute('disabled');
+            return;
+        } else if (int === 1) {
+            tol.disabled = true;
+            tolLabel.setAttribute('disabled', "");
+            return;
+        }
+    }
+})();
+document.getElementById('traceAlgorithm').addEventListener('change', updateTraceAlgorithm);
+updateTraceAlgorithm();
 
 fileInput.loadFiles = (files) => {
     const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
