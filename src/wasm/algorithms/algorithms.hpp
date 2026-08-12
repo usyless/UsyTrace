@@ -70,13 +70,13 @@ struct Trace {
             auto iter = res.begin();
             const auto end = res.end();
             if (res.size() == 1) {
-                const std::string first{ulp::str::to_string_view_or_default(iter->first)};
-                svg += ulp::str::concat_strings("M", first, " ", ulp::str::to_string_view_or_default(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
+                const std::string first{ulp::str::to_string_view(iter->first)};
+                svg += ulp::str::concat_strings("M", first, " ", ulp::str::to_string_view(iter->second), "q2 0 2 2t-2 2-2-2 2-2");
             } else {
                 svg += "M";
                 for (; iter != end; ++iter) {
-                    const std::string first{ulp::str::to_string_view_or_default(iter->first)};
-                    svg += ulp::str::concat_strings(first, " ", ulp::str::to_string_view_or_default(iter->second), " ");
+                    const std::string first{ulp::str::to_string_view(iter->first)};
+                    svg += ulp::str::concat_strings(first, " ", ulp::str::to_string_view(iter->second), " ");
                 }
                 if (svg.size() > 1) svg.pop_back();
             }

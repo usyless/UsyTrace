@@ -78,10 +78,21 @@ Module['onRuntimeInitialized'] = () => {
         /** @export */ smoothTrace: (data) => defaultTraceResponse(data, api.smooth()),
 
         /** @export */ exportTrace: (data) => {
-            data["export"] = api.export(parseInt(data["PPO"], 10), data["delim"] === "tab" ? 1 : 0,
-                parseFloat(data["lowFR"]), parseFloat(data["highFR"]), parseFloat(data["SPL"]["top"]), parseFloat(data["SPL"]["topPixel"]),
-                parseFloat(data["SPL"]["bottom"]), parseFloat(data["SPL"]["bottomPixel"]), parseFloat(data["FR"]["top"]),
-                parseFloat(data["FR"]["topPixel"]), parseFloat(data["FR"]["bottom"]), parseFloat(data["FR"]["bottomPixel"]));
+            data["export"] = api.export(
+                parseInt(data["PPO"], 10),
+                data["delim"] === "tab" ? 1 : 0,
+                parseInt(data["inputCompensation"], 10),
+                parseFloat(data["lowFR"]),
+                parseFloat(data["highFR"]),
+                parseFloat(data["SPL"]["top"]),
+                parseFloat(data["SPL"]["topPixel"]),
+                parseFloat(data["SPL"]["bottom"]),
+                parseFloat(data["SPL"]["bottomPixel"]),
+                parseFloat(data["FR"]["top"]),
+                parseFloat(data["FR"]["topPixel"]),
+                parseFloat(data["FR"]["bottom"]),
+                parseFloat(data["FR"]["bottomPixel"])
+            );
             return data;
         },
 

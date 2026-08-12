@@ -2,6 +2,7 @@
 
 import { createPopup, clearPopups, currentOk } from "./popups.js";
 import { state } from "./state.js";
+import { INPUT_COMPENSATION } from "./compensation.js";
 
 /** @type {Promise<tesseract_object>} */
 const tesseract_worker = new Promise(async (resolve, reject) => {
@@ -41,6 +42,7 @@ const defaults = {
 
     /** @export */ PPO: 48,
     /** @export */ delimitation: "tab",
+    /** @export */ inputCompensation: INPUT_COMPENSATION.NONE,
     /** @export */ lowFRExport: 20,
     /** @export */ highFRExport: 20000,
 
@@ -268,6 +270,7 @@ const preferences = (() => {
     const e_colourTolerance = document.getElementById('colourTolerance');
     const e_PPO = document.getElementById('PPO');
     const e_delimitation = document.getElementById('delimitation');
+    const e_inputCompensation = document.getElementById('inputCompensation');
     const e_lowFRExport = document.getElementById('lowFRExport');
     const e_highFRExport = document.getElementById('highFRExport');
 
@@ -285,6 +288,7 @@ const preferences = (() => {
 
         PPO: () => e_PPO.value || defaults.PPO,
         delimitation: () => e_delimitation.value || defaults.delimitation,
+        inputCompensation: () => e_inputCompensation.value || defaults.inputCompensation,
         lowFRExport: () => e_lowFRExport.value || defaults.lowFRExport,
         highFRExport: () => e_highFRExport.value || defaults.highFRExport,
     };
@@ -572,6 +576,7 @@ const worker = {
             /** @export */ type: 'exportTrace',
             /** @export */ PPO: preferences.PPO(),
             /** @export */ delim: preferences.delimitation(),
+            /** @export */ inputCompensation: preferences.inputCompensation(),
             /** @export */ lowFR: preferences.lowFRExport(),
             /** @export */ highFR: preferences.highFRExport(),
             /** @export */ SPL: {

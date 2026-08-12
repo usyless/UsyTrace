@@ -33,6 +33,9 @@
 - The points per octave to export data with, applied smoothing is half of the export PPO
 ### Delimitation
 - Whether to use tab or space between exported frequency and spl pairs
+### Input Compensation
+- Select `5128 DF (-1 dB/oct)` when tracing a graph compensated to this target to convert the exported values back to raw response data
+- The included target profile is inferred and is not official B&K data
 ### Minimum Frequency
 - The minimum frequency to export to, will draw a straight line from first data point to minimum frequency
 ### Maximum Frequency

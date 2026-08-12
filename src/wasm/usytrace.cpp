@@ -18,6 +18,7 @@
 
 #include "structures.hpp"
 #include "algorithms/algorithms.hpp"
+#include "compensation.hpp"
 
 enum class delim_t : std::uint8_t {
     Tab = 1
@@ -25,15 +26,35 @@ enum class delim_t : std::uint8_t {
 
 struct ExportData {
     delim_t delim;
+    Compensation compensation;
     double PPOStep, logMinFR, logMaxFR, logFRBottomValue, SPLRatio, FRRatio, SPLBottomValue, SPLBottomPixel, FRBottomPixel;
 
-    constexpr ExportData(const int PPO, const delim_t delim, const double lowFRExport,  const double highFRExport,
-        const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue, const double SPLBottomPixel,
-        const double FRTopValue, const double FRTopPixel, const double FRBottomValue, const double FRBottomPixel) noexcept :
-    delim(delim), PPOStep(log10(pow(2, 1.0 / PPO))), logMinFR(log10(lowFRExport)), logMaxFR(log10(highFRExport)),
-    logFRBottomValue(log10(FRBottomValue)), SPLRatio((SPLTopValue - SPLBottomValue) / (SPLTopPixel - SPLBottomPixel)),
-    FRRatio((log10(FRTopValue) - logFRBottomValue) / (FRTopPixel - FRBottomPixel)),
-    SPLBottomValue(SPLBottomValue), SPLBottomPixel(SPLBottomPixel), FRBottomPixel(FRBottomPixel) {}
+    constexpr ExportData(
+        const int PPO,
+        const delim_t delim,
+        const Compensation compensation,
+        const double lowFRExport,
+        const double highFRExport,
+        const double SPLTopValue,
+        const double SPLTopPixel,
+        const double SPLBottomValue,
+        const double SPLBottomPixel,
+        const double FRTopValue,
+        const double FRTopPixel,
+        const double FRBottomValue,
+        const double FRBottomPixel
+    ) noexcept
+        : delim(delim),
+          compensation(compensation),
+          PPOStep(log10(pow(2, 1.0 / PPO))),
+          logMinFR(log10(lowFRExport)),
+          logMaxFR(log10(highFRExport)),
+          logFRBottomValue(log10(FRBottomValue)),
+          SPLRatio((SPLTopValue - SPLBottomValue) / (SPLTopPixel - SPLBottomPixel)),
+          FRRatio((log10(FRTopValue) - logFRBottomValue) / (FRTopPixel - FRBottomPixel)),
+          SPLBottomValue(SPLBottomValue),
+          SPLBottomPixel(SPLBottomPixel),
+          FRBottomPixel(FRBottomPixel) {}
 };
 
 // delim 1 = tab, else = space
@@ -365,7 +386,7 @@ struct Image {
             auto interp = contiguousLinearInterpolation(FRxSPL);
             for (auto v = exportData.logMinFR; ; v += PPOStep) {
                 const auto freq = pow(10, v);
-                str.addData(freq, interp(freq));
+                str.addData(freq, CompensationTools::apply(exportData.compensation, freq, interp(freq)));
                 if (v >= logMaxFR) break;
             }
         }
@@ -491,13 +512,36 @@ extern "C" {
     }
 
     // Exporting
-    EMSCRIPTEN_KEEPALIVE void* exportTrace(const int PPO, const delim_t delim, const double lowFRExport,
-        const double highFRExport, const double SPLTopValue, const double SPLTopPixel, const double SPLBottomValue,
-        const double SPLBottomPixel, const double FRTopValue, const double FRTopPixel, const double FRBottomValue,
-        const double FRBottomPixel) {
-        return ReturnedString::make(currentImage->exportTrace(ExportData{PPO, delim, lowFRExport, highFRExport,
-            SPLTopValue, SPLTopPixel, SPLBottomValue, SPLBottomPixel, FRTopValue, FRTopPixel, FRBottomValue,
-            FRBottomPixel}));
+    EMSCRIPTEN_KEEPALIVE void* exportTrace(
+        const int PPO,
+        const delim_t delim,
+        const int compensation,
+        const double lowFRExport,
+        const double highFRExport,
+        const double SPLTopValue,
+        const double SPLTopPixel,
+        const double SPLBottomValue,
+        const double SPLBottomPixel,
+        const double FRTopValue,
+        const double FRTopPixel,
+        const double FRBottomValue,
+        const double FRBottomPixel
+    ) {
+        return ReturnedString::make(currentImage->exportTrace(ExportData{
+            PPO,
+            delim,
+            CompensationTools::fromInt(compensation),
+            lowFRExport,
+            highFRExport,
+            SPLTopValue,
+            SPLTopPixel,
+            SPLBottomValue,
+            SPLBottomPixel,
+            FRTopValue,
+            FRTopPixel,
+            FRBottomValue,
+            FRBottomPixel
+        }));
     }
 
     // Lines
