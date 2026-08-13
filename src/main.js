@@ -1404,7 +1404,7 @@ image.addEventListener('error', () => {
     let melvin_enabled = false;
     let melvin_style;
 
-    const setMelvin = async (compressedImgUrl, elementSelector) => {
+    const setMelvin = async () => {
         if (!melvin_style) {
             try {
                 const response = await fetch('assets/melvin');
