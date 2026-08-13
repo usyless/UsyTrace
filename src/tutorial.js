@@ -66,7 +66,11 @@ const tutorialSteps = [
             {
                 heading: 'Export Trace',
                 body: 'Writes the trace out as a csv file, once all four axis values are filled in.'
-            }
+            },
+            {
+                heading: 'Buttons snap to axis',
+                body: 'With this on, the arrow buttons under each value jump the guide straight to the nearest axis line found in the image instead of stepping by a fixed amount.'
+            },
         ]
     },
     {
@@ -90,12 +94,12 @@ const tutorialSteps = [
         header: 'Export Settings',
         blocks: [
             {
-                heading: 'Buttons snap to axis',
-                body: 'With this on, the arrow buttons under each value jump the guide straight to the nearest axis line found in the image instead of stepping by a fixed amount.'
-            },
-            {
                 heading: 'Export settings',
                 body: 'Points Per Octave sets the resolution of the exported data, Delimitation picks tab or space between columns, and the frequency range limits what gets written out.'
+            },
+            {
+                heading: 'Export Compensation',
+                body: 'Applies the selected compensation to make a compensated graph a raw graph, given that the target is the same'
             }
         ]
     },
