@@ -226,8 +226,8 @@ input[type="number"]:focus-visible, select:focus-visible {
 }
 
 #imageContainerInner {
-    --overlay-x: green;
-    --overlay-y: blue;
+    --overlay-x: #00e676;
+    --overlay-y: #00d4ff;
     --overlay-trace: #e0219a;
 }
 
@@ -239,6 +239,7 @@ input[type="number"]:focus-visible, select:focus-visible {
 
 .calCore {
     stroke-width: var(--overlayScale, 1);
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.95));
 }
 
 .calLineX .calCore {
@@ -254,6 +255,8 @@ input[type="number"]:focus-visible, select:focus-visible {
     font-weight: 700;
     font-size: calc(var(--overlayScale, 1) * 18px);
     letter-spacing: calc(var(--overlayScale, 1) * 0.2px);
+    paint-order: stroke fill;
+    stroke: rgba(0, 0, 0, 0.9);
     stroke-width: calc(var(--overlayScale, 1) * 3px);
     stroke-linejoin: round;
     stroke-opacity: 0.95;
