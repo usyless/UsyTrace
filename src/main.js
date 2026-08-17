@@ -90,6 +90,15 @@ const safariInverse = () => {
 // Global Variables
 let sizeRatio, width, height, lineWidth, CURRENT_MODE = null, MODE_RESET_CB = null;
 
+const imageMap = new Map();
+
+const LINE_BASE_LABELS = {
+    /** @export */ xHigh: 'High',
+    /** @export */ xLow: 'Low',
+    /** @export */ yHigh: 'High',
+    /** @export */ yLow: 'Low'
+};
+
 const glass = document.getElementById('glass');
 glass.img = glass.querySelector('img');
 glass.setColour = (colour) => glass.style.borderColor = `rgb(${colour})`;
@@ -128,9 +137,51 @@ const lines = {
         const ls = lines.lines, otherLinePos = lines.getPosition(ls[line.dataset["other"]]), sizeAttr = line.dataset["direction"] === 'x' ? width : height;
         if (line === ls["xHigh"] || line === ls["yLow"]) lines.updateLinePosition(line, Math.max(otherLinePos + 1, Math.min(sizeAttr - 1, position)));
         else lines.updateLinePosition(line, Math.max(1, Math.min(otherLinePos - 1, position)));
+        lines.updateLineLabel(line);
     },
     showLines: () => lines.parent.classList.remove('hidden'),
     hideLines: () => lines.parent.classList.add('hidden'), // potentially disable line keybinds
+    updateLineLabel: (line) => {
+        const baseLabel = LINE_BASE_LABELS[line.id] || (line.id.endsWith('High') ? 'High' : 'Low');
+        if (!preferences.showEstimatedValues()) {
+            line.lastElementChild.textContent = baseLabel;
+            return;
+        }
+
+        if (!image.isValid() || !imageMap.has(image.src)) {
+            line.lastElementChild.textContent = `${baseLabel} (N/A)`;
+            return;
+        }
+
+        const imgData = imageMap.get(image.src);
+        if (!imgData.words || !imgData.words.value) {
+            line.lastElementChild.textContent = `${baseLabel} (Loading)`;
+            return;
+        }
+
+        if (imgData.words_failed) {
+            line.lastElementChild.textContent = `${baseLabel} (N/A)`;
+            return;
+        }
+
+        const isX = line.dataset["direction"] === 'x';
+        const seq = isX ? imgData.xSeq : imgData.ySeq;
+        const pos = lines.getPosition(line);
+        const val = interpolateValue(pos, seq, isX, isX);
+
+        if (val === null || !Number.isFinite(val) || (isX && val <= 0)) {
+            line.lastElementChild.textContent = `${baseLabel} (N/A)`;
+        } else {
+            const rounded = Math.round(val * 10) / 10;
+            const unit = isX ? 'Hz' : 'dB';
+            line.lastElementChild.textContent = `${baseLabel} (${rounded} ${unit})`;
+        }
+    },
+    updateLabels: () => {
+        for (const line of lines.lineArray) {
+            lines.updateLineLabel(line);
+        }
+    },
     initialiseTextPosition: () => {
         lines.lines["xHigh"].lastElementChild.setAttribute('y', (height / 2).toString());
         lines.lines["xLow"].lastElementChild.setAttribute('y', (height / 2).toString());
@@ -144,6 +195,7 @@ const lines = {
             line.firstElementChild.setAttribute(`${otherDir}2`, sizeAttr);
         }
         lines.initialiseTextPosition();
+        lines.updateLabels();
     },
     fixPositioning: () => {
         // need to make sure snapped lines aren't bad
@@ -265,6 +317,7 @@ const preferences = (() => {
     const e_FRHigher = document.getElementById('FRHigher');
     const e_FRLower = document.getElementById('FRLower');
     const e_snapToLines = document.getElementById('snapToLines');
+    const e_showEstimatedValues = document.getElementById('showEstimatedValues');
     const e_line_move_speed = document.getElementById('line_move_speed');
     const e_traceAlgorithm = document.getElementById('traceAlgorithm');
     const e_colourTolerance = document.getElementById('colourTolerance');
@@ -281,6 +334,7 @@ const preferences = (() => {
         FRLower: () => e_FRLower.value,
 
         snapToLines: () => e_snapToLines.checked,
+        showEstimatedValues: () => e_showEstimatedValues.checked,
         line_move_speed: () => parseInt(e_line_move_speed.value, 10) || defaults.line_move_speed,
 
         traceAlgorithm: () => parseInt(e_traceAlgorithm.value, 10) || defaults.traceAlgorithm,
@@ -367,6 +421,127 @@ const parseTesseractText = (text) => {
 
     const val = parseFloat(cleaned);
     return isNaN(val) ? null : (hasK ? val * 1000 : val);
+};
+
+const extractOcrNumbers = (word_data) => {
+    return word_data.map((word) => ({
+        val: parseTesseractText(word['text']),
+        cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
+        cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2,
+        confidence: word['confidence']
+    })).filter(w => (w.val != null) && (w.confidence >= 70));
+};
+
+const findBestSequence = (ocrNumbers, isXAxis, isLog) => {
+    const alignKey = isXAxis ? 'cy' : 'cx';
+    const sortKey = isXAxis ? 'cx' : 'cy';
+    const alignTolerance = isXAxis ? 20 : 40;
+
+    const groups = [];
+    for (const num of ocrNumbers) {
+        let placed = false;
+        for (const group of groups) {
+            const avgAlign = group.reduce((sum, n) => sum + n[alignKey], 0) / group.length;
+            if (Math.abs(num[alignKey] - avgAlign) <= alignTolerance) {
+                group.push(num);
+                placed = true;
+                break;
+            }
+        }
+        if (!placed) groups.push([num]);
+    }
+
+    let bestSeq = null;
+    let maxScore = -1;
+
+    for (const group of groups) {
+        if (group.length < 2) continue;
+        group.sort((a, b) => a[sortKey] - b[sortKey]); // order spatially
+
+        const validGroup = group.filter(p => !(isLog && p.val <= 0));
+        if (validGroup.length < 2) continue;
+
+        let groupBestSeq = [];
+
+        const validgroup_length = validGroup.length;
+        for (let i = 0; i < validgroup_length; ++i) {
+            for (let j = i + 1; j < validgroup_length; ++j) {
+                const p1 = validGroup[i];
+                const p2 = validGroup[j];
+                const pxDiff = p2[sortKey] - p1[sortKey];
+
+                if (pxDiff < 5) continue;
+
+                let valDiff = isLog ? Math.log10(p2.val) - Math.log10(p1.val) : p2.val - p1.val;
+                const targetScale = valDiff / pxDiff;
+
+                if (isXAxis && targetScale <= 0) continue;
+                if (!isXAxis && targetScale >= 0) continue;
+
+                const inliers = [p1];
+                let lastInlier = p1;
+
+                for (let k = 0; k < validgroup_length; ++k) {
+                    if (k === i) continue;
+                    const current = validGroup[k];
+
+                    if (current[sortKey] <= lastInlier[sortKey]) continue;
+
+                    const localPxDiff = current[sortKey] - lastInlier[sortKey];
+                    if (localPxDiff < 5) continue;
+
+                    const localValDiff = isLog ? Math.log10(current.val) - Math.log10(lastInlier.val) : current.val - lastInlier.val;
+                    const localScale = localValDiff / localPxDiff;
+
+                    const scaleDeviation = Math.abs(localScale - targetScale) / Math.abs(targetScale || 1);
+
+                    if (scaleDeviation < 0.40) {
+                        inliers.push(current);
+                        lastInlier = current;
+                    }
+                }
+
+                if (inliers.length > groupBestSeq.length) {
+                    groupBestSeq = inliers;
+                } else if (inliers.length === groupBestSeq.length && inliers.length >= 2) {
+                    const currentSpread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
+                    const bestSpread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
+                    if (currentSpread > bestSpread) groupBestSeq = inliers;
+                }
+            }
+        }
+
+        if (groupBestSeq.length >= 2) {
+            const spread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
+            const score = (groupBestSeq.length * 1000) + spread;
+            if (score > maxScore) {
+                maxScore = score;
+                bestSeq = groupBestSeq;
+            }
+        }
+    }
+    return bestSeq;
+};
+
+const interpolateValue = (pixelTarget, sequence, isXAxis, isLog) => {
+    if (!sequence || sequence.length < 2) return null;
+
+    const p1 = sequence[0];
+    const p2 = sequence[sequence.length - 1];
+    const sortKey = isXAxis ? 'cx' : 'cy';
+
+    const px1 = p1[sortKey], px2 = p2[sortKey];
+    const v1 = p1.val, v2 = p2.val;
+
+    if (px1 === px2) return null;
+
+    if (isLog) {
+        if (v1 <= 0 || v2 <= 0) return null;
+        const logV1 = Math.log10(v1);
+        return Math.pow(10, logV1 + ((Math.log10(v2) - logV1) / (px2 - px1)) * (pixelTarget - px1));
+    } else {
+        return v1 + ((v2 - v1) / (px2 - px1)) * (pixelTarget - px1);
+    }
 };
 
 const worker = {
@@ -489,13 +664,23 @@ const worker = {
                             console.log('Words detected in image: ', words);
                             imageData.words.value = true;
                             imageData.words.resolve_(words);
+                            const ocrNumbers = extractOcrNumbers(words);
+                            imageData.xSeq = findBestSequence(ocrNumbers, true, true);
+                            imageData.ySeq = findBestSequence(ocrNumbers, false, false);
+                            if (image.src === src) {
+                                lines.updateLabels();
+                            }
                         });
                     }).catch((err) => {
                         global_canvas_2.width = 0;
                         global_canvas_2.height = 0;
                         console.log('Error detecting words in image: ', err);
                         imageData.words.value = true;
+                        imageData.words_failed = true;
                         imageData.words.reject_(err);
+                        if (image.src === src) {
+                            lines.updateLabels();
+                        }
                     });
                     break;
                 }
@@ -602,124 +787,14 @@ const worker = {
                     return;
                 }
 
-                const ocrNumbers = word_data.map((word) => ({
-                    val: parseTesseractText(word['text']),
-                    cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
-                    cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2,
-                    confidence: word['confidence']
-                })).filter(w => (w.val != null) && (w.confidence >= 70));
-
-                const findBestSequence = (isXAxis, isLog) => {
-                    const alignKey = isXAxis ? 'cy' : 'cx';
-                    const sortKey = isXAxis ? 'cx' : 'cy';
-                    const alignTolerance = isXAxis ? 20 : 40;
-
-                    const groups = [];
-                    for (const num of ocrNumbers) {
-                        let placed = false;
-                        for (const group of groups) {
-                            const avgAlign = group.reduce((sum, n) => sum + n[alignKey], 0) / group.length;
-                            if (Math.abs(num[alignKey] - avgAlign) <= alignTolerance) {
-                                group.push(num);
-                                placed = true;
-                                break;
-                            }
-                        }
-                        if (!placed) groups.push([num]);
-                    }
-
-                    let bestSeq = null;
-                    let maxScore = -1;
-
-                    for (const group of groups) {
-                        if (group.length < 2) continue;
-                        group.sort((a, b) => a[sortKey] - b[sortKey]); // order spatially
-
-                        const validGroup = group.filter(p => !(isLog && p.val <= 0));
-                        if (validGroup.length < 2) continue;
-
-                        let groupBestSeq = [];
-
-                        const validgroup_length = validGroup.length;
-                        for (let i = 0; i < validgroup_length; ++i) {
-                            for (let j = i + 1; j < validgroup_length; ++j) {
-                                const p1 = validGroup[i];
-                                const p2 = validGroup[j];
-                                const pxDiff = p2[sortKey] - p1[sortKey];
-
-                                if (pxDiff < 5) continue;
-
-                                let valDiff = isLog ? Math.log10(p2.val) - Math.log10(p1.val) : p2.val - p1.val;
-                                const targetScale = valDiff / pxDiff;
-
-                                if (isXAxis && targetScale <= 0) continue;
-                                if (!isXAxis && targetScale >= 0) continue;
-
-                                const inliers = [p1];
-                                let lastInlier = p1;
-
-                                for (let k = 0; k < validgroup_length; ++k) {
-                                    if (k === i) continue;
-                                    const current = validGroup[k];
-
-                                    if (current[sortKey] <= lastInlier[sortKey]) continue;
-
-                                    const localPxDiff = current[sortKey] - lastInlier[sortKey];
-                                    if (localPxDiff < 5) continue;
-
-                                    const localValDiff = isLog ? Math.log10(current.val) - Math.log10(lastInlier.val) : current.val - lastInlier.val;
-                                    const localScale = localValDiff / localPxDiff;
-
-                                    const scaleDeviation = Math.abs(localScale - targetScale) / Math.abs(targetScale || 1);
-
-                                    if (scaleDeviation < 0.40) {
-                                        inliers.push(current);
-                                        lastInlier = current;
-                                    }
-                                }
-
-                                if (inliers.length > groupBestSeq.length) {
-                                    groupBestSeq = inliers;
-                                } else if (inliers.length === groupBestSeq.length && inliers.length >= 2) {
-                                    const currentSpread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
-                                    const bestSpread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
-                                    if (currentSpread > bestSpread) groupBestSeq = inliers;
-                                }
-                            }
-                        }
-
-                        if (groupBestSeq.length >= 2) {
-                            const spread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
-                            const score = (groupBestSeq.length * 1000) + spread;
-                            if (score > maxScore) {
-                                maxScore = score;
-                                bestSeq = groupBestSeq;
-                            }
-                        }
-                    }
-                    return bestSeq;
-                };
-
-                const interpolateValue = (pixelTarget, sequence, isXAxis, isLog) => {
-                    if (!sequence || sequence.length < 2) return null;
-
-                    const p1 = sequence[0];
-                    const p2 = sequence[sequence.length - 1];
-                    const sortKey = isXAxis ? 'cx' : 'cy';
-
-                    const px1 = p1[sortKey], px2 = p2[sortKey];
-                    const v1 = p1.val, v2 = p2.val;
-
-                    if (isLog) {
-                        const logV1 = Math.log10(v1);
-                        return Math.pow(10, logV1 + ((Math.log10(v2) - logV1) / (px2 - px1)) * (pixelTarget - px1));
-                    } else {
-                        return v1 + ((v2 - v1) / (px2 - px1)) * (pixelTarget - px1);
-                    }
-                };
-
-                const xSeq = findBestSequence(true, true);
-                const ySeq = findBestSequence(false, false);
+                const imgData = imageMap.get(image.src);
+                let xSeq = imgData?.xSeq;
+                let ySeq = imgData?.ySeq;
+                if (!xSeq || !ySeq) {
+                    const ocrNumbers = extractOcrNumbers(word_data);
+                    xSeq = xSeq || findBestSequence(ocrNumbers, true, true);
+                    ySeq = ySeq || findBestSequence(ocrNumbers, false, false);
+                }
 
                 const bounds = [
                     { name: 'FR High', userVal: data.FR.top, ocrVal: interpolateValue(data.FR.topPixel, xSeq, true, true), isLog: true },
@@ -874,7 +949,6 @@ document.getElementById('clearPath').addEventListener('click', worker.clearTrace
 document.getElementById('export').addEventListener('click', worker.exportTrace);
 document.getElementById('smoothTrace').addEventListener('click', worker.smoothTrace);
 
-const imageMap = new Map();
 const fileInput = document.getElementById('fileInput');
 
 const imageQueue = {
@@ -1199,6 +1273,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 { // Move canvas lines with buttons and offset trace
     let holdInterval, line, snap = preferences.snapToLines();
     document.getElementById('snapToLines').addEventListener('change', () => snap = preferences.snapToLines());
+    document.getElementById('showEstimatedValues').addEventListener('change', () => lines.updateLabels());
 
     document.getElementById('buttonSection').addEventListener('pointerdown', (e) => {
         const t = e.target, p = t.parentNode;
@@ -1472,6 +1547,7 @@ function initAll() {
     buttons.disableButtons();
     buttons.resetButtons();
     lines.hideLines();
+    lines.updateLabels();
     erasing.hide();
     graphs.clearTracePath();
     image.src = '';

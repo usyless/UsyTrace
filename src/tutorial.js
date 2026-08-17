@@ -71,6 +71,10 @@ const tutorialSteps = [
                 heading: 'Buttons snap to axis',
                 body: 'With this on, the arrow buttons under each value jump the guide straight to the nearest axis line found in the image instead of stepping by a fixed amount.'
             },
+            {
+                heading: 'Show estimated values',
+                body: 'Displays estimated values from OCR directly on the axis lines on the graph.'
+            },
         ]
     },
     {
