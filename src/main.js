@@ -1144,6 +1144,14 @@ document.getElementById('editImage').addEventListener('click', () => {
 
 // Initialise the page
 resetToDefault();
+
+try {
+    const savedShowEstimated = window.localStorage.getItem('showEstimatedValues');
+    if (savedShowEstimated !== null) {
+        document.getElementById('showEstimatedValues').checked = savedShowEstimated === 'true';
+    }
+} catch {}
+
 initAll();
 
 const updateTraceAlgorithm = (() => {
@@ -1273,7 +1281,12 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
 { // Move canvas lines with buttons and offset trace
     let holdInterval, line, snap = preferences.snapToLines();
     document.getElementById('snapToLines').addEventListener('change', () => snap = preferences.snapToLines());
-    document.getElementById('showEstimatedValues').addEventListener('change', () => lines.updateLabels());
+    document.getElementById('showEstimatedValues').addEventListener('change', () => {
+        try {
+            window.localStorage.setItem('showEstimatedValues', preferences.showEstimatedValues().toString());
+        } catch {}
+        lines.updateLabels();
+    });
 
     document.getElementById('buttonSection').addEventListener('pointerdown', (e) => {
         const t = e.target, p = t.parentNode;
