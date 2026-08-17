@@ -54,7 +54,7 @@ namespace CompensationTools {
         {20186.382308, -2.555588}
     };
 
-    constexpr bool targetIsSorted() noexcept {
+    consteval bool targetIsSorted() noexcept {
         for (std::size_t i = 1; i < std::size(BK5128_TARGET); ++i) {
             if (BK5128_TARGET[i - 1].frequency >= BK5128_TARGET[i].frequency) return false;
         }
