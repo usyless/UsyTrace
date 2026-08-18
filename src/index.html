@@ -163,6 +163,13 @@
             <label for="highFRExport" title="Maximum exported frequency value">Maximum Frequency (Hz)</label>
             <input type="number" id="highFRExport" title="Maximum exported frequency value"/>
         </div>
+        <div class="sidebarSection" id="debugSettings">
+            <h3>Debug Settings</h3>
+            <div>
+                <label for="showOcrDebug">Show OCR Bounding Boxes</label>
+                <input id="showOcrDebug" type="checkbox">
+            </div>
+        </div>
         <button class="sidebarSection standardButton" id="restoreDefault">
             <b>Restore Default Settings</b>
         </button>
@@ -189,6 +196,7 @@
                     <path stroke="#000000" fill="transparent" d=""></path>
                     <path stroke="#ff0000" fill="transparent" d=""></path>
                 </svg>
+                <svg id="ocrDebug" class="canvasSizing hidden removePointerEvents"></svg>
                 <svg id="lines" class="canvasSizing hidden">
                     <g class="calLine calLineX" data-direction="x" id="xLow" data-other="xHigh">
                         <line class="calCore" x1="0" x2="0" y1="0" y2="0"></line>

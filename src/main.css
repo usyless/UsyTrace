@@ -279,6 +279,57 @@ input[type="number"]:focus-visible, select:focus-visible {
     stroke-dasharray: calc(var(--overlayScale, 1) * 6px) calc(var(--overlayScale, 1) * 5px);
 }
 
+#ocrDebug text {
+    font-family: 'Open Sans', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: calc(var(--overlayScale, 1) * 11px);
+    letter-spacing: calc(var(--overlayScale, 1) * 0.2px);
+    paint-order: stroke fill;
+    stroke: rgba(0, 0, 0, 0.95);
+    stroke-width: calc(var(--overlayScale, 1) * 2.5px);
+    stroke-linejoin: round;
+    text-anchor: start;
+    user-select: none;
+}
+
+.ocrBoxUsedX rect {
+    fill: rgba(0, 230, 118, 0.18);
+    stroke: var(--overlay-x, #00e676);
+    stroke-width: calc(var(--overlayScale, 1) * 2px);
+}
+.ocrBoxUsedX text {
+    fill: #00e676;
+}
+
+.ocrBoxUsedY rect {
+    fill: rgba(0, 212, 255, 0.18);
+    stroke: var(--overlay-y, #00d4ff);
+    stroke-width: calc(var(--overlayScale, 1) * 2px);
+}
+.ocrBoxUsedY text {
+    fill: #00d4ff;
+}
+
+.ocrBoxUnusedParsed rect {
+    fill: rgba(255, 152, 0, 0.14);
+    stroke: #ff9800;
+    stroke-width: calc(var(--overlayScale, 1) * 1.5px);
+    stroke-dasharray: calc(var(--overlayScale, 1) * 4px) calc(var(--overlayScale, 1) * 2px);
+}
+.ocrBoxUnusedParsed text {
+    fill: #ffb74d;
+}
+
+.ocrBoxIgnored rect {
+    fill: rgba(158, 158, 158, 0.08);
+    stroke: rgba(158, 158, 158, 0.5);
+    stroke-width: calc(var(--overlayScale, 1) * 1px);
+    stroke-dasharray: calc(var(--overlayScale, 1) * 2px) calc(var(--overlayScale, 1) * 2px);
+}
+.ocrBoxIgnored text {
+    fill: #b0bec5;
+}
+
 #imageQueueContainer {
     width: 100%;
     height: var(--image-queue-height);

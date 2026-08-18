@@ -47,7 +47,9 @@ const defaults = {
     /** @export */ highFRExport: 20000,
 
     /** @export */ SPLHigher: "",
-    /** @export */ SPLLower: ""
+    /** @export */ SPLLower: "",
+
+    /** @export */ showOcrDebug: false
 }
 const MAGNIFICATION = 3;
 document.getElementById('restoreDefault')?.addEventListener('click', () => {
@@ -55,7 +57,13 @@ document.getElementById('restoreDefault')?.addEventListener('click', () => {
     void createPopup("Restored settings to default");
 });
 function resetToDefault() {
-    for (const val in defaults) document.getElementById(val).value = defaults[val];
+    for (const val in defaults) {
+        const elem = document.getElementById(val);
+        if (!elem) continue;
+        if (elem.type === 'checkbox') elem.checked = defaults[val];
+        else elem.value = defaults[val];
+    }
+    ocrDebug?.update?.();
 }
 
 // const global_canvas = 'OffscreenCanvas' in window ? new OffscreenCanvas(0, 0) : document.createElement('canvas');
@@ -405,6 +413,114 @@ const erasing = {
 }
 erasing.init();
 
+const ocrDebug = {
+    elem: document.getElementById('ocrDebug'),
+    show: () => {
+        ocrDebug.elem?.classList.remove('hidden');
+        ocrDebug.update();
+    },
+    hide: () => {
+        ocrDebug.elem?.classList.add('hidden');
+    },
+    clear: () => {
+        ocrDebug.elem?.replaceChildren();
+    },
+    update: () => {
+        if (!preferences.showOcrDebug()) {
+            ocrDebug.hide();
+            return;
+        }
+        ocrDebug.elem?.classList.remove('hidden');
+        if (!image.isValid() || !imageMap.has(image.src)) {
+            ocrDebug.clear();
+            return;
+        }
+        const imgData = imageMap.get(image.src);
+        if (!imgData || !imgData.words || !imgData.words.value || imgData.words_failed) {
+            ocrDebug.clear();
+            return;
+        }
+        if (imgData.cachedWords) {
+            ocrDebug.render(imgData, imgData.cachedWords);
+        } else if (imgData.words.promise) {
+            imgData.words.promise.then((words) => {
+                if (image.src === imgData.src) {
+                    ocrDebug.render(imgData, words);
+                }
+            }).catch(() => ocrDebug.clear());
+        }
+    },
+    render: (imgData, wordsData) => {
+        if (!preferences.showOcrDebug()) {
+            ocrDebug.hide();
+            return;
+        }
+        ocrDebug.elem?.classList.remove('hidden');
+        ocrDebug.clear();
+
+        const words = wordsData || imgData?.cachedWords;
+        if (!words || !Array.isArray(words)) return;
+
+        const xSeqWords = new Set((imgData.xSeq || []).map(item => item.word));
+        const ySeqWords = new Set((imgData.ySeq || []).map(item => item.word));
+
+        const scale = sizeRatio || 1;
+        const fragment = document.createDocumentFragment();
+
+        for (const word of words) {
+            const bbox = word['bbox'];
+            if (!bbox) continue;
+
+            const x0 = bbox['x0'];
+            const y0 = bbox['y0'];
+            const w = bbox['x1'] - x0;
+            const h = bbox['y1'] - y0;
+            const rawText = word['text'] || '';
+            const parsedVal = parseTesseractText(rawText);
+
+            const isXSeq = xSeqWords.has(word);
+            const isYSeq = ySeqWords.has(word);
+
+            let groupClass = 'ocrBoxIgnored';
+            let labelText = '';
+
+            if (isXSeq) {
+                groupClass = 'ocrBoxUsedX';
+                labelText = `X: "${rawText}" → ${parsedVal}`;
+            } else if (isYSeq) {
+                groupClass = 'ocrBoxUsedY';
+                labelText = `Y: "${rawText}" → ${parsedVal}`;
+            } else if (parsedVal !== null) {
+                groupClass = 'ocrBoxUnusedParsed';
+                labelText = `Unused: "${rawText}" → ${parsedVal}`;
+            } else {
+                groupClass = 'ocrBoxIgnored';
+                labelText = `Ignored: "${rawText}" → N/A`;
+            }
+
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.setAttribute('class', `ocrDebugGroup ${groupClass}`);
+
+            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            rect.setAttribute('x', x0.toString());
+            rect.setAttribute('y', y0.toString());
+            rect.setAttribute('width', Math.max(1, w).toString());
+            rect.setAttribute('height', Math.max(1, h).toString());
+
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            const textY = (y0 > 14 * scale) ? y0 - 3 * scale : y0 + h + 11 * scale;
+            text.setAttribute('x', x0.toString());
+            text.setAttribute('y', textY.toString());
+            text.textContent = labelText;
+
+            g.append(rect, text);
+            fragment.appendChild(g);
+        }
+
+        ocrDebug.elem?.appendChild(fragment);
+    }
+};
+
 /** @type {HTMLImageElement & {
  * getMouseCoords: (MouseEvent) => any,
  * isValid: () => boolean,
@@ -473,6 +589,7 @@ const preferences = (() => {
     const e_FRLower = document.getElementById('FRLower');
     const e_snapToLines = document.getElementById('snapToLines');
     const e_showEstimatedValues = document.getElementById('showEstimatedValues');
+    const e_showOcrDebug = document.getElementById('showOcrDebug');
     const e_line_move_speed = document.getElementById('line_move_speed');
     const e_traceAlgorithm = document.getElementById('traceAlgorithm');
     const e_colourTolerance = document.getElementById('colourTolerance');
@@ -490,6 +607,7 @@ const preferences = (() => {
 
         snapToLines: () => e_snapToLines.checked,
         showEstimatedValues: () => e_showEstimatedValues.checked,
+        showOcrDebug: () => e_showOcrDebug.checked,
         line_move_speed: () => parseInt(e_line_move_speed.value, 10) || defaults.line_move_speed,
 
         traceAlgorithm: () => parseInt(e_traceAlgorithm.value, 10) || defaults.traceAlgorithm,
@@ -583,7 +701,10 @@ const extractOcrNumbers = (word_data) => {
         val: parseTesseractText(word['text']),
         cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
         cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2,
-        confidence: word['confidence']
+        confidence: word['confidence'],
+        rawText: word['text'],
+        bbox: word['bbox'],
+        word: word
     })).filter(w => (w.val != null) && (w.confidence >= 70));
 };
 
@@ -817,6 +938,7 @@ const worker = {
                                 return word;
                             });
                             console.log('Words detected in image: ', words);
+                            imageData.cachedWords = words;
                             imageData.words.value = true;
                             imageData.words.resolve_(words);
                             const ocrNumbers = extractOcrNumbers(words);
@@ -824,6 +946,7 @@ const worker = {
                             imageData.ySeq = findBestSequence(ocrNumbers, false, false);
                             if (image.src === src) {
                                 lines.updateLabels();
+                                ocrDebug.render(imageData, words);
                             }
                         });
                     }).catch((err) => {
@@ -835,6 +958,7 @@ const worker = {
                         imageData.words.reject_(err);
                         if (image.src === src) {
                             lines.updateLabels();
+                            ocrDebug.clear();
                         }
                     });
                     break;
@@ -1127,6 +1251,7 @@ const imageQueue = {
             a = document.getElementById('imageQueueInner');
         img.src = src;
         imageMap.set(img.src, {
+            src: img.src,
             initial: true,
             bitmap: createImageBitmap(blob)
         });
@@ -1442,6 +1567,7 @@ document.getElementById('fileInputButton').addEventListener('click', () => fileI
         } catch {}
         lines.updateLabels();
     });
+    document.getElementById('showOcrDebug')?.addEventListener('change', ocrDebug.update);
 
     document.getElementById('buttonSection').addEventListener('pointerdown', (e) => {
         const t = e.target, p = t.parentNode;
@@ -1576,12 +1702,14 @@ image.addEventListener('load', () => {
         worker.getCurrentPath();
     }
     lines.updateLineWidth();
+    ocrDebug.update();
 });
 
 image.addEventListener('error', () => {
     if (image.isValid()) {
         for (const img of imageQueue.currentlySelected()) imageQueue.deleteImage(img);
         void createPopup("Error loading this image, it may be malformed");
+        ocrDebug.clear();
     }
 });
 
@@ -1718,6 +1846,8 @@ function initAll() {
     lines.updateLabels();
     erasing.hide();
     graphs.clearTracePath();
+    ocrDebug.clear();
+    ocrDebug.hide();
     image.src = '';
 }
 
