@@ -1,6 +1,5 @@
 #pragma once
 
-#include <algorithm>
 #include <cstddef>
 #include <cmath>
 #include <cstdint>
@@ -69,32 +68,52 @@ namespace CompensationTools {
             : Compensation::None;
     }
 
-    inline double getBK5128(const double frequency) noexcept {
-        if (!std::isfinite(frequency) || frequency <= 0) return 0;
+    inline auto getBK5128() noexcept {
+        static constexpr auto firstF = BK5128_TARGET[0].frequency;
+        static constexpr auto firstG = BK5128_TARGET[0].gain;
+        static constexpr auto lastIdx = std::size(BK5128_TARGET) - 1;
+        static constexpr auto lastF = BK5128_TARGET[lastIdx].frequency;
+        static constexpr auto lastG = BK5128_TARGET[lastIdx].gain;
 
-        if (frequency <= BK5128_TARGET[0].frequency) return BK5128_TARGET[0].gain;
-        if (frequency >= BK5128_TARGET[std::size(BK5128_TARGET) - 1].frequency) {
-            return BK5128_TARGET[std::size(BK5128_TARGET) - 1].gain;
-        }
+        return [pos = std::size_t{0}](const double frequency) mutable noexcept -> double {
+            if (!std::isfinite(frequency) || frequency <= 0) return 0;
+            if (frequency <= firstF) return firstG;
+            if (frequency >= lastF) return lastG;
 
-        const auto upper = std::lower_bound(
-            std::begin(BK5128_TARGET),
-            std::end(BK5128_TARGET),
-            frequency,
-            [](const Point& point, const double value) { return point.frequency < value; }
-        );
-        const auto& lower = *std::prev(upper);
-        const auto ratio = std::log(frequency / lower.frequency) / std::log(upper->frequency / lower.frequency);
-        return lower.gain + (upper->gain - lower.gain) * ratio;
+            while ((pos < (lastIdx - 1)) && (frequency > BK5128_TARGET[pos + 1].frequency)) {
+                ++pos;
+            }
+
+            const auto& lower = BK5128_TARGET[pos];
+            const auto& upper = BK5128_TARGET[pos + 1];
+            const auto ratio = std::log(frequency / lower.frequency) / std::log(upper.frequency / lower.frequency);
+            return lower.gain + (upper.gain - lower.gain) * ratio;
+        };
     }
 
-    inline double apply(const Compensation compensation, const double frequency, const double spl) noexcept {
-        switch (compensation) {
-            case Compensation::BK5128:
-                return spl + getBK5128(frequency);
-            case Compensation::None:
-            default:
+    inline double getBK5128(const double frequency) noexcept {
+        return getBK5128()(frequency);
+    }
+
+    template <Compensation comp>
+    constexpr auto getCompensation() noexcept {
+        if constexpr (comp == Compensation::BK5128) {
+            return [bk5128 = getBK5128()](const double frequency, const double spl) mutable noexcept -> double {
+                return spl + bk5128(frequency);
+            };
+        } else {
+            return [](const double, const double spl) noexcept -> double {
                 return spl;
+            };
+        }
+    }
+
+    template <Compensation comp>
+    inline double apply(const double frequency, const double spl) noexcept {
+        if constexpr (comp == Compensation::BK5128) {
+            return spl + getBK5128(frequency);
+        } else {
+            return spl;
         }
     }
 }

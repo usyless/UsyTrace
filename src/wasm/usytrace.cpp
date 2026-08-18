@@ -367,11 +367,21 @@ struct Image {
         return traceHistory.add(traceHistory.getLatest().offsetTrace(direction, magnitude)).toSVG();
     }
 
+    template <Compensation Comp>
+    void exportTraceLoop(const ExportData& exportData, ExportString& str, auto& interp) const {
+        auto comp = CompensationTools::getCompensation<Comp>();
+        const auto PPOStep = exportData.PPOStep, logMaxFR = exportData.logMaxFR;
+        for (auto v = exportData.logMinFR; ; v += PPOStep) {
+            const auto freq = pow(10, v);
+            str.addData(freq, comp(freq, interp(freq)));
+            if (v >= logMaxFR) break;
+        }
+    }
+
     std::string exportTrace(const ExportData& exportData) const {
         const auto FRBottomPixel = exportData.FRBottomPixel, FRRatio = exportData.FRRatio,
         logFRBottomValue = exportData.logFRBottomValue, SPLBottomPixel = exportData.SPLBottomPixel,
-        SPLRatio = exportData.SPLRatio, SPLBottomValue = exportData.SPLBottomValue,
-        PPOStep = exportData.PPOStep, logMaxFR = exportData.logMaxFR;
+        SPLRatio = exportData.SPLRatio, SPLBottomValue = exportData.SPLBottomValue;
         auto str = ExportString{exportData.delim};
 
         std::vector<std::pair<double, double>> FRxSPL{};
@@ -384,10 +394,14 @@ struct Image {
 
         if (!FRxSPL.empty()) {
             auto interp = contiguousLinearInterpolation(FRxSPL);
-            for (auto v = exportData.logMinFR; ; v += PPOStep) {
-                const auto freq = pow(10, v);
-                str.addData(freq, CompensationTools::apply(exportData.compensation, freq, interp(freq)));
-                if (v >= logMaxFR) break;
+            switch (exportData.compensation) {
+                case Compensation::BK5128:
+                    exportTraceLoop<Compensation::BK5128>(exportData, str, interp);
+                    break;
+                case Compensation::None:
+                default:
+                    exportTraceLoop<Compensation::None>(exportData, str, interp);
+                    break;
             }
         }
 
