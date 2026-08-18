@@ -15,10 +15,10 @@ const tesseract_worker = new Promise(async (resolve, reject) => {
         });
 
         await tesseract_worker.setParameters({
-            /** @export */ tessedit_char_whitelist: '0123456789,.kK-+',
+            /** @export */ tessedit_char_whitelist: '0123456789,.kK-+ hzHZdbDBsplSPL',
             /** @export */ tessedit_pageseg_mode: Tesseract.PSM["SPARSE_TEXT"],
             /** @export */ user_defined_dpi: '300',
-            /** @export */ preserve_interword_spaces: '0'
+            /** @export */ preserve_interword_spaces: '1'
         });
 
         console.timeEnd("Initialise Tesseract OCR");
@@ -461,8 +461,8 @@ const ocrDebug = {
         const words = wordsData || imgData?.cachedWords;
         if (!words || !Array.isArray(words)) return;
 
-        const xSeqWords = new Set((imgData.xSeq || []).map(item => item.word));
-        const ySeqWords = new Set((imgData.ySeq || []).map(item => item.word));
+        const xSeqWords = new Set((imgData.xSeq || []).map(item => item['word']));
+        const ySeqWords = new Set((imgData.ySeq || []).map(item => item['word']));
 
         const scale = sizeRatio || 1;
         const fragment = document.createDocumentFragment();
@@ -681,6 +681,10 @@ const buttons = {
 const parseTesseractText = (text) => {
     let cleaned = text.toLowerCase().trim();
 
+    if (cleaned.endsWith('hz')) cleaned = cleaned.slice(0, -2);
+    if (cleaned.endsWith('spl')) cleaned = cleaned.slice(0, -3);
+    if (cleaned.endsWith('db')) cleaned = cleaned.slice(0, -2);
+
     const hasK = cleaned.endsWith('k');
     if (hasK) cleaned = cleaned.slice(0, -1);
 
@@ -696,22 +700,149 @@ const parseTesseractText = (text) => {
     return isNaN(val) ? null : (hasK ? val * 1000 : val);
 };
 
+const splitOcrWords = (rawWords) => {
+    const result = [];
+
+    for (const rawWord of rawWords) {
+        if (!rawWord || !rawWord['bbox']) continue;
+
+        rawWord['bbox']['x0'] /= 2.5;
+        rawWord['bbox']['x1'] /= 2.5;
+        rawWord['bbox']['y0'] /= 2.5;
+        rawWord['bbox']['y1'] /= 2.5;
+
+        const symbols = rawWord['symbols'];
+        if (Array.isArray(symbols) && symbols.length > 0) {
+            for (const sym of symbols) {
+                if (sym && sym['bbox']) {
+                    sym['bbox']['x0'] /= 2.5;
+                    sym['bbox']['x1'] /= 2.5;
+                    sym['bbox']['y0'] /= 2.5;
+                    sym['bbox']['y1'] /= 2.5;
+                }
+            }
+
+            const clusters = [];
+            let currentCluster = [];
+
+            for (let i = 0; i < symbols.length; i++) {
+                const sym = symbols[i];
+                if (!sym) continue;
+                const symText = sym['text'] || '';
+
+                if (symText.trim() === '') {
+                    if (currentCluster.length > 0) {
+                        clusters.push(currentCluster);
+                        currentCluster = [];
+                    }
+                    continue;
+                }
+
+                if (currentCluster.length > 0) {
+                    const prevSym = currentCluster[currentCluster.length - 1];
+                    const prevText = prevSym['text'] || '';
+                    const gap = (sym['bbox'] && prevSym['bbox']) ? (sym['bbox']['x0'] - prevSym['bbox']['x1']) : 0;
+                    const prevW = prevSym['bbox'] ? (prevSym['bbox']['x1'] - prevSym['bbox']['x0']) : 10;
+                    const prevH = prevSym['bbox'] ? (prevSym['bbox']['y1'] - prevSym['bbox']['y0']) : 12;
+
+                    const isDot = (t) => t === '.' || t === ',';
+                    const isDigit = (t) => /[0-9]/.test(t);
+                    const isDecimal = (isDot(prevText) && isDigit(symText)) || (isDigit(prevText) && isDot(symText));
+
+                    const isLargeGap = !isDecimal && (gap > Math.max(8, prevW * 1.1, prevH * 0.6));
+                    const isUnitBoundary = /[kK]/i.test(prevText) && /[0-9+\-]/.test(symText);
+                    const isSignBoundary = /[+\-]/.test(symText) && /[0-9kK]/i.test(prevText);
+
+                    if (isLargeGap || isUnitBoundary || isSignBoundary) {
+                        clusters.push(currentCluster);
+                        currentCluster = [];
+                    }
+                }
+
+                currentCluster.push(sym);
+            }
+
+            if (currentCluster.length > 0) {
+                clusters.push(currentCluster);
+            }
+
+            if (clusters.length > 1) {
+                for (const cluster of clusters) {
+                    const validBboxes = cluster.filter(s => s && s['bbox']);
+                    if (validBboxes.length === 0) continue;
+                    const clusterText = cluster.map(s => s['text'] || '').join('').trim();
+                    if (!clusterText) continue;
+
+                    const x0 = Math.min(...validBboxes.map(s => s['bbox']['x0']));
+                    const y0 = Math.min(...validBboxes.map(s => s['bbox']['y0']));
+                    const x1 = Math.max(...validBboxes.map(s => s['bbox']['x1']));
+                    const y1 = Math.max(...validBboxes.map(s => s['bbox']['y1']));
+                    const confidence = Math.round(cluster.reduce((sum, s) => sum + (s['confidence'] || rawWord['confidence'] || 80), 0) / cluster.length);
+
+                    result.push({
+                        /** @export */ text: clusterText,
+                        /** @export */ bbox: {
+                            /** @export */ x0: x0,
+                            /** @export */ y0: y0,
+                            /** @export */ x1: x1,
+                            /** @export */ y1: y1
+                        },
+                        /** @export */ confidence: confidence,
+                        /** @export */ symbols: cluster
+                    });
+                }
+                continue;
+            }
+        }
+
+        const rawText = (rawWord['text'] || '').trim();
+        const matches = [...rawText.matchAll(/[+-]?(?:\d+(?:[.,]\d+)?|[.,]\d+)(?:[kK](?:Hz)?)?|[^\s0-9.,kK\-+]+/g)];
+
+        if (matches.length > 1) {
+            const w = rawWord['bbox']['x1'] - rawWord['bbox']['x0'];
+            const len = Math.max(1, rawText.length);
+
+            for (const match of matches) {
+                const tokenText = match[0].trim();
+                if (!tokenText) continue;
+                const startIdx = match.index || 0;
+                const endIdx = startIdx + tokenText.length;
+
+                result.push({
+                    /** @export */ text: tokenText,
+                    /** @export */ bbox: {
+                        /** @export */ x0: rawWord['bbox']['x0'] + (startIdx / len) * w,
+                        /** @export */ y0: rawWord['bbox']['y0'],
+                        /** @export */ x1: rawWord['bbox']['x0'] + (endIdx / len) * w,
+                        /** @export */ y1: rawWord['bbox']['y1']
+                    },
+                    /** @export */ confidence: rawWord['confidence'] || 80
+                });
+            }
+        } else {
+            result.push(rawWord);
+        }
+    }
+
+    return result;
+};
+
 const extractOcrNumbers = (word_data) => {
     return word_data.map((word) => ({
-        val: parseTesseractText(word['text']),
-        cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
-        cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2,
-        confidence: word['confidence'],
-        rawText: word['text'],
-        bbox: word['bbox'],
-        word: word
-    })).filter(w => (w.val != null) && (w.confidence >= 70));
+        /** @export */ val: parseTesseractText(word['text']),
+        /** @export */ cx: (word['bbox']['x0'] + word['bbox']['x1']) / 2,
+        /** @export */ cy: (word['bbox']['y0'] + word['bbox']['y1']) / 2,
+        /** @export */ confidence: word['confidence'],
+        /** @export */ rawText: word['text'],
+        /** @export */ bbox: word['bbox'],
+        /** @export */ word: word
+    })).filter(w => (w['val'] != null) && (w['confidence'] >= 70));
 };
 
 const findBestSequence = (ocrNumbers, isXAxis, isLog) => {
     const alignKey = isXAxis ? 'cy' : 'cx';
     const sortKey = isXAxis ? 'cx' : 'cy';
-    const alignTolerance = isXAxis ? 20 : 40;
+    const alignTolerance = isXAxis ? 25 : 40;
 
     const groups = [];
     for (const num of ocrNumbers) {
@@ -732,67 +863,62 @@ const findBestSequence = (ocrNumbers, isXAxis, isLog) => {
 
     for (const group of groups) {
         if (group.length < 2) continue;
-        group.sort((a, b) => a[sortKey] - b[sortKey]); // order spatially
+        group.sort((a, b) => a[sortKey] - b[sortKey]);
 
-        const validGroup = group.filter(p => !(isLog && p.val <= 0));
-        if (validGroup.length < 2) continue;
+        const validGroup = group.filter(p => !(isLog && p['val'] <= 0));
+        const len = validGroup.length;
+        if (len < 2) continue;
 
-        let groupBestSeq = [];
-
-        const validgroup_length = validGroup.length;
-        for (let i = 0; i < validgroup_length; ++i) {
-            for (let j = i + 1; j < validgroup_length; ++j) {
+        for (let i = 0; i < len; ++i) {
+            for (let j = i + 1; j < len; ++j) {
                 const p1 = validGroup[i];
                 const p2 = validGroup[j];
                 const pxDiff = p2[sortKey] - p1[sortKey];
 
-                if (pxDiff < 5) continue;
+                if (pxDiff < 8) continue;
 
-                let valDiff = isLog ? Math.log10(p2.val) - Math.log10(p1.val) : p2.val - p1.val;
-                const targetScale = valDiff / pxDiff;
+                const y1 = isLog ? Math.log10(p1['val']) : p1['val'];
+                const y2 = isLog ? Math.log10(p2['val']) : p2['val'];
+                const slope = (y2 - y1) / pxDiff;
 
-                if (isXAxis && targetScale <= 0) continue;
-                if (!isXAxis && targetScale >= 0) continue;
+                if (isXAxis && slope <= 0) continue;
+                if (!isXAxis && slope >= 0) continue;
 
-                const inliers = [p1];
-                let lastInlier = p1;
+                const intercept = y1 - slope * p1[sortKey];
 
-                for (let k = 0; k < validgroup_length; ++k) {
-                    if (k === i) continue;
-                    const current = validGroup[k];
+                const inliers = [];
+                let lastVal = null;
+                let lastPx = null;
 
-                    if (current[sortKey] <= lastInlier[sortKey]) continue;
+                for (let k = 0; k < len; ++k) {
+                    const cand = validGroup[k];
+                    const candPx = cand[sortKey];
+                    const candVal = cand['val'];
+                    const candY = isLog ? Math.log10(candVal) : candVal;
 
-                    const localPxDiff = current[sortKey] - lastInlier[sortKey];
-                    if (localPxDiff < 5) continue;
+                    const expectedPx = (candY - intercept) / slope;
+                    const pxError = Math.abs(candPx - expectedPx);
 
-                    const localValDiff = isLog ? Math.log10(current.val) - Math.log10(lastInlier.val) : current.val - lastInlier.val;
-                    const localScale = localValDiff / localPxDiff;
-
-                    const scaleDeviation = Math.abs(localScale - targetScale) / Math.abs(targetScale || 1);
-
-                    if (scaleDeviation < 0.40) {
-                        inliers.push(current);
-                        lastInlier = current;
+                    if (pxError <= 6.0) {
+                        if (lastVal !== null) {
+                            if (candPx <= lastPx) continue;
+                            if (isXAxis && candVal <= lastVal) continue;
+                            if (!isXAxis && candVal >= lastVal) continue;
+                        }
+                        inliers.push(cand);
+                        lastVal = candVal;
+                        lastPx = candPx;
                     }
                 }
 
-                if (inliers.length > groupBestSeq.length) {
-                    groupBestSeq = inliers;
-                } else if (inliers.length === groupBestSeq.length && inliers.length >= 2) {
-                    const currentSpread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
-                    const bestSpread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
-                    if (currentSpread > bestSpread) groupBestSeq = inliers;
+                if (inliers.length >= 2) {
+                    const spread = inliers[inliers.length - 1][sortKey] - inliers[0][sortKey];
+                    const score = (inliers.length * 1000) + spread;
+                    if (score > maxScore) {
+                        maxScore = score;
+                        bestSeq = inliers;
+                    }
                 }
-            }
-        }
-
-        if (groupBestSeq.length >= 2) {
-            const spread = groupBestSeq[groupBestSeq.length - 1][sortKey] - groupBestSeq[0][sortKey];
-            const score = (groupBestSeq.length * 1000) + spread;
-            if (score > maxScore) {
-                maxScore = score;
-                bestSeq = groupBestSeq;
             }
         }
     }
@@ -802,22 +928,39 @@ const findBestSequence = (ocrNumbers, isXAxis, isLog) => {
 const interpolateValue = (pixelTarget, sequence, isXAxis, isLog) => {
     if (!sequence || sequence.length < 2) return null;
 
-    const p1 = sequence[0];
-    const p2 = sequence[sequence.length - 1];
     const sortKey = isXAxis ? 'cx' : 'cy';
+    const sorted = [...sequence].sort((a, b) => a[sortKey] - b[sortKey]);
 
-    const px1 = p1[sortKey], px2 = p2[sortKey];
-    const v1 = p1.val, v2 = p2.val;
+    const interpSeg = (p1, p2) => {
+        const px1 = p1[sortKey], px2 = p2[sortKey];
+        const v1 = p1['val'], v2 = p2['val'];
+        if (px1 === px2) return v1;
 
-    if (px1 === px2) return null;
+        const frac = (pixelTarget - px1) / (px2 - px1);
+        if (isLog) {
+            if (v1 <= 0 || v2 <= 0) return null;
+            const logV1 = Math.log10(v1);
+            const logV2 = Math.log10(v2);
+            return Math.pow(10, logV1 + frac * (logV2 - logV1));
+        } else {
+            return v1 + frac * (v2 - v1);
+        }
+    };
 
-    if (isLog) {
-        if (v1 <= 0 || v2 <= 0) return null;
-        const logV1 = Math.log10(v1);
-        return Math.pow(10, logV1 + ((Math.log10(v2) - logV1) / (px2 - px1)) * (pixelTarget - px1));
-    } else {
-        return v1 + ((v2 - v1) / (px2 - px1)) * (pixelTarget - px1);
+    if (pixelTarget <= sorted[0][sortKey]) {
+        return interpSeg(sorted[0], sorted[1]);
     }
+    if (pixelTarget >= sorted[sorted.length - 1][sortKey]) {
+        return interpSeg(sorted[sorted.length - 2], sorted[sorted.length - 1]);
+    }
+
+    for (let i = 0; i < sorted.length - 1; i++) {
+        if (pixelTarget >= sorted[i][sortKey] && pixelTarget <= sorted[i + 1][sortKey]) {
+            return interpSeg(sorted[i], sorted[i + 1]);
+        }
+    }
+
+    return null;
 };
 
 const worker = {
@@ -930,13 +1073,8 @@ const worker = {
                             global_canvas_2.height = 0;
 
                             console.timeEnd(label);
-                            const words = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3).map((word) => {
-                                word['bbox']['x0'] /= 2.5;
-                                word['bbox']['x1'] /= 2.5;
-                                word['bbox']['y0'] /= 2.5;
-                                word['bbox']['y1'] /= 2.5;
-                                return word;
-                            });
+                            const rawWords = d["data"]["blocks"].map((b) => b["paragraphs"].map((p) => p["lines"].map((l) => l["words"]))).flat(3);
+                            const words = splitOcrWords(rawWords);
                             console.log('Words detected in image: ', words);
                             imageData.cachedWords = words;
                             imageData.words.value = true;
