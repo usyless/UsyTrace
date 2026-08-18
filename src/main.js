@@ -123,14 +123,23 @@ const lines = {
         /** @export */ yHigh: document.getElementById('yHigh'),
         /** @export */ yLow: document.getElementById('yLow'),
     },
+    getTextWidth: (textElem) => {
+        try {
+            const bbox = textElem.getBBox();
+            if (bbox && bbox.width > 0) return bbox.width;
+        } catch {}
+        const len = (textElem.textContent || '').length;
+        return len * 18 * (sizeRatio || 1) * 0.65;
+    },
     updateLinePosition: (line, position) => {
         const attr = line.dataset["direction"];
         line.firstElementChild.setAttribute(`${attr}1`, position);
         line.firstElementChild.setAttribute(`${attr}2`, position);
-        line.lastElementChild.setAttribute(attr, position);
+        lines.updateTextPositions();
     },
     updateLineWidth: () => {
         document.getElementById('imageContainerInner').style.setProperty('--overlayScale', sizeRatio.toString());
+        lines.updateTextPositions();
     },
     getPosition: (line) => parseFloat(line.firstElementChild.getAttribute(`${line.dataset["direction"]}1`)),
     setPosition: (line, position) => {
@@ -145,22 +154,26 @@ const lines = {
         const baseLabel = LINE_BASE_LABELS[line.id] || (line.id.endsWith('High') ? 'High' : 'Low');
         if (!preferences.showEstimatedValues()) {
             line.lastElementChild.textContent = baseLabel;
+            lines.updateTextPositions();
             return;
         }
 
         if (!image.isValid() || !imageMap.has(image.src)) {
             line.lastElementChild.textContent = `${baseLabel} (N/A)`;
+            lines.updateTextPositions();
             return;
         }
 
         const imgData = imageMap.get(image.src);
         if (!imgData.words || !imgData.words.value) {
             line.lastElementChild.textContent = `${baseLabel} (Loading)`;
+            lines.updateTextPositions();
             return;
         }
 
         if (imgData.words_failed) {
             line.lastElementChild.textContent = `${baseLabel} (N/A)`;
+            lines.updateTextPositions();
             return;
         }
 
@@ -176,17 +189,160 @@ const lines = {
             const unit = isX ? 'Hz' : 'dB';
             line.lastElementChild.textContent = `${baseLabel} (${rounded} ${unit})`;
         }
+        lines.updateTextPositions();
     },
     updateLabels: () => {
         for (const line of lines.lineArray) {
             lines.updateLineLabel(line);
         }
     },
+    updateTextPositions: () => {
+        if (!width || !height) return;
+        const scale = sizeRatio || 1;
+        const pad = 8 * scale;
+        const textH = 22 * scale;
+        const offsetPx = 0.7 * 18 * scale;
+
+        const xLowLine = lines.lines["xLow"];
+        const xHighLine = lines.lines["xHigh"];
+        const yHighLine = lines.lines["yHigh"];
+        const yLowLine = lines.lines["yLow"];
+
+        if (!xLowLine || !xHighLine || !yHighLine || !yLowLine) return;
+
+        const xLowPos = lines.getPosition(xLowLine);
+        const xHighPos = lines.getPosition(xHighLine);
+        const yHighPos = lines.getPosition(yHighLine);
+        const yLowPos = lines.getPosition(yLowLine);
+
+        if (isNaN(xLowPos) || isNaN(xHighPos) || isNaN(yHighPos) || isNaN(yLowPos)) return;
+
+        const xLowText = xLowLine.lastElementChild;
+        const xHighText = xHighLine.lastElementChild;
+        const yHighText = yHighLine.lastElementChild;
+        const yLowText = yLowLine.lastElementChild;
+
+        const wXLow = lines.getTextWidth(xLowText);
+        const wXHigh = lines.getTextWidth(xHighText);
+        const wYHigh = lines.getTextWidth(yHighText);
+        const wYLow = lines.getTextWidth(yLowText);
+
+        const midX = (xLowPos + xHighPos) / 2;
+        const midY = (yHighPos + yLowPos) / 2;
+
+        let xYHigh = Math.max(wYHigh / 2 + pad, Math.min(width - wYHigh / 2 - pad, midX));
+        let xYLow = Math.max(wYLow / 2 + pad, Math.min(width - wYLow / 2 - pad, midX));
+
+        const vGap = yLowPos - yHighPos;
+        const yHighSpaceAbove = yHighPos - pad;
+        const yLowSpaceBelow = height - yLowPos - pad;
+
+        let yHighDy = "1.3em";
+        let yLowDy = "-0.7em";
+        let yHighBelow = true;
+        let yLowAbove = true;
+
+        const minVGap = textH * 2.2;
+        if (vGap < minVGap) {
+            if (yHighSpaceAbove >= textH) {
+                yHighDy = "-0.7em";
+                yHighBelow = false;
+            }
+            if (yLowSpaceBelow >= textH) {
+                yLowDy = "1.3em";
+                yLowAbove = false;
+            }
+        }
+
+        if (yHighBelow && yHighPos + textH + pad > height && yHighSpaceAbove >= textH) {
+            yHighDy = "-0.7em";
+            yHighBelow = false;
+        }
+        if (yLowAbove && yLowPos - textH - pad < 0 && yLowSpaceBelow >= textH) {
+            yLowDy = "1.3em";
+            yLowAbove = false;
+        }
+
+        if (yHighBelow === !yLowAbove) {
+            const stagger = Math.max(wYHigh, wYLow) * 0.55;
+            xYHigh = Math.max(wYHigh / 2 + pad, Math.min(width - wYHigh / 2 - pad, midX - stagger));
+            xYLow = Math.max(wYLow / 2 + pad, Math.min(width - wYLow / 2 - pad, midX + stagger));
+        }
+
+        yHighText.setAttribute('x', xYHigh.toString());
+        yHighText.setAttribute('y', yHighPos.toString());
+        yHighText.setAttribute('dy', yHighDy);
+        yHighText.setAttribute('text-anchor', 'middle');
+
+        yLowText.setAttribute('x', xYLow.toString());
+        yLowText.setAttribute('y', yLowPos.toString());
+        yLowText.setAttribute('dy', yLowDy);
+        yLowText.setAttribute('text-anchor', 'middle');
+
+        let yXLow = Math.max(textH / 2 + pad, Math.min(height - textH / 2 - pad, midY));
+        let yXHigh = Math.max(textH / 2 + pad, Math.min(height - textH / 2 - pad, midY));
+
+        const hGap = xHighPos - xLowPos;
+        const xLowSpaceLeft = xLowPos - pad;
+        const xHighSpaceRight = width - xHighPos - pad;
+
+        let xLowDx = "0.7em";
+        let xLowAnchor = "start";
+        let xLowRight = true;
+
+        let xHighDx = "-0.7em";
+        let xHighAnchor = "end";
+        let xHighLeft = true;
+
+        const minHGap = wXLow + wXHigh + offsetPx * 2 + pad;
+        if (hGap < minHGap) {
+            if (xLowSpaceLeft >= wXLow + offsetPx) {
+                xLowDx = "-0.7em";
+                xLowAnchor = "end";
+                xLowRight = false;
+            }
+            if (xHighSpaceRight >= wXHigh + offsetPx) {
+                xHighDx = "0.7em";
+                xHighAnchor = "start";
+                xHighLeft = false;
+            }
+        }
+
+        if (xLowRight && xLowPos + offsetPx + wXLow + pad > width && xLowSpaceLeft >= wXLow + offsetPx) {
+            xLowDx = "-0.7em";
+            xLowAnchor = "end";
+            xLowRight = false;
+        }
+        if (xHighLeft && xHighPos - offsetPx - wXHigh - pad < 0 && xHighSpaceRight >= wXHigh + offsetPx) {
+            xHighDx = "0.7em";
+            xHighAnchor = "start";
+            xHighLeft = false;
+        }
+
+        const xLowMinX = xLowRight ? xLowPos : xLowPos - offsetPx - wXLow;
+        const xLowMaxX = xLowRight ? xLowPos + offsetPx + wXLow : xLowPos;
+        const xHighMinX = xHighLeft ? xHighPos - offsetPx - wXHigh : xHighPos;
+        const xHighMaxX = xHighLeft ? xHighPos : xHighPos + offsetPx + wXHigh;
+
+        const hOverlap = Math.max(0, Math.min(xLowMaxX, xHighMaxX) - Math.max(xLowMinX, xHighMinX));
+        if (hOverlap > 0) {
+            const staggerY = textH * 1.1;
+            yXLow = Math.max(textH / 2 + pad, Math.min(height - textH / 2 - pad, midY - staggerY));
+            yXHigh = Math.max(textH / 2 + pad, Math.min(height - textH / 2 - pad, midY + staggerY));
+        }
+
+        xLowText.setAttribute('x', xLowPos.toString());
+        xLowText.setAttribute('y', yXLow.toString());
+        xLowText.setAttribute('dx', xLowDx);
+        xLowText.setAttribute('text-anchor', xLowAnchor);
+
+        xHighText.setAttribute('x', xHighPos.toString());
+        xHighText.setAttribute('y', yXHigh.toString());
+        xHighText.setAttribute('dx', xHighDx);
+        xHighText.setAttribute('text-anchor', xHighAnchor);
+    },
     initialiseTextPosition: () => {
-        lines.lines["xHigh"].lastElementChild.setAttribute('y', (height / 2).toString());
-        lines.lines["xLow"].lastElementChild.setAttribute('y', (height / 2).toString());
-        lines.lines["yHigh"].lastElementChild.setAttribute('x', (width / 2).toString());
-        lines.lines["yLow"].lastElementChild.setAttribute('x', (width / 2).toString());
+        lines.updateTextPositions();
     },
     initialise: () => {
         for (const line of lines.lineArray) {
@@ -194,7 +350,6 @@ const lines = {
             line.firstElementChild.setAttribute(`${otherDir}1`, "0");
             line.firstElementChild.setAttribute(`${otherDir}2`, sizeAttr);
         }
-        lines.initialiseTextPosition();
         lines.updateLabels();
     },
     fixPositioning: () => {
