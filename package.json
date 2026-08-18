@@ -24,8 +24,8 @@
     "build:css": "node scripts/build.js --css",
     "build:css:debug": "node scripts/build.js --css --debug",
     "build:dist": "node scripts/build.js --dist",
-    "serve": "npm run build && node scripts/server.js",
-    "serve:debug": "npm run build:debug && node scripts/server.js",
+    "serve": "node scripts/server.js",
+    "serve:debug": "node scripts/server.js --debug",
 
     "download": "node scripts/download-tesseract.js"
   },
