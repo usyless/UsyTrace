@@ -2,8 +2,7 @@
 
 import { state } from "./state.js";
 
-const eventListeners = [];
-const onclosefuncs = [];
+const popupMap = new Map();
 
 export let currentOk;
 
@@ -48,7 +47,7 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
             ok_button.addEventListener('click', () => {
                 const value = content.serialise?.();
                 if (overlay) clearPopups(null, center_div);
-                else clearPopups()
+                else clearPopups();
                 resolve(value ?? true);
             });
             currentOk = ok_button;
@@ -60,40 +59,71 @@ export async function createPopup(content, {listeners = [], buttons, classes = [
         center_div.addEventListener('click', (e) => {
             if (e.target === e.currentTarget) {
                 if (overlay) clearPopups(null, center_div);
-                else clearPopups()
+                else clearPopups();
                 resolve(false);
             }
         });
 
         center_div.appendChild(main_div);
 
-        listeners.push({
-            target: window,
-            type: 'keydown',
-            listener: (e) => {
-                if (e.key.toLowerCase() === 'escape') center_div.click();
+        const popupListeners = [
+            ...listeners,
+            {
+                target: window,
+                type: 'keydown',
+                listener: (e) => {
+                    if (e.key.toLowerCase() === 'escape') center_div.click();
+                }
             }
-        })
+        ];
 
-        for (const listener of listeners) {
-            eventListeners.push(listener);
+        for (const listener of popupListeners) {
             listener.target.addEventListener(listener.type, listener.listener);
         }
 
-        if (onclose != null) onclosefuncs.push(onclose);
+        popupMap.set(center_div, {
+            listeners: popupListeners,
+            onclose: onclose
+        });
+
         beforeRender?.(center_div);
         document.body.appendChild(center_div);
     });
 }
 
+function removePopupInstance(center_div) {
+    const data = popupMap.get(center_div);
+    if (data) {
+        if (data.listeners) {
+            for (const listener of data.listeners) {
+                listener.target?.removeEventListener?.(listener.type, listener.listener);
+            }
+        }
+        try {
+            data.onclose?.();
+        } catch (err) {
+            console.error("Error in popup onclose:", err);
+        }
+        popupMap.delete(center_div);
+    }
+    center_div.remove();
+}
+
 export function clearPopups(_ = null, specific = null) {
-    if (specific) specific.remove(); // dont use other stuff if using specific
-    else {
+    if (specific) {
+        removePopupInstance(specific);
+    } else {
+        const allPopups = Array.from(document.querySelectorAll('[usy-overlay]'));
+        for (const popup of allPopups) {
+            removePopupInstance(popup);
+        }
+        for (const [elem] of popupMap) {
+            removePopupInstance(elem);
+        }
+        popupMap.clear();
+    }
+
+    if (document.querySelectorAll('[usy-overlay]').length === 0) {
         state.enableKeyBinds();
-        for (const listener of eventListeners) listener.target?.removeEventListener?.(listener.type, listener.listener);
-        for (const f of onclosefuncs) f();
-        onclosefuncs.length = 0;
-        eventListeners.length = 0;
-        document.querySelectorAll('[usy-overlay]').forEach((e) => e.remove());
     }
 }

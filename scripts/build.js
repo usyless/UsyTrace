@@ -7,7 +7,7 @@ import * as common from './common.js';
 
 
 export const MINIFIED_JS_FILES = [
-    "state.js", "compensation.js", "main.js", "popups.js", "tutorial.js",
+    "state.js", "compensation.js", "edit.js", "main.js", "popups.js", "tutorial.js",
     "about.js", "updater.js", "themes.js"
 ];
 
