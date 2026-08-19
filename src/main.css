@@ -511,12 +511,12 @@ input[type="number"]:focus-visible, select:focus-visible {
 
     .transformHandleText {
         font-family: 'Open Sans', system-ui, sans-serif;
-        font-size: 11px;
+        font-size: 13px;
         font-weight: 700;
         fill: var(--overlay-x, #00e676);
         paint-order: stroke fill;
-        stroke: rgba(0, 0, 0, 0.9);
-        stroke-width: 2.5px;
+        stroke: rgba(0, 0, 0, 0.95);
+        stroke-width: 3px;
         stroke-linejoin: round;
         user-select: none;
         pointer-events: none;

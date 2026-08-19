@@ -1722,13 +1722,19 @@ document.getElementById('editImage').addEventListener('click', () => {
 
             const touchCircle = document.createElementNS(svgNS, 'circle');
             touchCircle.setAttribute('class', 'transformHandleTouch');
+            touchCircle.setAttribute('r', '22');
 
             const coreCircle = document.createElementNS(svgNS, 'circle');
             coreCircle.setAttribute('class', 'transformHandleCore');
+            coreCircle.setAttribute('r', '7');
 
             const text = document.createElementNS(svgNS, 'text');
             text.setAttribute('class', 'transformHandleText');
             text.textContent = handleLabels[i];
+            const dx = (i === 0 || i === 3) ? -16 : 16;
+            const dy = (i === 0 || i === 1) ? -16 : 16;
+            text.setAttribute('x', dx.toString());
+            text.setAttribute('y', dy.toString());
 
             g.append(touchCircle, coreCircle, text);
             svgOverlay.appendChild(g);
@@ -1772,26 +1778,12 @@ document.getElementById('editImage').addEventListener('click', () => {
             }
 
             const rect = svgOverlay.getBoundingClientRect();
-            const scale = rect.width > 0 ? (img_w / rect.width) : (img.clientWidth > 0 ? (img_w / img.clientWidth) : 1);
-            const rCore = Math.max(5, 7 * scale);
-            const rTouch = Math.max(16, 22 * scale);
-            const fontSize = Math.max(9, 12 * scale);
+            const dispW = rect.width > 0 ? rect.width : (img.clientWidth > 0 ? img.clientWidth : (img_wrapper.clientWidth > 0 ? img_wrapper.clientWidth : 0));
+            const scale = dispW > 0 ? (img_w / dispW) : 1;
 
             for (let i = 0; i < 4; i++) {
                 const g = handleGroups[i];
-                g.setAttribute('transform', `translate(${corners[i].x}, ${corners[i].y})`);
-                const touchCircle = g.children[0];
-                const coreCircle = g.children[1];
-                const text = g.children[2];
-
-                touchCircle.setAttribute('r', rTouch.toString());
-                coreCircle.setAttribute('r', rCore.toString());
-                text.setAttribute('font-size', `${fontSize}px`);
-
-                const dx = (i === 0 || i === 3) ? (-15 * scale) : (15 * scale);
-                const dy = (i === 0 || i === 1) ? (-15 * scale) : (15 * scale);
-                text.setAttribute('x', dx.toString());
-                text.setAttribute('y', dy.toString());
+                g.setAttribute('transform', `translate(${corners[i].x}, ${corners[i].y}) scale(${scale})`);
             }
         };
 
@@ -1841,7 +1833,7 @@ document.getElementById('editImage').addEventListener('click', () => {
                 transformButton.setAttribute('active', '');
                 resetGridButton.style.display = '';
                 svgOverlay.style.display = '';
-                updateTransformOverlay();
+                requestAnimationFrame(updateTransformOverlay);
             } else {
                 transformButton.removeAttribute('active');
                 resetGridButton.style.display = 'none';
@@ -1858,6 +1850,12 @@ document.getElementById('editImage').addEventListener('click', () => {
             ];
             updateTransformOverlay();
         });
+
+        const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => {
+            if (isTransformActive) updateTransformOverlay();
+        }) : null;
+        ro?.observe(img_wrapper);
+        ro?.observe(img);
 
         const onResize = () => {
             if (isTransformActive) updateTransformOverlay();
@@ -1928,7 +1926,13 @@ document.getElementById('editImage').addEventListener('click', () => {
                 global_canvas.height = 0;
             });
         });
-        void createPopup(elem, {buttons, onclose: () => window.removeEventListener('resize', onResize)});
+        void createPopup(elem, {
+            buttons,
+            onclose: () => {
+                window.removeEventListener('resize', onResize);
+                ro?.disconnect();
+            }
+        });
     } else void createPopup('No valid image selected');
 });
 
