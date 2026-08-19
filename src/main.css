@@ -420,6 +420,7 @@ input[type="number"]:focus-visible, select:focus-visible {
         display: flex;
         gap: var(--spacing);
         flex-wrap: wrap;
+        justify-content: center;
     }
 
     h3 {
@@ -427,14 +428,97 @@ input[type="number"]:focus-visible, select:focus-visible {
         margin-bottom: var(--spacing-smaller);
     }
 
+    button[active] {
+        background-color: var(--quaternary);
+        outline: 2px solid var(--overlay-x, #00e676);
+    }
+
     .cropWrapper {
         max-width: 100%;
         max-height: 100%;
+        position: relative;
+        display: inline-block;
+        touch-action: none;
 
         img {
             max-width: 100%;
             max-height: 50vh;
+            display: block;
         }
+    }
+
+    .transformOverlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+    }
+
+    .transformQuad {
+        fill: rgba(0, 230, 118, 0.1);
+        stroke: var(--overlay-x, #00e676);
+        stroke-width: 2px;
+        vector-effect: non-scaling-stroke;
+        pointer-events: none;
+    }
+
+    .transformQuad.invalid {
+        fill: rgba(255, 60, 60, 0.15);
+        stroke: #ff3c3c;
+    }
+
+    .transformGridLine {
+        stroke: var(--overlay-x, #00e676);
+        stroke-width: 1px;
+        stroke-opacity: 0.55;
+        stroke-dasharray: 4 3;
+        vector-effect: non-scaling-stroke;
+        pointer-events: none;
+    }
+
+    .transformHandle {
+        pointer-events: all;
+        cursor: grab;
+        touch-action: none;
+    }
+
+    .transformHandle:hover, .transformHandle.dragging {
+        cursor: grabbing;
+    }
+
+    .transformHandleTouch {
+        fill: transparent;
+    }
+
+    .transformHandleCore {
+        fill: var(--primary, #121313);
+        stroke: var(--overlay-x, #00e676);
+        stroke-width: 2.5px;
+        vector-effect: non-scaling-stroke;
+    }
+
+    .transformHandle:hover .transformHandleCore,
+    .transformHandle.dragging .transformHandleCore {
+        fill: var(--overlay-x, #00e676);
+        stroke: #ffffff;
+    }
+
+    .transformHandleText {
+        font-family: 'Open Sans', system-ui, sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        fill: var(--overlay-x, #00e676);
+        paint-order: stroke fill;
+        stroke: rgba(0, 0, 0, 0.9);
+        stroke-width: 2.5px;
+        stroke-linejoin: round;
+        user-select: none;
+        pointer-events: none;
+        text-anchor: middle;
+        dominant-baseline: central;
     }
 }
 
