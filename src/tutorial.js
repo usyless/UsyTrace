@@ -122,8 +122,12 @@ const tutorialSteps = [
                     strong('h'), ' to hide the bar, or ', strong('Delete'), ' to remove the selected image.']
             },
             {
-                heading: 'Image Editing (Ctrl + E)',
-                body: 'Crop the image and apply filters before tracing. Raising the contrast, or inverting a dark screenshot, often makes a line far easier to detect.'
+                heading: 'Image Editing & Filters (Ctrl + E)',
+                body: 'Apply filters before tracing. Active filters are highlighted with their set values. Raising contrast, brightness, or inverting a dark screenshot often makes lines far easier to detect.'
+            },
+            {
+                heading: '3D Perspective Transform',
+                body: 'Correct images photographed or captured at an angle in 3D. Open Edit, turn on 3D Transform, drag the 4 corner handles (TL, TR, BR, BL) to frame the perspective-skewed graph, and Save to rectify it back to a flat rectangular image.'
             }
         ]
     }

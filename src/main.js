@@ -1613,7 +1613,11 @@ document.getElementById('editImage').addEventListener('click', () => {
                 validate: (v) => Math.abs(v) % 360
             },
         } : {
-            /** @export */ Invert: 'invert(1)'
+            /** @export */ Invert: {
+                property: 'invert',
+                default: 1,
+                unit: '',
+            }
         };
 
         const removeFilter = (filter) => {
@@ -1629,7 +1633,9 @@ document.getElementById('editImage').addEventListener('click', () => {
             button.addEventListener('click', () => {
                 if (activeFilters.has(filter)) {
                     activeFilters.delete(filter);
-                    removeFilter(f.property);
+                    removeFilter(f.property || 'invert');
+                    button.removeAttribute('active');
+                    button.textContent = filter;
                 } else {
                     if (f.validate) {
                         const input = document.createElement('input');
@@ -1642,13 +1648,17 @@ document.getElementById('editImage').addEventListener('click', () => {
                                 v = f.validate(v);
                                 activeFilters.add(filter);
                                 img.style.filter += `${f.property}(${v}${f.unit})`;
-                            } else {
+                                button.setAttribute('active', '');
+                                button.textContent = `${filter}: ${v}${f.unit}`;
+                            } else if (v !== false) {
                                 void createPopup('Invalid value.', {overlay: true});
                             }
                         });
                     } else {
                         activeFilters.add(filter);
-                        img.style.filter += `${f.property}(${f.default}${f.unit})`;
+                        img.style.filter += `${f.property || 'invert'}(${f.default ?? 1}${f.unit ?? ''})`;
+                        button.setAttribute('active', '');
+                        button.textContent = `${filter} (On)`;
                     }
                 }
             });

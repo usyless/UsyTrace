@@ -431,6 +431,9 @@ input[type="number"]:focus-visible, select:focus-visible {
     button[active] {
         background-color: var(--quaternary);
         outline: 2px solid var(--overlay-x, #00e676);
+        color: var(--text-primary);
+        box-shadow: 0 0 6px rgba(0, 230, 118, 0.45);
+        font-weight: 700;
     }
 
     .cropWrapper {
