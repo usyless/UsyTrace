@@ -238,13 +238,6 @@ void applySobel(const ImageData<4>& original, ImageData<1>& outX, ImageData<1>& 
     }
 }
 
-void invertImage(ImageData<4>& data) {
-    const size_t pixelCount = static_cast<size_t>(data.width) * data.height;
-    auto* pixels = reinterpret_cast<uint32_t*>(data.data.get());
-
-    for (size_t i = 0; i < pixelCount; ++i) pixels[i] = ~pixels[i];
-}
-
 template <bool vertical>
 std::set<uint32_t> detectLines(const ImageData<1>& imageData, const uint32_t tolerance) {
     std::set<uint32_t> lines{};
@@ -305,13 +298,14 @@ struct Image {
     Image(ImageData<4>&& _imageData, const uint32_t counter) : imageData(std::move(_imageData)), traceHistory(imageData) {
         this->backgroundColour = imageData.getBackgroundColour();
 
-        const auto needsInverse = (this->backgroundColour.sum() / 3) < 127;
+        const auto luminance = (77 * static_cast<uint32_t>(this->backgroundColour.R) +
+                                150 * static_cast<uint32_t>(this->backgroundColour.G) +
+                                29 * static_cast<uint32_t>(this->backgroundColour.B)) >> 8;
+        const auto needsInverse = luminance < 128;
 
     #ifdef __EMSCRIPTEN__
         EM_ASM( onImageInverseReady($0, $1), counter, needsInverse );
     #endif
-
-        if (needsInverse) invertImage(imageData);
 
         {
         auto filteredDataX = ImageData<1>{imageData.width, imageData.height};
@@ -321,8 +315,6 @@ struct Image {
         hLines = detectLines<false>(filteredDataY, 20);
         vLines = detectLines<true>(filteredDataX, 20);
         }
-
-        if (needsInverse) invertImage(imageData);
     }
 
     inline TraceContext context() {

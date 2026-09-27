@@ -1,11 +1,12 @@
 #pragma once
 
 #include <map>
-#include <unordered_map>
+#include <array>
 #include <memory>
 #include <cstdint>
 #include <algorithm>
 #include <set>
+#include <vector>
 #include <optional>
 #include <cmath>
 
@@ -72,20 +73,84 @@ struct ImageData {
     }
 
     inline RGB getBackgroundColour() const {
-        std::unordered_map<int, uint32_t> colours{};
-        colours.reserve(1024);
-        const auto mY = height, mX = width;
-        const uint32_t xJump = std::max<uint32_t>(1, mX / 100), yJump = std::max<uint32_t>(1, mY / 100);
+        if (width == 0 || height == 0) return {255, 255, 255};
 
-        for (uint32_t y = 0; y < mY; y += yJump) {
-            for (uint32_t x = 0; x < mX; x += xJump) {
-                ++colours[getRGB(x, y).toBin()];
+        alignas(4) std::array<uint16_t, 4096> bins{};
+
+        auto toBin = [](const RGB& rgb) noexcept -> uint16_t {
+            return (static_cast<uint16_t>(rgb.R >> 4) << 8) |
+                   (static_cast<uint16_t>(rgb.G >> 4) << 4) |
+                   static_cast<uint16_t>(rgb.B >> 4);
+        };
+
+        const uint32_t xStep = std::max<uint32_t>(1, width / 40);
+        const uint32_t yStep = std::max<uint32_t>(1, height / 40);
+
+        for (uint32_t x = 0; x < width; x += xStep) {
+            bins[toBin(getRGB(x, 0))] += 3;
+            bins[toBin(getRGB(x, height - 1))] += 3;
+        }
+        for (uint32_t y = 0; y < height; y += yStep) {
+            bins[toBin(getRGB(0, y))] += 3;
+            bins[toBin(getRGB(width - 1, y))] += 3;
+        }
+
+        const uint32_t xInterior = std::max<uint32_t>(1, width / 30);
+        const uint32_t yInterior = std::max<uint32_t>(1, height / 30);
+        for (uint32_t y = yStep; y + yStep < height; y += yInterior) {
+            for (uint32_t x = xStep; x + xStep < width; x += xInterior) {
+                ++bins[toBin(getRGB(x, y))];
             }
         }
-        if (colours.empty()) return {255, 255, 255};
-        const auto bin = std::max_element(colours.begin(), colours.end(),
-            [] (const std::pair<int, uint32_t>& a, const std::pair<int, uint32_t>& b) { return a.second < b.second; })->first;
-        return {static_cast<Colour>(bin >> 16), static_cast<Colour>((bin >> 8) & 0xff), static_cast<Colour>(bin & 0xff)};
+
+        uint16_t maxIdx = 0;
+        uint16_t maxCount = 0;
+        for (uint32_t i = 0; i < 4096; ++i) {
+            if (bins[i] > maxCount) {
+                maxCount = bins[i];
+                maxIdx = static_cast<uint16_t>(i);
+            }
+        }
+        if (maxCount == 0) return {255, 255, 255};
+
+        uint32_t sumR = 0, sumG = 0, sumB = 0, total = 0;
+        auto accumulate = [&](uint32_t x, uint32_t y) {
+            const auto rgb = getRGB(x, y);
+            if (toBin(rgb) == maxIdx) {
+                sumR += rgb.R;
+                sumG += rgb.G;
+                sumB += rgb.B;
+                ++total;
+            }
+        };
+
+        for (uint32_t x = 0; x < width; x += xStep) {
+            accumulate(x, 0);
+            accumulate(x, height - 1);
+        }
+        for (uint32_t y = 0; y < height; y += yStep) {
+            accumulate(0, y);
+            accumulate(width - 1, y);
+        }
+        for (uint32_t y = yStep; y + yStep < height; y += yInterior) {
+            for (uint32_t x = xStep; x + xStep < width; x += xInterior) {
+                accumulate(x, y);
+            }
+        }
+
+        if (total == 0) {
+            return {
+                static_cast<Colour>(((maxIdx >> 8) & 0x0F) * 17),
+                static_cast<Colour>(((maxIdx >> 4) & 0x0F) * 17),
+                static_cast<Colour>((maxIdx & 0x0F) * 17)
+            };
+        }
+
+        return {
+            static_cast<Colour>(sumR / total),
+            static_cast<Colour>(sumG / total),
+            static_cast<Colour>(sumB / total)
+        };
     }
 
     static Colour* allocate_buffer(const uint32_t width, const uint32_t height) {
