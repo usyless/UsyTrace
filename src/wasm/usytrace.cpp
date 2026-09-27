@@ -222,8 +222,8 @@ void applySobel(const ImageData<4>& original, ImageData<1>& outX, ImageData<1>& 
             const int Ysum = vd_prev + (vd_curr << 1) + vd_next;
 
             const size_t pos = outRowPos + x;
-            outputDataX[pos] = static_cast<uint8_t>(std::clamp(std::abs(Xsum) * 2, 0, 255));
-            outputDataY[pos] = static_cast<uint8_t>(std::clamp(std::abs(Ysum) * 2, 0, 255));
+            outputDataX[pos] = static_cast<uint8_t>(std::clamp(std::abs(Xsum) * 2 / 3, 0, 255));
+            outputDataY[pos] = static_cast<uint8_t>(std::clamp(std::abs(Ysum) * 2 / 3, 0, 255));
 
             vs_prev = vs_curr;
             vs_curr = vs_next;
