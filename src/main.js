@@ -1134,9 +1134,15 @@ const worker = {
         /** @export */ src: src
     }),
     addImage: (width, height, image_id) => {
+        if (!width || !height || width < 3 || height < 3) {
+            console.error("addImage called with invalid dimensions:", width, height);
+            return;
+        }
         global_canvas.width = width;
         global_canvas.height = height;
-        global_canvas_ctx_2d.drawImage(image, 0, 0);
+        const entry = imageMap.get(image.src);
+        const drawable = (entry?.bitmap && typeof entry.bitmap.close === 'function') ? entry.bitmap : image;
+        global_canvas_ctx_2d.drawImage(drawable, 0, 0);
         const imageData = global_canvas_ctx_2d.getImageData(0, 0, width, height);
         worker.worker.postMessage({
             /** @export */ src: image.src, // use postMessage directly to pass buffer properly
@@ -1377,6 +1383,10 @@ const imageQueue = {
         for (const i of imageQueue.currentlyAllSelected()) i.classList.remove('selectedImage');
     },
     deleteImage: (img) => {
+        const item = imageMap.get(img.src);
+        if (item?.bitmap && typeof item.bitmap.close === 'function') {
+            try { item.bitmap.close(); } catch {}
+        }
         imageMap.delete(img.src);
         worker.removeImage(img.src);
         URL.revokeObjectURL(img.src);
@@ -1385,14 +1395,20 @@ const imageQueue = {
     scrollToSelected: () => {
         (imageQueue.currentlySelected())?.scrollIntoView({inline: 'center', behavior: 'smooth'});
     },
-    addImage: (blob, src, display=false) => {
+    addImage: (blob, src, display=false, preloadedBitmap=null) => {
+        if (!blob || blob.size <= 0) {
+            void createPopup("Invalid image: file has 0 size or is empty");
+            if (preloadedBitmap && typeof preloadedBitmap.close === 'function') preloadedBitmap.close();
+            if (src && src.startsWith('blob:')) URL.revokeObjectURL(src);
+            return null;
+        }
         const img = document.createElement('img'),
             a = document.getElementById('imageQueueInner');
         img.src = src;
         imageMap.set(img.src, {
             src: img.src,
             initial: true,
-            bitmap: createImageBitmap(blob)
+            bitmap: preloadedBitmap || createImageBitmap(blob)
         });
         img.addEventListener('dragstart', (e) => e.preventDefault());
         img.addEventListener('click', (e) => {
@@ -1484,19 +1500,43 @@ const updateTraceAlgorithm = (() => {
 document.getElementById('traceAlgorithm').addEventListener('change', updateTraceAlgorithm);
 updateTraceAlgorithm();
 
-fileInput.loadFiles = (files) => {
-    const validFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
-    const lastId = validFiles.length - 1;
-    
-    if (validFiles.length > 0) {
-        clearPopups();
-        validFiles.forEach((file, index) => {
-            imageQueue.addImage(file, URL.createObjectURL(file), index === lastId);
-        });
+fileInput.loadFiles = async (files) => {
+    const rawFiles = Array.from(files);
+    const validEntries = [];
+    let hasInvalid = false;
+
+    for (const file of rawFiles) {
+        if (!file.type.startsWith("image/") || file.size <= 0) {
+            hasInvalid = true;
+            continue;
+        }
+        try {
+            const bitmap = await createImageBitmap(file);
+            if (bitmap.width < 3 || bitmap.height < 3) {
+                bitmap.close?.();
+                hasInvalid = true;
+                continue;
+            }
+            validEntries.push({ file, bitmap });
+        } catch {
+            hasInvalid = true;
+        }
     }
-    else void createPopup("Invalid image/file(s) added!");
+
+    if (validEntries.length > 0) {
+        clearPopups();
+        const lastId = validEntries.length - 1;
+        validEntries.forEach(({ file, bitmap }, index) => {
+            imageQueue.addImage(file, URL.createObjectURL(file), index === lastId, bitmap);
+        });
+        if (hasInvalid) {
+            void createPopup("Some image(s) had invalid data/sizes and were skipped.");
+        }
+    } else {
+        void createPopup("Invalid image/file(s) added! Images must have non-zero size and valid dimensions.");
+    }
     fileInput.value = ''; // reset value of input to allow re-input of the same item in chromium
-}
+};
 fileInput.addEventListener('change', (e) => {
     fileInput.loadFiles(e.target.files);
 });
@@ -1661,6 +1701,14 @@ let tesseract_id = 0;
 
 // where everything starts
 image.addEventListener('load', () => {
+    if (!image.naturalWidth || !image.naturalHeight || image.naturalWidth < 3 || image.naturalHeight < 3) {
+        if (image.isValid()) {
+            for (const img of imageQueue.currentlyAllSelected()) imageQueue.deleteImage(img);
+            void createPopup("Error: Image has invalid dimensions or zero size");
+            ocrDebug.clear();
+        }
+        return;
+    }
     document.getElementById('defaultMainText').classList.add('hidden');
     buttons.enableButtons();
     buttons.resetButtons();

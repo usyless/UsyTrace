@@ -89,7 +89,8 @@ struct ImageData {
     }
 
     static Colour* allocate_buffer(const uint32_t width, const uint32_t height) {
-        return new Colour[width * height * Channels];
+        if (width == 0 || height == 0) return nullptr;
+        return new Colour[static_cast<size_t>(width) * height * Channels];
     }
 };
 

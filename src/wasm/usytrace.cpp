@@ -164,74 +164,77 @@ auto contiguousLinearInterpolation(const std::vector<std::pair<double, double>>&
     };
 }
 
-void padOutputData(const ImageData<4>& original, ImageData<1>& output) {
-    const auto width = original.width, height = original.height;
-    const auto maxWidthOrig = width * original.channels, maxWidthOut = width * output.channels;
-    const auto data = original.data.get();
-    auto outputData = output.data.get();
-    // Copy top and bottom rows
-    for (size_t x = 0; x < width; ++x) {
-        size_t orx = x * 4;
-        outputData[x] = (data[orx] + data[orx + 1] + data[orx + 2]) / 3;
-
-        orx += (height - 1) * maxWidthOrig;
-        outputData[x + ((height - 1) * maxWidthOut)] = (data[orx] + data[orx + 1] + data[orx + 2]) / 3;
-    }
-    // Copy left and right columns
-    for (size_t y = 0; y < height; ++y) {
-        size_t ory = y * maxWidthOrig, ouy = y * maxWidthOut;
-        outputData[ouy] = (data[ory] + data[ory + 1] + data[ory + 2]) / 3;
-
-        ory += maxWidthOrig - 4;
-        outputData[ouy + maxWidthOut - 1] = (data[ory] + data[ory + 1] + data[ory + 2]) / 3;
-    }
-}
-
 void applySobel(const ImageData<4>& original, ImageData<1>& outX, ImageData<1>& outY) {
-    const size_t widthBound = original.width - 1, heightBound = original.height - 1;
-    const size_t maxWidthOrig = original.width * original.channels, maxWidthOut = original.width * outX.channels;
-    const auto data = original.data.get();
-    auto outputDataX = outX.data.get();
-    auto outputDataY = outY.data.get();
+    const size_t width = original.width;
+    const size_t height = original.height;
+    if (width < 3 || height < 3) return;
 
-    static constexpr int yFilter[3][3] = {
-        {-1, -2, -1},
-        { 0,  0,  0},
-        { 1,  2,  1}
-    };
+    const auto* data = original.data.get();
+    auto* outputDataX = outX.data.get();
+    auto* outputDataY = outY.data.get();
 
-    static constexpr int xFilter[3][3] = {
-        {-1,  0,  1},
-        {-2,  0,  2},
-        {-1,  0,  1}
-    };
+    std::fill_n(outputDataX, width, 0);
+    std::fill_n(outputDataX + (height - 1) * width, width, 0);
+    std::fill_n(outputDataY, width, 0);
+    std::fill_n(outputDataY + (height - 1) * width, width, 0);
+    for (size_t y = 0; y < height; ++y) {
+        outputDataX[y * width] = 0;
+        outputDataX[y * width + width - 1] = 0;
+        outputDataY[y * width] = 0;
+        outputDataY[y * width + width - 1] = 0;
+    }
 
-    for (size_t y = 1; y < heightBound; ++y) {
-        size_t origY = y * maxWidthOrig;
-        size_t outYPos = y * maxWidthOut;
-        for (size_t x = 1; x < widthBound; ++x) {
-            int Xsum = 0;
-            int Ysum = 0;
-            size_t origX = x * 4;
+    auto lineBuffer = ImageData<1>{original.width, 3};
+    uint8_t* rows[3] = { &lineBuffer.data[0], &lineBuffer.data[width], &lineBuffer.data[2 * width] };
 
-            for (int k = -1; k <= 1; ++k) {
-                size_t yPos = origY + (k * maxWidthOrig) + origX;
-                const auto knX = xFilter[k + 1];
-                const auto knY = yFilter[k + 1];
-
-                for (int l = -1; l <= 1; ++l) {
-                    const size_t pos = yPos + (l * 4);
-                    int sum = data[pos] + data[pos + 1] + data[pos + 2];
-
-                    Xsum += sum * knX[l + 1];
-                    Ysum += sum * knY[l + 1];
-                }
-            }
-
-            const size_t pos = outYPos + x;
-            outputDataX[pos] = std::clamp(Xsum * 2 / 3, 0, 255);
-            outputDataY[pos] = std::clamp(Ysum * 2 / 3, 0, 255);
+    auto loadGrayRow = [&](const size_t rowIdx, uint8_t* dst) {
+        const size_t rowOffset = rowIdx * width * 4;
+        for (size_t x = 0; x < width; ++x) {
+            const size_t pos = rowOffset + (x * 4);
+            dst[x] = static_cast<uint8_t>((static_cast<uint32_t>(data[pos]) + data[pos + 1] + data[pos + 2]) / 3);
         }
+    };
+
+    loadGrayRow(0, rows[0]);
+    loadGrayRow(1, rows[1]);
+
+    // Two 1d vectors instead of a 2d kernel
+    // seems to perform better on its first run, then trades blows after
+    for (size_t y = 1; y < height - 1; ++y) {
+        loadGrayRow(y + 1, rows[2]);
+
+        const uint8_t* r0 = rows[0];
+        const uint8_t* r1 = rows[1];
+        const uint8_t* r2 = rows[2];
+        const size_t outRowPos = y * width;
+
+        int vs_prev = static_cast<int>(r0[0]) + (static_cast<int>(r1[0]) << 1) + static_cast<int>(r2[0]);
+        int vd_prev = static_cast<int>(r2[0]) - static_cast<int>(r0[0]);
+
+        int vs_curr = static_cast<int>(r0[1]) + (static_cast<int>(r1[1]) << 1) + static_cast<int>(r2[1]);
+        int vd_curr = static_cast<int>(r2[1]) - static_cast<int>(r0[1]);
+
+        for (size_t x = 1; x < width - 1; ++x) {
+            const int vs_next = static_cast<int>(r0[x + 1]) + (static_cast<int>(r1[x + 1]) << 1) + static_cast<int>(r2[x + 1]);
+            const int vd_next = static_cast<int>(r2[x + 1]) - static_cast<int>(r0[x + 1]);
+
+            const int Xsum = vs_next - vs_prev;
+            const int Ysum = vd_prev + (vd_curr << 1) + vd_next;
+
+            const size_t pos = outRowPos + x;
+            outputDataX[pos] = static_cast<uint8_t>(std::clamp(std::abs(Xsum) * 2, 0, 255));
+            outputDataY[pos] = static_cast<uint8_t>(std::clamp(std::abs(Ysum) * 2, 0, 255));
+
+            vs_prev = vs_curr;
+            vs_curr = vs_next;
+            vd_prev = vd_curr;
+            vd_curr = vd_next;
+        }
+
+        uint8_t* temp = rows[0];
+        rows[0] = rows[1];
+        rows[1] = rows[2];
+        rows[2] = temp;
     }
 }
 
@@ -253,6 +256,8 @@ std::set<uint32_t> detectLines(const ImageData<1>& imageData, const uint32_t tol
         length = imageData.height;
         otherDirection = imageData.width;
     }
+
+    if (length < 3 || otherDirection < 3) return lines;
 
     auto comparator = [&imageData, tolerance](const uint32_t x, const uint32_t y) {
         if constexpr (vertical) {
@@ -310,9 +315,7 @@ struct Image {
 
         {
         auto filteredDataX = ImageData<1>{imageData.width, imageData.height};
-        padOutputData(imageData, filteredDataX);
         auto filteredDataY = ImageData<1>{imageData.width, imageData.height};
-        padOutputData(imageData, filteredDataY);
 
         applySobel(imageData, filteredDataX, filteredDataY);
         hLines = detectLines<false>(filteredDataY, 20);
@@ -466,6 +469,7 @@ inline ReturnedString* ReturnedString::make(std::string&& str) {
 extern "C" {
     // Image Control
     EMSCRIPTEN_KEEPALIVE void* create_buffer(const uint32_t width, const uint32_t height) {
+        if (width < 3 || height < 3) return nullptr;
         return ImageData<4>::allocate_buffer(width, height);
     }
 
@@ -474,6 +478,7 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE void* addImage(Colour* data, const uint32_t width, const uint32_t height, const uint32_t counter) {
+        if (!data || width < 3 || height < 3) return nullptr;
         auto ptr = new Image{ImageData<4>{data, width, height}, counter};
         currentImage = ptr;
         return ptr;

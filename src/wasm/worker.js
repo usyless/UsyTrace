@@ -51,9 +51,27 @@ Module['onRuntimeInitialized'] = () => {
         /** @export */ setCurrent: ({src}) => api.setCurrent_(src),
         /** @export */ removeImage: ({src}) => api.removeImage_(src),
         /** @export */ setData: ({src, type, width, height, data, image_id}) => {
-            const p = api.create_buffer(parseInt(width, 10), parseInt(height, 10));
+            const w = parseInt(width, 10);
+            const h = parseInt(height, 10);
+            if (!w || !h || w < 3 || h < 3 || !data) {
+                return {
+                    /** @export */ src,
+                    /** @export */ type,
+                    /** @export */ image_id,
+                    /** @export */ error: "Invalid image dimensions",
+                };
+            }
+            const p = api.create_buffer(w, h);
+            if (!p) {
+                return {
+                    /** @export */ src,
+                    /** @export */ type,
+                    /** @export */ image_id,
+                    /** @export */ error: "Failed to allocate image buffer",
+                };
+            }
             HEAPU8.set(data, p);
-            api.addImage_(src, p, parseInt(width, 10), parseInt(height, 10));
+            api.addImage_(src, p, w, h);
             return {
                 /** @export */ src,
                 /** @export */ type,
